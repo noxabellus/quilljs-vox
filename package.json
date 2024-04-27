@@ -1,0 +1,23 @@
+{
+    "name": "vox-editor",
+    "version": "0.0.0",
+    "description": "A rich text editor with source control",
+    "main": "dist/main.js",
+    "scripts": {
+        "dev": "webpack --watch",
+        "client": "electron ."
+    },
+    "author": "vox-authors",
+    "license": "MIT",
+    "devDependencies": {
+        "@electron/remote": "^2.1.2",
+        "css-loader": "^7.1.1",
+        "css-minimizer-webpack-plugin": "^6.0.0",
+        "electron": "^30.0.1",
+        "html-webpack-plugin": "^5.6.0",
+        "mini-css-extract-plugin": "^2.9.0",
+        "quill": "^2.0.0",
+        "webpack": "^5.91.0",
+        "webpack-cli": "^5.1.4"
+    }
+}
