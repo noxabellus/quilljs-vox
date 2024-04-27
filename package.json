@@ -8,7 +8,7 @@
         "client": "electron ."
     },
     "author": "vox-authors",
-    "license": "MIT",
+    "license": "Apache-2.0",
     "devDependencies": {
         "@electron/remote": "^2.1.2",
         "css-loader": "^7.1.1",
