@@ -1,21 +1,33 @@
 import Quill from 'quill';
-import * as remote from '@electron/remote'
+import { openFile, saveFile } from './editor/file.js';
+import { terminal } from './editor/remote.js';
 
+const file = await openFile();
 
-const con = remote.app.console;
+console.log(file);
+
+const out = { test: 1, test2: "foo" };
+console.log(await saveFile(out));
+
 
 const quill = new Quill('#editor', {
     modules: {
-        toolbar: "#toolbar"
+        toolbar: "#toolbar",
+        history: {
+            delay: 1000,
+            maxStack: Infinity,
+            userOnly: false,
+        }
     }
 });
 
 quill.on('text-change', (delta, oldDelta, source) => {
     if (source == 'api') {
-        con.log('An API call triggered this change.');
+        terminal.log('An API call triggered this change.');
     } else if (source == 'user') {
-        con.log('A user action triggered this change.');
+        terminal.log('A user action triggered this change.');
     }
-    con.log("new", delta);
-    con.log("old", oldDelta);
+    terminal.log("new", delta);
+    terminal.log("old", oldDelta);
 });
+
