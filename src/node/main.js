@@ -31,16 +31,25 @@ app.whenReady().then(() => {
 
     remoteMain.enable(win.webContents);
 
+    let dirty = false;
+
     (async () => {
         try {
             const watcher = watch(clientDir);
             for await (const _ of watcher) {
-                console.log("Reloading window");
-                win.reload();
+                dirty = true;
             }
         } catch (err) {
             throw err;
         }
-      })(); 
+      })();
+
+    setInterval(() => {
+        if (dirty) {
+            console.log("reloading window");
+            dirty = false;
+            win.reload();
+        }
+    }, 1000);
   }).catch(console.error);
 

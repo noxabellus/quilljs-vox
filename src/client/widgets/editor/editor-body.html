@@ -6,11 +6,12 @@
         }
         
         #user-content {
-            border-left: 1px solid grey;
-            border-right: 1px solid grey;
-            border-bottom: 1px solid rgb(229, 229, 229);
+            border: 1px solid rgba(var(--frame-border-color), var(--frame-border-opacity));
+            border-top: none;
             margin: auto;
             width: 960px;
+            background-color: rgba(var(--frame-background-color), var(--frame-background-opacity));
+            color: rgb(var(--primary-text-color));
         }
     </style>
     <div id="user-content"></div>
