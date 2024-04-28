@@ -1,13 +1,14 @@
 import Quill from 'quill';
-import { openVox, saveVox } from '../../support/file.js';
+import { writeVox } from '../../support/file.js';
 import { terminal } from '../../support/remote.js';
 import Widget from "../../support/widget.js";
 import Settings from "../../support/settings.js";
 
 import editor_header_src from "./editor-header.html";
 import editor_body_src from "./editor-body.html";
+import { loadHistoryStack } from '../../support/history.js';
 
-export default async function Element(container = document.body) {
+export default function Element(filePath, state, container = document.body) {
     const editor_header_elem = Widget(editor_header_src);
     const editor_body_elem = Widget(editor_body_src);
 
@@ -33,13 +34,6 @@ export default async function Element(container = document.body) {
         document_settings_elem.classList.remove("visible");
     });
 
-    // const file = await openVox();
-
-    // console.log(file);
-
-    // const out = { test: 1, test2: "foo" };
-    // console.log(await saveVox(out));
-
     const quill = new Quill(user_content_elem, {
         modules: {
             toolbar: document_toolbar_elem,
@@ -50,22 +44,49 @@ export default async function Element(container = document.body) {
             }
         }
     });
+    
+    quill.setContents(state.delta);
+    loadHistoryStack(state.history, quill);
+    state.history = quill.history.stack;
 
-    quill.on('text-change', (delta, oldDelta, source) => {
-        if (source == 'api') {
-            terminal.log('An API call triggered this change.');
-        } else if (source == 'user') {
-            terminal.log('A user action triggered this change.');
-        }
-        terminal.log("new", delta);
-        terminal.log("old", oldDelta);
-        terminal.log(oldDelta.compose(delta));
+    let saved = false;
+    let auto_save = true;
+    quill.on('text-change', (delta, oldDelta, _source) => {
+        state.delta = oldDelta.compose(delta);
+        saved = false;
     });
+    
+    const intervalId = setInterval(saveFile, 3000);
+    async function saveFile() {
+        if (!saved) {
+            const file_res = await writeVox(filePath, state);
+
+            if (file_res.is_success()) {
+                saved = true;
+                terminal.log("saved file", filePath);
+            } else {
+                alert("failed to save file, stopping auto-save", file_res.body);
+                auto_save = false;
+                clearInterval(intervalId);
+            }
+        }
+    }
 
     return {
         header: editor_header_elem,
         body: editor_body_elem,
         settings: document_settings,
         quill,
+        close() {
+            clearInterval(intervalId);
+            if (auto_save) {
+                saveFile();
+            }
+
+            this.header.remove();
+            this.body.remove();
+            this.settings = null;
+            this.quill = null;
+        }
     };
 }

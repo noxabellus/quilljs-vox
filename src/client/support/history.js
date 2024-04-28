@@ -1,17 +1,20 @@
-import { Delta } from 'quill';
+import Delta from 'quill-delta';
 
-export function loadHistoryStack (stack, editor) {
+export function loadHistoryStack (stack, quill) {
+    quill.history.stack.undo = [];
+    quill.history.stack.redo = [];
+
     stack.undo.forEach(elem => 
-        editor.history.stack.undo.push({
-            redo: new Delta(elem.redo.ops),
-            undo: new Delta(elem.undo.ops),
+        quill.history.stack.undo.push({
+            delta: new Delta(elem.delta),
+            range: elem.range,
         })
     );
 
     stack.redo.forEach(elem =>
-        editor.history.stack.redo.push({
-            redo: new Delta(elem.redo.ops),
-            undo: new Delta(elem.undo.ops),
+        quill.history.stack.redo.push({
+            delta: new Delta(elem.delta),
+            range: elem.range,
         })
     );
 }

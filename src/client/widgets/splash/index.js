@@ -24,8 +24,16 @@ export default async function Element(fileCallback, container = document.body) {
     container.append(splash.elem);
 
     new_button.addEventListener("click", async () => {
-        const obj = {};
+        const obj = {
+            history: {
+                undo: [],
+                redo: [],
+            },
+            delta: [],
+        };
+
         const file_res = await saveVox(obj);
+        
         if (file_res.is_success()) {
             fileCallback.call(splash, Result.Success({filePath: file_res.body, obj}));
         } else {
