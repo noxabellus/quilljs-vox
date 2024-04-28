@@ -1,4 +1,5 @@
 .vscode
+.depr
 package-lock.json
 /dist
 /node_modules

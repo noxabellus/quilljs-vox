@@ -31,7 +31,7 @@ module.exports = [
                 {
                     test: /\.html$/i,
                     exclude: /index\.html/,
-                    loader: "dom-element-loader",
+                    loader: "html-loader",
                 },
                 {
                     test: /\.css$/i,

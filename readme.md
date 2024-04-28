@@ -13,6 +13,7 @@ WIP rich text editor
     - github style view
 + collaborative editing
 + comments and other editorial kit
++ dark mode / editor themes
 
 ## Dependencies
 + quill 2

@@ -1,0 +1,147 @@
+<div id="editor-header">
+    <style>
+        #document-toolbar {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            background: white;
+            border-bottom: 1px solid #adadad;
+            cursor: default;
+        }
+
+        #document-toolbar button,
+        #document-toolbar span {
+            color: #494949;
+            background: white;
+            border: 1px solid #b4b4b4;
+            cursor: pointer;
+            min-width: 1.5em;
+            margin-left: .25em;
+            margin-top: .1em;
+            margin-bottom: .1em;
+            padding-left: .5em;
+            padding-right: .5em;
+            border-radius: .25em;
+        }
+
+        #document-toolbar span {
+            font-family: sans-serif;
+            min-width: fit-content;
+        }
+
+        #document-toolbar select {
+            cursor: pointer;
+        }
+
+        #document-toolbar button {
+            font-family: serif;
+        }
+        
+        #document-toolbar button:hover,
+        #document-toolbar button.ql-active {
+            color: #1883bc;
+        }
+
+        #document-toolbar button.ql-bold {
+            font-weight: bold;
+        }
+
+        #document-toolbar button.ql-italic {
+            font-style: italic;
+        }
+
+        #document-toolbar button.ql-underline {
+            text-decoration: underline;
+        }
+
+        #document-toolbar button.ql-strike {
+            text-decoration: line-through;
+        }
+
+        #document-toolbar button.settings-toggle {
+            justify-self: right;
+        }
+
+        #document-settings {
+            position: absolute;
+            background: rgb(64, 64, 64);
+            color: white;
+            font-family: sans-serif;
+            display: none;
+        }
+    
+        #document-settings.visible {
+            display: block;
+        }
+
+        #document-settings #stack {
+            display: flex;
+            flex-direction: row;
+        }
+
+        #document-settings #stack ul {
+            padding: 5px;
+        }
+
+        #document-settings h1, #document-settings h2, #document-settings h3,
+        #document-settings li, #document-settings label, #document-settings input {
+            color: white;
+            cursor: default;
+        }
+
+        #document-settings input[type="number"] {
+            min-width: none;
+            width: 3em;
+            cursor: text;
+        }
+
+        #document-settings input::-webkit-outer-spin-button,
+        #document-settings input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        #document-settings ul {
+            list-style-type: none;
+            padding: 0;
+        }
+    </style>
+    <div id="document-toolbar">
+        <button name="Bold" class="ql-bold">B</button>
+        <button class="ql-italic">I</button>
+        <button class="ql-underline">U</button>
+        <button class="ql-strike">S</button>
+        <span>
+            <label for="align">Align:</label>
+            <select name="align" class="ql-align">
+                <option selected>Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+                <option value="justify">Justified</option>
+            </select>
+        </span>
+        <button class="ql-clean">Clear</button>
+        <button class="settings-toggle">Document Settings</button>
+    </div>
+    <div id="document-settings">
+        <div id="stack">
+            <ul id="label-stack">
+                <li>
+                    <label for="width">Width</label>
+                </li>
+                <li>
+                    <label for="padding">Padding</label>
+                </li>
+            </ul>
+            <ul id="ctrl-stack">
+                <li>
+                    <input type="number" id="width" value="960" t>px
+                </li>
+                <li>
+                    <input type="number" id="padding" value="20">px
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
