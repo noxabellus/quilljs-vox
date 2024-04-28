@@ -2,6 +2,7 @@ const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
+const { type } = require("os");
 
 module.exports = [
     {
@@ -32,6 +33,10 @@ module.exports = [
                     test: /\.html$/i,
                     exclude: /index\.html/,
                     loader: "html-loader",
+                },
+                {
+                    test: /\.(png|svg|jpg|jpeg|gif)$/i,
+                    type: "asset/inline",
                 },
                 {
                     test: /\.css$/i,

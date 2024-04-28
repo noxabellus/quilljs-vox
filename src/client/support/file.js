@@ -1,57 +1,34 @@
 
-import remote from "./remote.js";
 import fs from "fs/promises";
 
+import remote from "./remote.js";
+import Result from "./result.js";
 
 export async function readText (path) {
     try {
-        return {
-            success: true,
-            is_error: false,
-            body: await fs.readFile(path, "utf8"),
-        };
+        return Result.Success(await fs.readFile(path, "utf8"));
     } catch (error) {
-        return {
-            success: false,
-            is_error: false,
-            error
-        };
+        return Result.Error(error);
     }
 }
 
 export async function writeText (path, text) {
     try {
         await fs.writeFile(path, text);
-
-        return {
-            success: true,
-            is_error: false,
-        };
+        return Result.Success(path);
     } catch (error) {
-        return {
-            success: false,
-            is_error: true,
-            error
-        };
+        return Result.Error(error);
     }
 }
 
 export async function readVox (path) {
     const text = await readText(path);
 
-    if (text.success) {
+    if (text.is_success()) {
         try {
-            return {
-                success: true,
-                is_error: false,
-                body: JSON.parse(text.body),
-            };
+            return Result.Success(JSON.parse(text.body));
         } catch (error) {
-            return {
-                success: false,
-                is_error: false,
-                error
-            };
+            return Result.Error(error);
         }
     } else {
         return text;
@@ -70,22 +47,20 @@ export async function openVox () {
         });
 
         if (fps.canceled || fps.filePaths.length != 1) {
-            return {
-                success: false,
-                is_error: false,
-            };
+            return Result.Failure();
         }
 
         filePath = fps.filePaths[0];
     } catch (error) {
-        return {
-            success: false,
-            is_error: false,
-            error
-        };
+        return Result.Error(error);
     }
 
-    return readVox(filePath);
+    const read_res = await readVox(filePath);
+    if (read_res.is_success()) {
+        return Result.Success({ filePath, obj: read_res.body });
+    } else {
+        return read_res;
+    }
 }
 
 export async function writeVox (path, data) {
@@ -93,11 +68,7 @@ export async function writeVox (path, data) {
     try {
         text = JSON.stringify(data, null, 4);
     } catch (error) {
-        return {
-            success: false,
-            is_error: true,
-            error
-        };
+        return Result.Error(error);
     }
 
     return writeText(path, text);

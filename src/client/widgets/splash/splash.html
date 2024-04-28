@@ -1,0 +1,103 @@
+<div id="splash">
+    <style>
+        #splash {
+            top: calc(50% - 320px);
+            left: calc(50% - 400px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 800px;
+            height: 640px;
+        }
+
+        #splash,
+        #app-settings {
+            position: absolute;
+            background-color: #3c394b;
+            border-radius: 32px;
+            border: 2px solid #dfa3fcff;
+            box-shadow: 0 0 16px 8px #00000034,
+                        0 0 16px 8px #00000034 inset;
+            user-select: none;
+        }
+
+        #splash-stack {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-around;
+            margin-top: 96px;
+            width: 75%;
+        }
+
+        #splash button {
+            font-size: 24px;
+            font-family: sans-serif;
+            color: #dfa3fcff;
+            border-radius: 16px;
+            padding: 8px 16px;
+            border: 2px solid #dfa3fcff;
+            box-shadow: 0 0 8px 4px #00000034,
+                        0 0 8px 4px #00000034 inset;
+            cursor: pointer;
+        }
+
+        #splash button:hover {
+            box-shadow: 0 -5px 8px 4px #00000034,
+                        0 10px 8px 4px #00000034 inset,
+                        0  0   8px 4px #ffffff34 inset;
+        }
+
+        #splash button:active {
+            box-shadow: 0 0 8px 4px #00000034,
+                        0 0 8px 4px #00000034 inset,
+                        0 0 8px 4px #ffffff34 inset;
+        }
+
+        #app-settings {
+            display: none;
+            top: calc(50% - 400px);
+            left: calc(50% - 320px);
+            width: 640px;
+            height: 800px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-evenly;
+        }
+
+        #app-settings.visible {
+            display: flex;
+        }
+
+        #settings-stack {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-around;
+            margin-top: 96px;
+            width: 75%;
+            height: calc(100% - 10em);
+        }
+    </style>
+
+    <img src="../../../../assets/vox.png" alt="Vox" id="logo"/>
+
+    <div id="splash-stack">
+        <button id="new-file">New</button>
+        <button id="open-file">Open</button>
+        <button id="app-settings-open">Settings</button>
+    </div>
+
+    <div id="app-settings">
+        <div id="settings-stack">
+            <ul id="settings-labels">
+
+            </ul>
+            <ul id="settings-values">
+                
+            </ul>
+        </div>
+        <button id="app-settings-close">Close</button>
+    </div>
+</div>

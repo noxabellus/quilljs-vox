@@ -59,12 +59,13 @@ export default async function Element(container = document.body) {
         }
         terminal.log("new", delta);
         terminal.log("old", oldDelta);
+        terminal.log(oldDelta.compose(delta));
     });
 
     return {
         header: editor_header_elem,
         body: editor_body_elem,
-        quill,
         settings: document_settings,
+        quill,
     };
 }
