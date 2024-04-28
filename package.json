@@ -10,14 +10,17 @@
         "client": "electron ."
     },
     "devDependencies": {
-        "quill": "^2.0.0",
         "@electron/remote": "^2.1.2",
-        "electron": "^30.0.1",
-        "webpack": "^5.91.0",
-        "webpack-cli": "^5.1.4",
-        "html-webpack-plugin": "^5.6.0",
         "css-loader": "^7.1.1",
         "css-minimizer-webpack-plugin": "^6.0.0",
-        "mini-css-extract-plugin": "^2.9.0"
+        "dom-element-loader": "^1.0.3",
+        "electron": "^30.0.1",
+        "html-loader": "^5.0.0",
+        "html-webpack-plugin": "^5.6.0",
+        "mini-css-extract-plugin": "^2.9.0",
+        "quill": "^2.0.0",
+        "style-loader": "^4.0.0",
+        "webpack": "^5.91.0",
+        "webpack-cli": "^5.1.4"
     }
 }

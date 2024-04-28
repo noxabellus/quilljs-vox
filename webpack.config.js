@@ -29,6 +29,11 @@ module.exports = [
         module: {
             rules: [
                 {
+                    test: /\.html$/i,
+                    exclude: /index\.html/,
+                    loader: "dom-element-loader",
+                },
+                {
                     test: /\.css$/i,
                     use: [MiniCssExtractPlugin.loader, "css-loader"],
                 },
@@ -36,7 +41,6 @@ module.exports = [
         },
         plugins: [
             new HtmlWebpackPlugin({
-                title: "Output Management",
                 template: "src/client/index.html",
                 inject: "body",
             }),

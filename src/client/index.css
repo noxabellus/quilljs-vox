@@ -12,18 +12,9 @@
 
 html, body {
     height: 100%;
-    border: 1px solid green;
 }
 
 body {
     display: flex;
     flex-direction: column;
-}
-
-#toolbar {
-    border: 1px solid blue;
-}
-
-#editor {
-    border: 1px solid red;
 }

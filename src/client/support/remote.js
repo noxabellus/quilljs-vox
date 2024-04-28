@@ -5,8 +5,9 @@ export const app = {
     on: remote.app.on,
     off: remote.app.off,
     once: remote.app.once,
-}
-export const terminal = remote.app.terminal;
+};
+
+export const terminal = remote.app.console;
 export const dialog = remote.dialog;
 
 export default {
