@@ -30,6 +30,10 @@ module.exports = [
         module: {
             rules: [
                 {
+                    resourceQuery: /raw/,
+                    type: 'asset/source',
+                },
+                {
                     test: /\.html$/i,
                     exclude: /index\.html/,
                     loader: "html-loader",
@@ -40,6 +44,7 @@ module.exports = [
                 },
                 {
                     test: /\.css$/i,
+                    resourceQuery: { not: [/raw/] },
                     use: [MiniCssExtractPlugin.loader, "css-loader"],
                 },
             ],

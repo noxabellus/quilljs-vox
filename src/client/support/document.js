@@ -1,5 +1,6 @@
 import { THEME_KEYS, applyDocumentTheme } from "./document-theme.js";
 import { loadHistoryStack } from "./history.js";
+import quillBaseCss from "../../extern/quill.core.css?raw";
 
 export class Document {
     constructor () {
@@ -11,6 +12,13 @@ export class Document {
             undo: [],
             redo: [],
         };
+    }
+
+    generateStyles () {
+        console.log("TODO");
+        return `
+            ${quillBaseCss}
+        `;
     }
 
     applyTheme (elem) {

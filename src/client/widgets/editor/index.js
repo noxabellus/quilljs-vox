@@ -6,6 +6,8 @@ import Settings from "../../support/settings.js";
 import editor_header_src from "./editor-header.html";
 import editor_body_src from "./editor-body.html";
 
+import { html_beautify } from "js-beautify";
+
 export default function Element(filePath, doc, container = document.body) {
     const editor_header_elem = Widget(editor_header_src);
     const editor_body_elem = Widget(editor_body_src);
@@ -55,7 +57,29 @@ export default function Element(filePath, doc, container = document.body) {
     doc.linkEditor(quill);
 
     export_elem.addEventListener("click", async () => {
-        const html = quill.root.innerHTML;
+        const html = html_beautify(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>${doc.title}</title>
+                <style>
+                    ${doc.generateStyles()}
+                </style>
+            </head>
+            <body>${quill.root.innerHTML}</body>
+            </html>
+        `, {
+            indent_size: 4,
+            wrap_line_length: 80,
+            wrap_attributes: "auto",
+            wrap_attributes_indent_size: 2,
+            end_with_newline: true,
+            preserve_newlines: true,
+            max_preserve_newlines: 2,
+            indent_inner_html: true,
+            extra_liners: ["head", "body", "/html"],
+        });
 
         export_elem.disabled = true;
         
