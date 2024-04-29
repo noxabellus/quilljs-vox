@@ -3,6 +3,7 @@ import Result from "../../support/result.js";
 import { openVox, saveVox } from "../../support/file.js";
 
 import splash_src from "./splash.html";
+import Document from "../../support/document.js";
 
 
 export default async function Element(fileCallback, container = document.body) {
@@ -24,18 +25,12 @@ export default async function Element(fileCallback, container = document.body) {
     container.append(splash.elem);
 
     new_button.addEventListener("click", async () => {
-        const obj = {
-            history: {
-                undo: [],
-                redo: [],
-            },
-            delta: [],
-        };
+        const doc = new Document();
 
-        const file_res = await saveVox(obj);
+        const file_res = await saveVox(doc);
         
         if (file_res.is_success()) {
-            fileCallback.call(splash, Result.Success({filePath: file_res.body, obj}));
+            fileCallback.call(splash, Result.Success({filePath: file_res.body, doc}));
         } else {
             fileCallback.call(splash, file_res);
         }

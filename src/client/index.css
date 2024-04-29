@@ -62,5 +62,7 @@ html, body {
 body {
     display: flex;
     flex-direction: column;
+    justify-content: stretch;
+    align-items: stretch;
     background-color: rgb(var(--background-color));
 }

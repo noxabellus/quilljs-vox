@@ -3,6 +3,7 @@ import fs from "fs/promises";
 
 import remote from "./remote.js";
 import Result from "./result.js";
+import Document from "./document.js";
 
 export async function readText (path) {
     try {
@@ -26,7 +27,7 @@ export async function readVox (path) {
 
     if (text.is_success()) {
         try {
-            return Result.Success(JSON.parse(text.body));
+            return Result.Success(Document.deserialize(text.body));
         } catch (error) {
             return Result.Error(error);
         }
@@ -57,7 +58,7 @@ export async function openVox () {
 
     const read_res = await readVox(filePath);
     if (read_res.is_success()) {
-        return Result.Success({ filePath, obj: read_res.body });
+        return Result.Success({ filePath, doc: read_res.body });
     } else {
         return read_res;
     }
@@ -66,7 +67,7 @@ export async function openVox () {
 export async function writeVox (path, data) {
     let text;
     try {
-        text = JSON.stringify(data, null, 4);
+        text = data.serialize();
     } catch (error) {
         return Result.Error(error);
     }

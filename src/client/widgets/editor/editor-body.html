@@ -3,6 +3,7 @@
         #editor-body {
             overflow: scroll;
             scrollbar-width: none;
+            flex-grow: 1;
         }
         
         #user-content {
@@ -12,6 +13,22 @@
             width: 960px;
             background-color: rgba(var(--frame-background-color), var(--frame-background-opacity));
             color: rgb(var(--primary-text-color));
+            box-shadow: 0 0 10px 10px rgba(var(--shadow-color), calc(var(--shadow-opacity) / 4)),
+                        0 0 10px 10px rgba(var(--shadow-color), calc(var(--shadow-opacity) / 4)) inset;
+        }
+        
+        #user-content .ql-editor {
+            border: var(--document-border-size) solid rgba(var(--document-border-color), var(--document-border-opacity));
+            border-radius: var(--document-border-radius);
+            font-family: var(--document-primary-font-family);
+            font-size: var(--document-primary-font-size);
+            font-weight: var(--document-primary-font-weight);
+            color: rgb(var(--document-primary-text-color));
+            background-color: rgb(var(--document-background-color));
+            padding-top: var(--document-padding-vertical);
+            padding-bottom: var(--document-padding-vertical);
+            padding-left: var(--document-padding-horizontal);
+            padding-right: var(--document-padding-horizontal);
         }
     </style>
     <div id="user-content"></div>

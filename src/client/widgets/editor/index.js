@@ -8,7 +8,7 @@ import editor_header_src from "./editor-header.html";
 import editor_body_src from "./editor-body.html";
 import { loadHistoryStack } from '../../support/history.js';
 
-export default function Element(filePath, state, container = document.body) {
+export default function Element(filePath, doc, container = document.body) {
     const editor_header_elem = Widget(editor_header_src);
     const editor_body_elem = Widget(editor_body_src);
 
@@ -53,9 +53,7 @@ export default function Element(filePath, state, container = document.body) {
     let saved = true;
     let auto_save = true;
 
-    quill.setContents(state.delta);
-    loadHistoryStack(state.history, quill);
-    state.history = quill.history.stack;
+    doc.linkEditor(quill);
 
     settings_toggle_elem.addEventListener("click", () => {
         document_settings_elem.style.top = `${settings_toggle_elem.offsetTop}px`;
@@ -115,20 +113,20 @@ export default function Element(filePath, state, container = document.body) {
     });
 
     quill.on('text-change', (delta, oldDelta, _source) => {
-        state.delta = oldDelta.compose(delta);
+        doc.delta = oldDelta.compose(delta).ops;
         saved = false;
     });
     
     const intervalId = setInterval(saveFile, 3000);
     async function saveFile() {
         if (!saved) {
-            const file_res = await writeVox(filePath, state);
+            const file_res = await writeVox(filePath, doc);
 
             if (file_res.is_success()) {
                 saved = true;
                 console.log("saved file", filePath);
             } else {
-                alert("failed to save file, stopping auto-save", file_res.body);
+                alert(`failed to save file, stopping auto-save:\n${file_res.body}`);
                 auto_save = false;
                 clearInterval(intervalId);
             }
@@ -140,6 +138,7 @@ export default function Element(filePath, state, container = document.body) {
         body: editor_body_elem,
         settings: document_settings,
         quill,
+        doc,
         close() {
             clearInterval(intervalId);
             if (auto_save) {
@@ -150,6 +149,7 @@ export default function Element(filePath, state, container = document.body) {
             this.body.remove();
             this.settings = null;
             this.quill = null;
+            this.doc = null;
         }
     };
 }
