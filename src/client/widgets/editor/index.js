@@ -1,5 +1,5 @@
 import Quill from "quill";
-import { writeVox } from "../../support/file.js";
+import { saveHtml, writeVox } from "../../support/file.js";
 import Widget from "../../support/widget.js";
 import Settings from "../../support/settings.js";
 
@@ -16,6 +16,7 @@ export default function Element(filePath, doc, container = document.body) {
     const document_toolbar_elem = editor_header_elem.querySelector("#document-toolbar");
     const settings_toggle_elem = document_toolbar_elem.querySelector("button.settings-toggle");
     const document_settings_elem = editor_header_elem.querySelector("#document-settings");
+    const export_elem = document_toolbar_elem.querySelector("button.export");
 
     const document_settings = Settings(document_settings_elem, {
         "width": [960, parseInt, (v) => user_content_elem.style.width = `${v}px`],
@@ -23,7 +24,7 @@ export default function Element(filePath, doc, container = document.body) {
     })
 
     const disable_button_elems =
-        document_toolbar_elem.querySelectorAll("button:not(.settings-toggle)");
+        document_toolbar_elem.querySelectorAll("button:not(.nolock)");
     disable_button_elems.forEach(elem => {
         elem.disabled = true;
     });
@@ -52,6 +53,20 @@ export default function Element(filePath, doc, container = document.body) {
     let auto_save = true;
 
     doc.linkEditor(quill);
+
+    export_elem.addEventListener("click", async () => {
+        const html = quill.root.innerHTML;
+
+        export_elem.disabled = true;
+        
+        const res = await saveHtml(html);
+
+        if (res.is_error()) {
+            alert(`failed to export HTML file:\n${res.body}`);
+        }
+
+        export_elem.disabled = false;
+    });
 
     settings_toggle_elem.addEventListener("click", () => {
         document_settings_elem.style.top = `${settings_toggle_elem.offsetTop}px`;

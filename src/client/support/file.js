@@ -75,34 +75,36 @@ export async function writeVox (path, data) {
     return writeText(path, text);
 }
 
-export async function saveVox (data) {
+export async function saveWith (filters, callback) {
     let filePath;
     try {
         const fps = await remote.dialog.showSaveDialog({
             properties: ["showOverwriteConfirmation"],
             filters: [
-                { name: "Vox Files", extensions: ["vox"] },
+                ...filters,
                 { name: "All Files", extensions: ["*"] },
             ],
         });
 
         if (fps.canceled) {
-            return {
-                success: false,
-                is_error: false
-            };
+            return Result.Failure();
         }
-        
+
         filePath = fps.filePath;
     } catch (error) {
-        return {
-            success: false,
-            is_error: true,
-            error
-        };
+        return Result.Error(error);
     }
 
-    return writeVox(filePath, data);
+    return callback(filePath);
+
+}
+
+export async function saveHtml (data) {
+    return saveWith([{ name: "Html Files", extensions: ["html"] }], filePath => writeText(filePath, data));
+}
+
+export async function saveVox (data) {
+    return saveWith([{ name: "Vox Files", extensions: ["vox"] }], filePath => writeVox(filePath, data));
 }
 
 export default {
