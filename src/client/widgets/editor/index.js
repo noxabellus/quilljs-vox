@@ -1,12 +1,10 @@
-import Quill from 'quill';
-import { writeVox } from '../../support/file.js';
-import { terminal } from '../../support/remote.js';
+import Quill from "quill";
+import { writeVox } from "../../support/file.js";
 import Widget from "../../support/widget.js";
 import Settings from "../../support/settings.js";
 
 import editor_header_src from "./editor-header.html";
 import editor_body_src from "./editor-body.html";
-import { loadHistoryStack } from '../../support/history.js';
 
 export default function Element(filePath, doc, container = document.body) {
     const editor_header_elem = Widget(editor_header_src);
@@ -49,7 +47,7 @@ export default function Element(filePath, doc, container = document.body) {
             }
         }
     });
-    
+
     let saved = true;
     let auto_save = true;
 
@@ -92,7 +90,7 @@ export default function Element(filePath, doc, container = document.body) {
         });
     });
 
-    quill.on('selection-change', (range, _oldRange, _source) => {
+    quill.on("selection-change", (range, _oldRange, _source) => {
         if (range === null) {
             disable_button_elems.forEach(elem => {
                 elem.disabled = true;
@@ -112,11 +110,11 @@ export default function Element(filePath, doc, container = document.body) {
         }
     });
 
-    quill.on('text-change', (delta, oldDelta, _source) => {
+    quill.on("text-change", (delta, oldDelta, _source) => {
         doc.delta = oldDelta.compose(delta).ops;
         saved = false;
     });
-    
+
     const intervalId = setInterval(saveFile, 3000);
     async function saveFile() {
         if (!saved) {

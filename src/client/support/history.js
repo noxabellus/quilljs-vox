@@ -1,4 +1,4 @@
-import Delta from 'quill-delta';
+import Delta from "quill-delta";
 
 export function loadHistoryStack (stack, quill) {
     quill.history.stack.undo = [];
