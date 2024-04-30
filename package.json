@@ -11,6 +11,7 @@
     },
     "devDependencies": {
         "@electron/remote": "^2.1.2",
+        "@types/js-beautify": "^1.14.3",
         "css-loader": "^7.1.1",
         "css-minimizer-webpack-plugin": "^6.0.0",
         "dom-element-loader": "^1.0.3",
@@ -20,7 +21,10 @@
         "js-beautify": "^1.15.1",
         "mini-css-extract-plugin": "^2.9.0",
         "quill": "^2.0.0",
+        "raw-loader": "^4.0.2",
         "style-loader": "^4.0.0",
+        "ts-loader": "^9.5.1",
+        "typescript": "^5.4.5",
         "webpack": "^5.91.0",
         "webpack-cli": "^5.1.4"
     }

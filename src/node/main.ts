@@ -8,7 +8,7 @@ import { watch } from "fs/promises";
 
 const clientDir = path.join(__dirname, "./client");
 
-app.console = new console.Console(process.stdout, process.stderr);
+(app as any).console = new console.Console(process.stdout, process.stderr);
 
 Menu.setApplicationMenu(null);
 
@@ -20,7 +20,7 @@ app.whenReady().then(() => {
         height: 600,
         webPreferences: {
             nodeIntegration: true,
-            enableRemoteModule: true,
+            // enableRemoteModule: true,
             contextIsolation: false
         }
     })

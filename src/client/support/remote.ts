@@ -7,7 +7,7 @@ export const app = {
     once: remote.app.once,
 };
 
-export const terminal = remote.app.console;
+export const terminal = (remote.app as any).console;
 export const dialog = remote.dialog;
 
 export default {

@@ -1,12 +1,15 @@
-import Widget from "../../support/widget.js";
-import Result from "../../support/result.js";
-import { openVox, saveVox } from "../../support/file.js";
+import Widget from "../../support/widget";
+import Result from "../../support/result";
+import { openVox, saveVox } from "../../support/file";
 
 import splash_src from "./splash.html";
-import Document from "../../support/document.js";
+import Document from "../../support/document";
+import { PathLike } from "original-fs";
 
 
-export default async function Element(fileCallback, container = document.body) {
+export type SplashResult = Result<{filePath: PathLike, doc: Document}>;
+
+export default async function Element(fileCallback: (res: SplashResult) => Promise<void>, container = document.body) {
     const splash_elem = Widget(splash_src);
     const new_button = splash_elem.querySelector("#new-file");
     const open_button = splash_elem.querySelector("#open-file");
@@ -25,11 +28,11 @@ export default async function Element(fileCallback, container = document.body) {
     container.append(splash.elem);
 
     new_button.addEventListener("click", async () => {
-        const doc = new Document();
+        const doc = new Document("untitled document");
 
         const file_res = await saveVox(doc);
         
-        if (file_res.is_success()) {
+        if (Result.is_success(file_res)) {
             fileCallback.call(splash, Result.Success({filePath: file_res.body, doc}));
         } else {
             fileCallback.call(splash, file_res);

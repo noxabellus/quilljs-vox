@@ -1,9 +1,40 @@
-import { THEME_KEYS, applyDocumentTheme } from "./document-theme.js";
-import { loadHistoryStack } from "./history.js";
+import { Theme, THEME_KEYS, applyDocumentTheme, isThemeKey, isValidProperty } from "./document-theme";
+import Delta, { AttributeMap, Op } from "quill-delta";
+import { loadHistoryStack } from "./history";
 import quillBaseCss from "../../extern/quill.core.css?raw";
+import Quill from "quill";
+import { HistoryOptions, StackItem } from "quill/modules/history";
+
+export type ProtoStackItem = {
+    delta: Op[],
+    range: {index: number, length: number},
+}
+
+export type ProtoHistory = {
+    undo: ProtoStackItem[],
+    redo: ProtoStackItem[],
+};
+
+export type History = {
+    undo: StackItem[],
+    redo: StackItem[],
+};
+
+export type Block = {
+    command: string,
+    arg: JSON,
+    body: Block[],
+};
 
 export class Document {
-    constructor () {
+    title: string;
+    theme: Theme;
+    delta: Op[];
+    history: History | ProtoHistory;
+
+    constructor (title: string) {
+        this.title = title;
+
         this.theme = {};
 
         this.delta = [];
@@ -14,25 +45,25 @@ export class Document {
         };
     }
 
-    generateStyles () {
+    generateStyles (): string {
         console.log("TODO");
         return `
             ${quillBaseCss}
         `;
     }
 
-    applyTheme (elem) {
+    applyTheme (elem: HTMLElement) {
         return applyDocumentTheme(elem, this.theme);
     }
 
-    linkEditor (editor) {
+    linkEditor (editor: Quill) {
         editor.setContents(this.delta);
         loadHistoryStack(this.history, editor);
         this.history = editor.history.stack;
     }
 
-    static deserialize (text) {
-        const doc = {};
+    static deserialize (text: string): Document {
+        const doc = {} as any;
 
         const blocks = makeBlocks(makeLines(text));
         blocks.forEach(b => parseBlock(doc, b));
@@ -43,7 +74,7 @@ export class Document {
 
         Object.setPrototypeOf(doc, Document.prototype);
 
-        return doc;
+        return doc as Document;
     }
 
     serialize () {
@@ -67,13 +98,13 @@ export class Document {
 
 export default Document;
 
-export function serializeHistoryOp (op) {
+export function serializeHistoryOp (op: StackItem): string[] {
     return [ `@ [${op.range.index}, ${op.range.length}]`
-           ,    ...(op.delta.ops || op.delta).flatMap(serializeDeltaOp).map(indent)
+           ,    ...((op.delta.ops || op.delta) as Op[]).flatMap(serializeDeltaOp).map(indent)
            ];
 }
 
-export function serializeDeltaOp (op) {
+export function serializeDeltaOp (op: Op): string[] {
     if (op.insert !== undefined) {
         return [ `I ${JSON.stringify(op.insert)}`
                ,    ...serializeAttributes(op.attributes).map(indent)
@@ -89,12 +120,12 @@ export function serializeDeltaOp (op) {
     }
 }
 
-export function serializeAttributes (attributes) {
+export function serializeAttributes (attributes: AttributeMap): string[] {
     if (attributes === undefined) return [];
     return Object.entries(attributes).map(([key, value]) => `${key} ${JSON.stringify(value)}`);
 }
 
-export function parseBlock (doc, block) {
+export function parseBlock (doc: Document, block: Block): void {
     if (block.arg !== undefined)
         throw `top level block should not have arg ${block.arg}`;
 
@@ -128,24 +159,27 @@ export function parseBlock (doc, block) {
     }
 }
 
-export function parseTheme (blocks) {
-    const theme = {};
+export function parseTheme (blocks: Block[]): Theme {
+    const theme = {} as any;
 
-    blocks.forEach(b => {
-        if (!THEME_KEYS.includes(b.command)) 
+    blocks.forEach((b: Block) => {
+        if (!isThemeKey(b.command)) 
             throw `unknown theme key ${b.command}`;
 
         if (theme[b.command] !== undefined)
             throw `duplicate theme key ${b.command}`;
 
+        if (!isValidProperty(b.command, b.arg))
+            throw `invalid theme value for key ${b.command}: ${b.arg}`;
+        
         theme[b.command] = b.arg;
     });
 
     return theme;
 }
 
-export function parseHistory (blocks) {
-    const history = {};
+export function parseHistory (blocks: Block[]): History {
+    const history = {} as any;
     
     blocks.forEach(b => {
         if (b.arg !== undefined)
@@ -160,8 +194,8 @@ export function parseHistory (blocks) {
     return history;
 }
 
-export function parseHistoryOps (blocks) {
-    const ops = [];
+export function parseHistoryOps (blocks: Block[]): ProtoStackItem[] {
+    const ops: ProtoStackItem[] = [];
 
     blocks.forEach(b => {
         if (b.command !== "@")
@@ -173,11 +207,11 @@ export function parseHistoryOps (blocks) {
     return ops;
 }
 
-export function parseHistoryOp (arg, blocks) {
+export function parseHistoryOp (arg: JSON, blocks: Block[]): ProtoStackItem {
     if (!(Array.isArray(arg) && arg.length === 2 && arg.every(Number.isInteger)))
         throw `invalid history range ${arg}`;
 
-    const op = {range: {index: arg[0], length: arg[1]}, delta: []};
+    const op: ProtoStackItem = {range: {index: arg[0], length: arg[1]}, delta: []};
 
     blocks.forEach(b => {
         op.delta.push(parseDeltaOp(b));
@@ -186,8 +220,8 @@ export function parseHistoryOp (arg, blocks) {
     return op;
 }
 
-export function parseDelta (blocks) {
-    const delta = [];
+export function parseDelta (blocks: Block[]): Op[] {
+    const delta: Op[] = [];
 
     blocks.forEach(b => {
         delta.push(parseDeltaOp(b));
@@ -196,7 +230,7 @@ export function parseDelta (blocks) {
     return delta;
 }
 
-export function parseDeltaOp (block) {
+export function parseDeltaOp (block: Block): Op {
     switch (block.command) {
         case "I":
             return parseInsert(block.arg, block.body);
@@ -212,23 +246,32 @@ export function parseDeltaOp (block) {
     }
 }
 
-export function parseInsert (arg, blocks) {
+export function parseInsert (arg: JSON, blocks: Block[]): Op {
+    if (typeof arg !== "string")
+        throw `insert should have string arg ${arg}`;
+
     return {insert: arg, attributes: parseAttributes(blocks)};
 }
 
-export function parseDelete (arg, blocks) {
+export function parseDelete (arg: JSON, blocks: Block[]): Op {
     if (blocks.length > 0)
         throw "delete should not have body";
+
+    if (typeof arg !== "number")
+        throw `delete should have number arg ${arg}`;
 
     return {delete: arg};
 }
 
-export function parseRetain (arg, blocks) {
+export function parseRetain (arg: JSON, blocks: Block[]): Op {
+    if (typeof arg !== "number")
+        throw `retain should have number arg ${arg}`;
+
     return {retain: arg, attributes: parseAttributes(blocks)};
 }
 
-export function parseAttributes (blocks) {
-    const attributes = {};
+export function parseAttributes (blocks: Block[]): AttributeMap {
+    const attributes = {} as AttributeMap;
 
     blocks.forEach(b => {
         if (b.body.length > 0)
@@ -243,7 +286,9 @@ export function parseAttributes (blocks) {
     return attributes;
 }
 
-export function makeBlocks (lines, indent = 0) {
+export type Line = [number, string];
+
+export function makeBlocks (lines: Line[], indent = 0): Block[] {
     let block = [];
     while (lines.length > 0) {
         let [currIndent, currLine] = lines[0];
@@ -269,30 +314,32 @@ export function makeBlocks (lines, indent = 0) {
     return block;
 }
 
-export function makeCommand (line) {
+export function makeCommand (line: string): [string, JSON | undefined] {
     const index = line.search(/\s/);
     if (index < 0) {
-        return [line];
+        return [line, undefined];
     } else {
         return [line.slice(0, index), JSON.parse(line.slice(index + 1))];
     }
 }
 
-export function makeLines (text) {
-    return text
-        .split("\n")
-        .map(line => {
-            const indent = getIndent(line);
-            return [indent, line.slice(indent)];
-        })
-        .filter(([indent, line]) => line.length > 0);
+export function makeLines (text: string): Line[] {
+    return (
+        text
+            .split("\n")
+            .map(line => {
+                const indent = getIndent(line);
+                return [indent, line.slice(indent)];
+            })
+            .filter(([indent, line]: [number, string]) => line.length > 0) as Line[]
+    );
 }
 
-function indent (line) {
+function indent (line: string): string {
     return `\t${line}`;
 }
 
-function getIndent (line) {
+function getIndent (line: string): number {
     let i = 0;
     while (i < line.length && line[i] === "\t") {
         i++;

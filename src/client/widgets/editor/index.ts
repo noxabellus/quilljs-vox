@@ -1,44 +1,34 @@
 import Quill from "quill";
-import { saveHtml, writeVox } from "../../support/file.js";
-import Widget from "../../support/widget.js";
-import Settings from "../../support/settings.js";
+import { saveHtml, writeVox } from "../../support/file";
+import Widget from "../../support/widget";
+import Settings from "../../support/settings";
+import Document from "../../support/document";
+import Result from "../../support/result";
 
 import editor_header_src from "./editor-header.html";
 import editor_body_src from "./editor-body.html";
 
 import { html_beautify } from "js-beautify";
+import { PathLike } from "original-fs";
 
-export default function Element(filePath, doc, container = document.body) {
+export default function Element(filePath: PathLike, doc: Document, container = document.body) {
     const editor_header_elem = Widget(editor_header_src);
     const editor_body_elem = Widget(editor_body_src);
 
-    container.append(editor_header_elem, editor_body_elem);
-
-    const user_content_elem = editor_body_elem.querySelector("#user-content");
-    const document_toolbar_elem = editor_header_elem.querySelector("#document-toolbar");
-    const settings_toggle_elem = document_toolbar_elem.querySelector("button.settings-toggle");
-    const document_settings_elem = editor_header_elem.querySelector("#document-settings");
-    const export_elem = document_toolbar_elem.querySelector("button.export");
+    const user_content_elem: HTMLElement = editor_body_elem.querySelector("#user-content");
+    const document_toolbar_elem: HTMLElement = editor_header_elem.querySelector("#document-toolbar");
+    const settings_toggle_elem: HTMLButtonElement = document_toolbar_elem.querySelector("button.settings-toggle");
+    const document_settings_elem: HTMLElement = editor_header_elem.querySelector("#document-settings");
+    const export_elem: HTMLButtonElement = document_toolbar_elem.querySelector("button.export");
+    const disable_button_elems: NodeListOf<HTMLButtonElement> = document_toolbar_elem.querySelectorAll("button:not(.no-lock)");
+    const align_toggle_elem: HTMLButtonElement = document_toolbar_elem.querySelector("button.align-toggle");
+    const align_dropdown_elem: HTMLElement = document_toolbar_elem.querySelector("#align-dropdown");
+    const align_dropdown_elems: NodeListOf<HTMLButtonElement> = align_dropdown_elem.querySelectorAll("button");
 
     const document_settings = Settings(document_settings_elem, {
         "width": [960, parseInt, (v) => user_content_elem.style.width = `${v}px`],
         "padding": [20, parseInt, (v) => user_content_elem.style.padding = `${v}px`],
-    })
-
-    const disable_button_elems =
-        document_toolbar_elem.querySelectorAll("button:not(.nolock)");
-    disable_button_elems.forEach(elem => {
-        elem.disabled = true;
     });
-
-    const align_toggle_elem =
-        document_toolbar_elem.querySelector("button.align-toggle");
-
-    const align_dropdown_elem =
-        document_toolbar_elem.querySelector("#align-dropdown");
-
-    const align_dropdown_elems =
-        align_dropdown_elem.querySelectorAll("button");
 
     const quill = new Quill(user_content_elem, {
         modules: {
@@ -53,19 +43,22 @@ export default function Element(filePath, doc, container = document.body) {
 
     let saved = true;
     let auto_save = true;
+    
+    disable_button_elems.forEach(elem => {
+        elem.disabled = true;
+    });
 
     doc.linkEditor(quill);
 
     export_elem.addEventListener("click", async () => {
+        // TODO: document title
         const html = html_beautify(`
             <!DOCTYPE html>
             <html>
             <head>
                 <meta charset="utf-8">
                 <title>${doc.title}</title>
-                <style>
-                    ${doc.generateStyles()}
-                </style>
+                <style>${doc.generateStyles()}</style>
             </head>
             <body>${quill.root.innerHTML}</body>
             </html>
@@ -78,14 +71,14 @@ export default function Element(filePath, doc, container = document.body) {
             preserve_newlines: true,
             max_preserve_newlines: 2,
             indent_inner_html: true,
-            extra_liners: ["head", "body", "/html"],
+            extra_liners: [],
         });
 
         export_elem.disabled = true;
         
         const res = await saveHtml(html);
 
-        if (res.is_error()) {
+        if (Result.is_error(res)) {
             alert(`failed to export HTML file:\n${res.body}`);
         }
 
@@ -159,16 +152,18 @@ export default function Element(filePath, doc, container = document.body) {
         if (!saved) {
             const file_res = await writeVox(filePath, doc);
 
-            if (file_res.is_success()) {
+            if (Result.is_success(file_res)) {
                 saved = true;
                 console.log("saved file", filePath);
             } else {
-                alert(`failed to save file, stopping auto-save:\n${file_res.body}`);
+                alert(`failed to save file, stopping auto-save:\n${Result.unsuccessful_message(file_res)}`);
                 auto_save = false;
                 clearInterval(intervalId);
             }
         }
     }
+
+    container.append(editor_header_elem, editor_body_elem);
 
     return {
         header: editor_header_elem,

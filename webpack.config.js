@@ -2,13 +2,24 @@ const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
-const { type } = require("os");
 
 module.exports = [
     {
         target: "electron-main",
         entry: {
-            main: "./src/node/main.js"
+            main: "./src/node/main.ts"
+        },
+        resolve: {
+            extensions: [".ts", ".js"],
+        },
+        module: {
+            rules: [
+                {
+                    test: /\.(ts|tsx)$/i,
+                    exclude: /node_modules/,
+                    use: "ts-loader",
+                },
+            ]
         },
         output: {
             filename: "[name].js",
@@ -23,12 +34,20 @@ module.exports = [
         target: "electron-renderer",
         entry: {
             index: [
-                "./src/client/index.js",
+                "./src/client/index.ts",
                 "./src/client/index.css"
             ]
         },
+        resolve: {
+            extensions: [".tsx", ".ts", ".jsx", ".js"],
+        },
         module: {
             rules: [
+                {
+                    test: /\.(ts|tsx)$/i,
+                    exclude: /node_modules/,
+                    use: "ts-loader",
+                },
                 {
                     resourceQuery: /raw/,
                     type: 'asset/source',

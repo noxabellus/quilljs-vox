@@ -1,38 +1,39 @@
 
 import fs from "fs/promises";
 
-import remote from "./remote.js";
-import Result from "./result.js";
-import Document from "./document.js";
+import remote from "./remote";
+import Result from "./result";
+import Document from "./document";
+import { PathLike } from "original-fs";
 
-export async function readText (path) {
+export async function readText (path: PathLike): Promise<Result<string>> {
     try {
         return Result.Success(await fs.readFile(path, "utf8"));
     } catch (error) {
-        return Result.Error(error);
+        return Result.Error(error.toString());
     }
 }
 
-export async function writeText (path, text) {
+export async function writeText (path: PathLike, text: string): Promise<Result<PathLike>> {
     try {
         await fs.writeFile(path, text);
         return Result.Success(path);
     } catch (error) {
-        return Result.Error(error);
+        return Result.Error(error.toString());
     }
 }
 
-export async function readVox (path) {
-    const text = await readText(path);
+export async function readVox (path: PathLike): Promise<Result<Document>> {
+    const text_res = await readText(path);
 
-    if (text.is_success()) {
+    if (Result.is_success(text_res)) {
         try {
-            return Result.Success(Document.deserialize(text.body));
+            return Result.Success(Document.deserialize(text_res.body));
         } catch (error) {
-            return Result.Error(error);
+            return Result.Error(error.toString());
         }
     } else {
-        return text;
+        return text_res;
     }
 }
 
@@ -57,14 +58,14 @@ export async function openVox () {
     }
 
     const read_res = await readVox(filePath);
-    if (read_res.is_success()) {
+    if (Result.is_success(read_res)) {
         return Result.Success({ filePath, doc: read_res.body });
     } else {
         return read_res;
     }
 }
 
-export async function writeVox (path, data) {
+export async function writeVox (path: PathLike, data: Document): Promise<Result<PathLike>> {
     let text;
     try {
         text = data.serialize();
@@ -75,7 +76,12 @@ export async function writeVox (path, data) {
     return writeText(path, text);
 }
 
-export async function saveWith (filters, callback) {
+interface Filter {
+    name: string;
+    extensions: string[];
+}
+
+export async function saveWith<T> (filters: Filter[], callback: (filePath: PathLike) => Promise<Result<T>>): Promise<Result<T>> {
     let filePath;
     try {
         const fps = await remote.dialog.showSaveDialog({
@@ -99,11 +105,11 @@ export async function saveWith (filters, callback) {
 
 }
 
-export async function saveHtml (data) {
+export async function saveHtml (data: string): Promise<Result<PathLike>> {
     return saveWith([{ name: "Html Files", extensions: ["html"] }], filePath => writeText(filePath, data));
 }
 
-export async function saveVox (data) {
+export async function saveVox (data: Document): Promise<Result<PathLike>> {
     return saveWith([{ name: "Vox Files", extensions: ["vox"] }], filePath => writeVox(filePath, data));
 }
 
