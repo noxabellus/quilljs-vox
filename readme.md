@@ -20,7 +20,8 @@ WIP rich text editor
 ## Dependencies
 + quill 2
 + electron 30
-+ webpack
++ typescript
++ webpack & various plugins
 
 #### Possible future dependencies
 + highlight.js
