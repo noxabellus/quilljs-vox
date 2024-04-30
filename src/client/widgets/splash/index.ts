@@ -2,7 +2,7 @@ import Widget from "../../support/widget";
 import Result from "../../support/result";
 import { openVox, saveVox } from "../../support/file";
 
-import splash_src from "./splash.html";
+import splashSrc from "./splash.html";
 import Document from "../../support/document";
 import { PathLike } from "original-fs";
 
@@ -10,15 +10,15 @@ import { PathLike } from "original-fs";
 export type SplashResult = Result<{filePath: PathLike, doc: Document}>;
 
 export default async function Element(fileCallback: (res: SplashResult) => Promise<void>, container = document.body) {
-    const splash_elem = Widget(splash_src);
-    const new_button = splash_elem.querySelector("#new-file");
-    const open_button = splash_elem.querySelector("#open-file");
-    const app_settings_open_elem = splash_elem.querySelector("#app-settings-open");
-    const app_settings_close_elem = splash_elem.querySelector("#app-settings-close");
-    const app_settings_elem = splash_elem.querySelector("#app-settings");
+    const splashElem = Widget(splashSrc);
+    const newButton = splashElem.querySelector("#new-file");
+    const openButtonElem = splashElem.querySelector("#open-file");
+    const appSettingsOpenElem = splashElem.querySelector("#app-settings-open");
+    const appSettingsCloseElem = splashElem.querySelector("#app-settings-close");
+    const appSettingsElem = splashElem.querySelector("#app-settings");
 
     const splash = {
-        elem: splash_elem,
+        elem: splashElem,
         close() {
             this.elem.remove();
             this.elem = null;
@@ -27,29 +27,29 @@ export default async function Element(fileCallback: (res: SplashResult) => Promi
 
     container.append(splash.elem);
 
-    new_button.addEventListener("click", async () => {
+    newButton.addEventListener("click", async () => {
         const doc = new Document("untitled document");
 
-        const file_res = await saveVox(doc);
-        
-        if (Result.is_success(file_res)) {
-            fileCallback.call(splash, Result.Success({filePath: file_res.body, doc}));
+        const fileRes = await saveVox(doc);
+
+        if (Result.isSuccess(fileRes)) {
+            fileCallback.call(splash, Result.Success({filePath: fileRes.body, doc}));
         } else {
-            fileCallback.call(splash, file_res);
+            fileCallback.call(splash, fileRes);
         }
     });
 
-    open_button.addEventListener("click", async () => {
-        const file_res = await openVox();
-        fileCallback.call(splash, file_res);
+    openButtonElem.addEventListener("click", async () => {
+        const fileRes = await openVox();
+        fileCallback.call(splash, fileRes);
     });
 
-    app_settings_open_elem.addEventListener("click", () => {
-        app_settings_elem.classList.add("visible");
+    appSettingsOpenElem.addEventListener("click", () => {
+        appSettingsElem.classList.add("visible");
     });
 
-    app_settings_close_elem.addEventListener("click", () => {
-        app_settings_elem.classList.remove("visible");
+    appSettingsCloseElem.addEventListener("click", () => {
+        appSettingsElem.classList.remove("visible");
     });
 
     return splash;

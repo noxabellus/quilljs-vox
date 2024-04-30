@@ -24,16 +24,16 @@ export async function writeText (path: PathLike, text: string): Promise<Result<P
 }
 
 export async function readVox (path: PathLike): Promise<Result<Document>> {
-    const text_res = await readText(path);
+    const res = await readText(path);
 
-    if (Result.is_success(text_res)) {
+    if (Result.isSuccess(res)) {
         try {
-            return Result.Success(Document.deserialize(text_res.body));
+            return Result.Success(Document.deserialize(res.body));
         } catch (error) {
             return Result.Error(error.toString());
         }
     } else {
-        return text_res;
+        return res;
     }
 }
 
@@ -57,11 +57,11 @@ export async function openVox () {
         return Result.Error(error);
     }
 
-    const read_res = await readVox(filePath);
-    if (Result.is_success(read_res)) {
-        return Result.Success({ filePath, doc: read_res.body });
+    const res = await readVox(filePath);
+    if (Result.isSuccess(res)) {
+        return Result.Success({ filePath, doc: res.body });
     } else {
-        return read_res;
+        return res;
     }
 }
 

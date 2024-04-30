@@ -6,7 +6,7 @@ export function loadHistoryStack (stack: ProtoHistory | History, quill: Quill) {
     quill.history.stack.undo = [];
     quill.history.stack.redo = [];
 
-    stack.undo.forEach(elem => 
+    stack.undo.forEach(elem =>
         quill.history.stack.undo.push({
             delta: new Delta(elem.delta),
             range: elem.range,

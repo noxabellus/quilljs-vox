@@ -28,10 +28,10 @@ export default function Settings(widget: HTMLElement, obj: SettingsConfig): Sett
         elem.addEventListener("change", () => {
             value = parser(elem.value);
             update(value);
-        })
+        });
 
         update(value);
     });
-    
+
     return set;
 }

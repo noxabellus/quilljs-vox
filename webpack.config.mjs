@@ -1,10 +1,15 @@
-const path = require("path");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
+import HtmlWebpackPlugin from "html-webpack-plugin";
+import MiniCssExtractPlugin from "mini-css-extract-plugin";
+import CssMinimizerPlugin from "css-minimizer-webpack-plugin";
+import { fileURLToPath } from "url";
+import path from "path";
 
-module.exports = [
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export default [
     {
+        mode: "development",
         target: "electron-main",
         entry: {
             main: "./src/node/main.ts"
@@ -31,6 +36,7 @@ module.exports = [
         }
     },
     {
+        mode: "development",
         target: "electron-renderer",
         entry: {
             index: [

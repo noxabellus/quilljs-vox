@@ -13,6 +13,7 @@ export type Error<E> = {
     status: "error"
     body: E
 }
+
 export type Result<T, E = string> = Success<T> | Failure | Error<E>;
 
 export const Result = {
@@ -28,31 +29,31 @@ export const Result = {
         return { status: "error", body };
     },
 
-    is_success<T, E>(res: Result<T, E>): res is Success<T> {
+    isSuccess<T, E>(res: Result<T, E>): res is Success<T> {
         return res.status === "success";
     },
 
-    not_success<T, E>(res: Result<T, E>): res is Failure | Error<E> {
+    notSuccess<T, E>(res: Result<T, E>): res is Failure | Error<E> {
         return res.status !== "success";
     },
 
-    is_failure<T, E>(res: Result<T, E>): res is Failure {
+    isFailure<T, E>(res: Result<T, E>): res is Failure {
         return res.status === "failure";
     },
 
-    is_error<T, E>(res: Result<T, E>): res is Error<E> {
+    isError<T, E>(res: Result<T, E>): res is Error<E> {
         return res.status === "error";
     },
-    
-    unsuccessful_message<T, E>(res: Result<T, E>): string {
-        if (Result.is_failure(res)) {
+
+    problemMessage<T, E>(res: Result<T, E>): string {
+        if (Result.isFailure(res)) {
             return "unknown failure";
-        } else if (Result.is_error(res)) {
+        } else if (Result.isError(res)) {
             return res.body.toString();
         } else {
             return "not a failure";
         }
-    }
+    },
 };
 
 export default Result;

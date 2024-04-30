@@ -11,17 +11,17 @@ import Result from "./support/result";
 // }
 // Editor(filePath, doc_res.body)
 
-Splash(async function (file_res: SplashResult) {
-    if (Result.is_success(file_res)) {
+Splash(async function (fileRes: SplashResult) {
+    if (Result.isSuccess(fileRes)) {
         this.close();
 
-        const {filePath, doc} = file_res.body;
+        const {filePath, doc} = fileRes.body;
 
         console.log("loaded doc", filePath, doc);
-        
+
         const editor = Editor(filePath, doc) as any;
         Object.assign(window, {editor});
     } else {
-        alert(`failed to load file: ${Result.unsuccessful_message(file_res)}`);
+        alert(`failed to load file: ${Result.problemMessage(fileRes)}`);
     }
 });

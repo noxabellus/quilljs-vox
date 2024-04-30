@@ -1,9 +1,9 @@
-import { Theme, THEME_KEYS, applyDocumentTheme, isThemeKey, isValidProperty } from "./document-theme";
-import Delta, { AttributeMap, Op } from "quill-delta";
+import { Theme, applyDocumentTheme, isThemeKey, isValidProperty } from "./document-theme";
+import { AttributeMap, Op } from "quill-delta";
 import { loadHistoryStack } from "./history";
 import quillBaseCss from "../../extern/quill.core.css?raw";
 import Quill from "quill";
-import { HistoryOptions, StackItem } from "quill/modules/history";
+import { StackItem } from "quill/modules/history";
 
 export type ProtoStackItem = {
     delta: Op[],
@@ -86,7 +86,7 @@ export class Document {
 
             , "delta"
             ,   ...this.delta.flatMap(serializeDeltaOp).map(indent)
-            
+
             , "history"
             ,   ...Object.entries(this.history).flatMap(([key, ops]) =>
                     [key, ...ops.flatMap(serializeHistoryOp).map(indent)]
@@ -163,7 +163,7 @@ export function parseTheme (blocks: Block[]): Theme {
     const theme = {} as any;
 
     blocks.forEach((b: Block) => {
-        if (!isThemeKey(b.command)) 
+        if (!isThemeKey(b.command))
             throw `unknown theme key ${b.command}`;
 
         if (theme[b.command] !== undefined)
@@ -171,7 +171,7 @@ export function parseTheme (blocks: Block[]): Theme {
 
         if (!isValidProperty(b.command, b.arg))
             throw `invalid theme value for key ${b.command}: ${b.arg}`;
-        
+
         theme[b.command] = b.arg;
     });
 
@@ -180,12 +180,12 @@ export function parseTheme (blocks: Block[]): Theme {
 
 export function parseHistory (blocks: Block[]): History {
     const history = {} as any;
-    
+
     blocks.forEach(b => {
         if (b.arg !== undefined)
             throw `history block should not have arg ${b.arg}`;
 
-        if (history[b.command] !== undefined) 
+        if (history[b.command] !== undefined)
             throw `duplicate history block ${b.command}`;
 
         history[b.command] = parseHistoryOps(b.body);
@@ -289,9 +289,9 @@ export function parseAttributes (blocks: Block[]): AttributeMap {
 export type Line = [number, string];
 
 export function makeBlocks (lines: Line[], indent = 0): Block[] {
-    let block = [];
+    const block = [];
     while (lines.length > 0) {
-        let [currIndent, currLine] = lines[0];
+        const [currIndent, currLine] = lines[0];
 
         if (currIndent < indent) {
             break;
@@ -299,10 +299,10 @@ export function makeBlocks (lines: Line[], indent = 0): Block[] {
 
         lines.shift();
 
-        let [command, arg] = makeCommand(currLine);
+        const [command, arg] = makeCommand(currLine);
 
         if (lines.length > 0) {
-            let [nextIndent, nextLine] = lines[0];
+            const [nextIndent, _] = lines[0];
             if (nextIndent > currIndent) {
                 block.push({command, arg, body: makeBlocks(lines, nextIndent)});
                 continue;
@@ -331,7 +331,7 @@ export function makeLines (text: string): Line[] {
                 const indent = getIndent(line);
                 return [indent, line.slice(indent)];
             })
-            .filter(([indent, line]: [number, string]) => line.length > 0) as Line[]
+            .filter(([_, line]: [number, string]) => line.length > 0) as Line[]
     );
 }
 

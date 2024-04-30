@@ -1,9 +1,9 @@
-declare module '*.css?raw' {
+declare module "*.css?raw" {
     const content: string;
     export default content;
 }
 
-declare module '*.html' {
+declare module "*.html" {
     const content: string;
     export default content;
 }

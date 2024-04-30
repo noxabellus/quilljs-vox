@@ -5,34 +5,34 @@ import Settings from "../../support/settings";
 import Document from "../../support/document";
 import Result from "../../support/result";
 
-import editor_header_src from "./editor-header.html";
-import editor_body_src from "./editor-body.html";
+import editorHeaderSrc from "./editor-header.html";
+import editorBodySrc from "./editor-body.html";
 
 import { html_beautify } from "js-beautify";
 import { PathLike } from "original-fs";
 
 export default function Element(filePath: PathLike, doc: Document, container = document.body) {
-    const editor_header_elem = Widget(editor_header_src);
-    const editor_body_elem = Widget(editor_body_src);
+    const editorHeaderElem = Widget(editorHeaderSrc);
+    const editorBodyElem = Widget(editorBodySrc);
 
-    const user_content_elem: HTMLElement = editor_body_elem.querySelector("#user-content");
-    const document_toolbar_elem: HTMLElement = editor_header_elem.querySelector("#document-toolbar");
-    const settings_toggle_elem: HTMLButtonElement = document_toolbar_elem.querySelector("button.settings-toggle");
-    const document_settings_elem: HTMLElement = editor_header_elem.querySelector("#document-settings");
-    const export_elem: HTMLButtonElement = document_toolbar_elem.querySelector("button.export");
-    const disable_button_elems: NodeListOf<HTMLButtonElement> = document_toolbar_elem.querySelectorAll("button:not(.no-lock)");
-    const align_toggle_elem: HTMLButtonElement = document_toolbar_elem.querySelector("button.align-toggle");
-    const align_dropdown_elem: HTMLElement = document_toolbar_elem.querySelector("#align-dropdown");
-    const align_dropdown_elems: NodeListOf<HTMLButtonElement> = align_dropdown_elem.querySelectorAll("button");
+    const userContentElem: HTMLElement = editorBodyElem.querySelector("#user-content");
+    const documentToolbarElem: HTMLElement = editorHeaderElem.querySelector("#document-toolbar");
+    const settingsToggleElem: HTMLButtonElement = documentToolbarElem.querySelector("button.settings-toggle");
+    const documentSettingsElem: HTMLElement = editorHeaderElem.querySelector("#document-settings");
+    const exportElem: HTMLButtonElement = documentToolbarElem.querySelector("button.export");
+    const disableButtonElems: NodeListOf<HTMLButtonElement> = documentToolbarElem.querySelectorAll("button:not(.no-lock)");
+    const alignToggleElem: HTMLButtonElement = documentToolbarElem.querySelector("button.align-toggle");
+    const alignDropdownElem: HTMLElement = documentToolbarElem.querySelector("#align-dropdown");
+    const alignDropdownElems: NodeListOf<HTMLButtonElement> = alignDropdownElem.querySelectorAll("button");
 
-    const document_settings = Settings(document_settings_elem, {
-        "width": [960, parseInt, (v) => user_content_elem.style.width = `${v}px`],
-        "padding": [20, parseInt, (v) => user_content_elem.style.padding = `${v}px`],
+    const documentSettings = Settings(documentSettingsElem, {
+        "width": [960, parseInt, (v) => userContentElem.style.width = `${v}px`],
+        "padding": [20, parseInt, (v) => userContentElem.style.padding = `${v}px`],
     });
 
-    const quill = new Quill(user_content_elem, {
+    const quill = new Quill(userContentElem, {
         modules: {
-            toolbar: document_toolbar_elem,
+            toolbar: documentToolbarElem,
             history: {
                 delay: 1000,
                 maxStack: Infinity,
@@ -42,15 +42,15 @@ export default function Element(filePath: PathLike, doc: Document, container = d
     });
 
     let saved = true;
-    let auto_save = true;
-    
-    disable_button_elems.forEach(elem => {
+    let autoSave = true;
+
+    disableButtonElems.forEach(elem => {
         elem.disabled = true;
     });
 
     doc.linkEditor(quill);
 
-    export_elem.addEventListener("click", async () => {
+    exportElem.addEventListener("click", async () => {
         // TODO: document title
         const html = html_beautify(`
             <!DOCTYPE html>
@@ -62,7 +62,7 @@ export default function Element(filePath: PathLike, doc: Document, container = d
             </head>
             <body>${quill.root.innerHTML}</body>
             </html>
-        `, {
+        `, { /* eslint-disable camelcase */
             indent_size: 4,
             wrap_line_length: 80,
             wrap_attributes: "auto",
@@ -72,73 +72,73 @@ export default function Element(filePath: PathLike, doc: Document, container = d
             max_preserve_newlines: 2,
             indent_inner_html: true,
             extra_liners: [],
-        });
+        } /* eslint-enable camelcase */);
 
-        export_elem.disabled = true;
-        
+        exportElem.disabled = true;
+
         const res = await saveHtml(html);
 
-        if (Result.is_error(res)) {
+        if (Result.isError(res)) {
             alert(`failed to export HTML file:\n${res.body}`);
         }
 
-        export_elem.disabled = false;
+        exportElem.disabled = false;
     });
 
-    settings_toggle_elem.addEventListener("click", () => {
-        document_settings_elem.style.top = `${settings_toggle_elem.offsetTop}px`;
-        document_settings_elem.style.left = `${settings_toggle_elem.offsetLeft}px`;
-        document_settings_elem.classList.add("visible");
+    settingsToggleElem.addEventListener("click", () => {
+        documentSettingsElem.style.top = `${settingsToggleElem.offsetTop}px`;
+        documentSettingsElem.style.left = `${settingsToggleElem.offsetLeft}px`;
+        documentSettingsElem.classList.add("visible");
         quill.blur();
     });
 
-    document_settings_elem.addEventListener("mouseleave", () => {
-        document_settings_elem.classList.remove("visible");
+    documentSettingsElem.addEventListener("mouseleave", () => {
+        documentSettingsElem.classList.remove("visible");
     });
 
-    align_toggle_elem.addEventListener("click", () => {
-        align_dropdown_elem.style.top = `${align_toggle_elem.offsetTop}px`;
-        align_dropdown_elem.style.left = `${align_toggle_elem.offsetLeft}px`;
-        align_dropdown_elem.style.width = `${align_toggle_elem.offsetWidth}px`;
-        align_dropdown_elem.classList.add("visible");
+    alignToggleElem.addEventListener("click", () => {
+        alignDropdownElem.style.top = `${alignToggleElem.offsetTop}px`;
+        alignDropdownElem.style.left = `${alignToggleElem.offsetLeft}px`;
+        alignDropdownElem.style.width = `${alignToggleElem.offsetWidth}px`;
+        alignDropdownElem.classList.add("visible");
         quill.focus();
     });
 
-    align_dropdown_elem.addEventListener("mouseleave", () => {
-        align_dropdown_elem.classList.remove("visible");
+    alignDropdownElem.addEventListener("mouseleave", () => {
+        alignDropdownElem.classList.remove("visible");
     });
 
-    align_dropdown_elems.forEach(elem => {
-        elem.addEventListener("click", (e) => {
+    alignDropdownElems.forEach(elem => {
+        elem.addEventListener("click", _ => {
             const selection = quill.getSelection();
             const currentAlign = quill.getFormat(selection).align;
-            align_dropdown_elem.classList.remove("visible");
+            alignDropdownElem.classList.remove("visible");
             if (currentAlign == elem.value) {
                 quill.focus();
                 return;
             }
-            align_toggle_elem.innerHTML = elem.innerHTML;
+            alignToggleElem.innerHTML = elem.innerHTML;
             quill.format("align", elem.value);
         });
     });
 
     quill.on("selection-change", (range, _oldRange, _source) => {
         if (range === null) {
-            disable_button_elems.forEach(elem => {
+            disableButtonElems.forEach(elem => {
                 elem.disabled = true;
             });
             return;
         } else {
-            disable_button_elems.forEach(elem => {
+            disableButtonElems.forEach(elem => {
                 elem.disabled = false;
             });
         }
 
         switch (quill.getFormat(range).align) {
-            case "center": align_toggle_elem.innerHTML = "Center"; break;
-            case "right": align_toggle_elem.innerHTML = "Right"; break;
-            case "justify": align_toggle_elem.innerHTML = "Justify"; break;
-            default: align_toggle_elem.innerHTML = "Left"; break;
+            case "center": alignToggleElem.innerHTML = "Center"; break;
+            case "right": alignToggleElem.innerHTML = "Right"; break;
+            case "justify": alignToggleElem.innerHTML = "Justify"; break;
+            default: alignToggleElem.innerHTML = "Left"; break;
         }
     });
 
@@ -150,30 +150,30 @@ export default function Element(filePath: PathLike, doc: Document, container = d
     const intervalId = setInterval(saveFile, 3000);
     async function saveFile() {
         if (!saved) {
-            const file_res = await writeVox(filePath, doc);
+            const fileRes = await writeVox(filePath, doc);
 
-            if (Result.is_success(file_res)) {
+            if (Result.isSuccess(fileRes)) {
                 saved = true;
                 console.log("saved file", filePath);
             } else {
-                alert(`failed to save file, stopping auto-save:\n${Result.unsuccessful_message(file_res)}`);
-                auto_save = false;
+                alert(`failed to save file, stopping auto-save:\n${Result.problemMessage(fileRes)}`);
+                autoSave = false;
                 clearInterval(intervalId);
             }
         }
     }
 
-    container.append(editor_header_elem, editor_body_elem);
+    container.append(editorHeaderElem, editorBodyElem);
 
     return {
-        header: editor_header_elem,
-        body: editor_body_elem,
-        settings: document_settings,
+        header: editorHeaderElem,
+        body: editorBodyElem,
+        settings: documentSettings,
         quill,
         doc,
         close() {
             clearInterval(intervalId);
-            if (auto_save) {
+            if (autoSave) {
                 saveFile();
             }
 

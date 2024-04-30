@@ -12,7 +12,7 @@ function getStyle (target: HTMLElement, prop: keyof CSSStyleDeclaration): string
                 (prop as string)
                     .replace(
                         /([a-z])([A-Z])/,
-                        (a, b, c) => b + "-" + c.toLowerCase()
+                        (_, a, b) => a + "-" + b.toLowerCase()
                     )
             )
     );
@@ -65,7 +65,7 @@ export function getUnits (target: HTMLElement, prop: keyof CSSStyleDeclaration, 
 
 // get object with units
 export default function getUnits (target: HTMLElement, prop: keyof CSSStyleDeclaration, returnUnit?: Unit): Conversion | ConversionMap {
-    const baseline = 100;  // any number serves 
+    const baseline = 100;  // any number serves
 
     const map: Record<UnitName, Unit> = {  // list of all units and their identifying string
         pixel: "px",
@@ -86,7 +86,7 @@ export default function getUnits (target: HTMLElement, prop: keyof CSSStyleDecla
 
     const numeric = getNumeric(value);
     const unit = getUnit(value);
-    
+
     let activeMap: UnitName;  // a reference to the map key for the existing unit
     for (const name in map) {
         if(map[name as UnitName] == unit){
@@ -111,11 +111,11 @@ export default function getUnits (target: HTMLElement, prop: keyof CSSStyleDecla
         }
     }
 
-    let temp = document.createElement("div");  // create temporary element
+    const temp = document.createElement("div");  // create temporary element
     temp.style.overflow = "hidden";  // in case baseline is set too low
     temp.style.visibility = "hidden";  // no need to show it
 
-    target.parentNode.appendChild(temp);    // insert it into the parent for em and ex  
+    target.parentNode.appendChild(temp);    // insert it into the parent for em and ex
 
     for (const n in map) {  // set the style for each unit, then calculate it's relative value against the baseline
         const name = n as UnitName;

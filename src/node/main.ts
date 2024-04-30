@@ -23,8 +23,8 @@ app.whenReady().then(() => {
             // enableRemoteModule: true,
             contextIsolation: false
         }
-    })
-  
+    });
+
     win.loadFile(path.join(clientDir, "index.html"));
     win.setFullScreen(true);
     win.webContents.openDevTools();
@@ -34,15 +34,11 @@ app.whenReady().then(() => {
     let dirty = false;
 
     (async () => {
-        try {
-            const watcher = watch(clientDir);
-            for await (const _ of watcher) {
-                dirty = true;
-            }
-        } catch (err) {
-            throw err;
+        const watcher = watch(clientDir);
+        for await (const _ of watcher) {
+            dirty = true;
         }
-      })();
+    })();
 
     setInterval(() => {
         if (dirty) {
@@ -52,4 +48,3 @@ app.whenReady().then(() => {
         }
     }, 1000);
   }).catch(console.error);
-
