@@ -34,6 +34,7 @@ WIP rich text editor
     - 🟥 github style view
 + 🯄 collaborative editing
 + 🯄 workspace/multi-document mode
++ 🯄 inline latex/typst support
 
 
 > * 🟩 implemented >75%
