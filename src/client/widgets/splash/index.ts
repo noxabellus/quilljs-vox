@@ -5,17 +5,18 @@ import { openVox, saveVox } from "../../support/file";
 import splashSrc from "./splash.html";
 import Document from "../../support/document";
 import { PathLike } from "original-fs";
+import { forceVal } from "../../support/nullable";
 
 
 export type SplashResult = Result<{filePath: PathLike, doc: Document}>;
 
 export default async function Element(fileCallback: (res: SplashResult) => Promise<void>, container = document.body) {
     const splashElem = Widget(splashSrc);
-    const newButton = splashElem.querySelector("#new-file");
-    const openButtonElem = splashElem.querySelector("#open-file");
-    const appSettingsOpenElem = splashElem.querySelector("#app-settings-open");
-    const appSettingsCloseElem = splashElem.querySelector("#app-settings-close");
-    const appSettingsElem = splashElem.querySelector("#app-settings");
+    const newButton = forceVal(splashElem.querySelector("#new-file"));
+    const openButtonElem = forceVal(splashElem.querySelector("#open-file"));
+    const appSettingsOpenElem = forceVal(splashElem.querySelector("#app-settings-open"));
+    const appSettingsCloseElem = forceVal(splashElem.querySelector("#app-settings-close"));
+    const appSettingsElem = forceVal(splashElem.querySelector("#app-settings"));
 
     const splash = {
         elem: splashElem,

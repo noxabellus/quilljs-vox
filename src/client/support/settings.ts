@@ -1,7 +1,9 @@
+import { Value, forceVal } from "./nullable";
+
 export type SettingsEntry<T> = [T, (v: string) => T, (v: T) => void];
 
 export type SettingsConfig = {
-    [id: string]: SettingsEntry<unknown>
+    [id: string]: SettingsEntry<Value>
 };
 
 export type Settings<Proto extends SettingsConfig> = {
@@ -12,7 +14,7 @@ export default function Settings(widget: HTMLElement, obj: SettingsConfig): Sett
     const set = {};
 
     Object.entries(obj).forEach(([id, [value, parser, update]]) => {
-        const elem: HTMLInputElement = widget.querySelector(`input#${id}`);
+        const elem: HTMLInputElement = forceVal(widget.querySelector(`input#${id}`));
 
         elem.value = value.toString();
 

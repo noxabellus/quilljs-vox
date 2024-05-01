@@ -5,6 +5,7 @@ import remote from "./remote";
 import Result from "./result";
 import Document from "./document";
 import { PathLike } from "original-fs";
+import { NonNull, unsafeForceVal } from "./nullable";
 
 export async function readText (path: PathLike): Promise<Result<string>> {
     try {
@@ -81,8 +82,7 @@ interface Filter {
     extensions: string[];
 }
 
-export async function saveWith<T> (filters: Filter[], callback: (filePath: PathLike) => Promise<Result<T>>): Promise<Result<T>> {
-    let filePath;
+export async function saveWith<T extends NonNull> (filters: Filter[], callback: (filePath: PathLike) => Promise<Result<T>>): Promise<Result<T>> {
     try {
         const fps = await remote.dialog.showSaveDialog({
             properties: ["showOverwriteConfirmation"],
@@ -96,13 +96,12 @@ export async function saveWith<T> (filters: Filter[], callback: (filePath: PathL
             return Result.Failure();
         }
 
-        filePath = fps.filePath;
+        // safety: fps has a crappy type,
+        // but if !canceled then filePath is always a string
+        return callback(unsafeForceVal(fps.filePath));
     } catch (error) {
         return Result.Error(error);
     }
-
-    return callback(filePath);
-
 }
 
 export async function saveHtml (data: string): Promise<Result<PathLike>> {

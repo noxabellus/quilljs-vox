@@ -1,12 +1,20 @@
 {
-    "include": ["src/**/*.ts"],
+    "include": ["src/**/*.ts", "src/**/*.tsx"],
     "exclude": ["node_modules"],
     "compilerOptions": {
-      "outDir": "./dist/",
-      "noImplicitAny": true,
-      "module": "preserve",
-      "target": "ESNext",
-      "allowJs": true,
-      "moduleResolution": "node"
+        "jsx": "react-jsx",
+        "outDir": "./dist/",
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "module": "preserve",
+        "target": "ESNext",
+        "allowJs": true,
+        "moduleResolution": "node",
+        "plugins": [
+            {
+                "name": "@styled/typescript-styled-plugin"
+            }
+        ],
     }
+
 }

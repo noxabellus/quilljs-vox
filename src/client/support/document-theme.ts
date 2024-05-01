@@ -1,3 +1,4 @@
+import { unsafeForceVal } from "./nullable";
 
 export type Theme = {
     "width"?: Length,
@@ -69,7 +70,7 @@ export function applyDocumentProperty (elem: HTMLElement, key: ThemeKey, value: 
 
     let valueString = propertyString(value);
 
-    if (valueString === undefined) {
+    if (valueString === null) {
         valueString = propertyString(DEFAULT_DOCUMENT_THEME[key]);
     }
 
@@ -77,19 +78,20 @@ export function applyDocumentProperty (elem: HTMLElement, key: ThemeKey, value: 
 }
 
 export function propertyTypeOfKey (key: ThemeKey): PropertyType {
-    return propertyType(DEFAULT_DOCUMENT_THEME[key]);
+    // safety: ThemeKey is by definition a key of Theme
+    return unsafeForceVal(propertyType(DEFAULT_DOCUMENT_THEME[key]));
 }
 
 export function isValidProperty (key: ThemeKey, value: any): value is Theme[typeof key] {
     return propertyTypeOfKey(key) === propertyType(value);
 }
 
-export function propertyType<K extends ThemeKey> (value: Theme[K]): PropertyType | undefined {
+export function propertyType<K extends ThemeKey> (value: Theme[K]): PropertyType | null {
     if (Array.isArray(value)) {
         switch (value.length) {
             case 3: return "color";
             case 4: return "dimensions";
-            default: return undefined;
+            default: return null;
         }
     }
 
@@ -98,20 +100,21 @@ export function propertyType<K extends ThemeKey> (value: Theme[K]): PropertyType
         case "string": return "string";
         case "number": return "number";
         case "object": return "length";
-        default: return undefined;
+        default: return null;
     }
 }
 
-export function propertyString<K extends ThemeKey> (value: Theme[K]): string | undefined {
+export function propertyString<K extends ThemeKey> (value: Theme[K]): string | null {
     switch (propertyType(value)) {
         case "string": return value as string;
         case "number": return `${value}`;
         case "color": return (value as Color).map(propertyString).join(", ");
         case "dimensions": return (value as Dimensions).map(propertyString).join(" ");
         case "length": {
-            const [unit, val] = Object.entries(value)[0];
+            // safety: propertyType already validated that this is not undefined
+            const [unit, val] = Object.entries(unsafeForceVal(value))[0];
             return `${val}${unit}`;
         }
-        default: return undefined;
+        default: return null;
     }
 }

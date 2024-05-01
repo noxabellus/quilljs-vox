@@ -1,8 +1,12 @@
+import { unsafeForceVal, forceVal } from "./nullable";
+
 // get computed style property
 function getStyle (target: HTMLElement, prop: keyof CSSStyleDeclaration): string {
     if ((prop in target.style)  // if it's explicitly assigned, just grab that
     && (!!(target.style[prop]) || target.style[prop] === 0)) {
-        return target.style[prop].toString();
+        // safety: don't know why ts isn't picking up
+        // on `prop in target.style` as a type guard
+        return unsafeForceVal(target.style[prop]).toString();
     }
 
     return (
@@ -87,7 +91,7 @@ export default function getUnits (target: HTMLElement, prop: keyof CSSStyleDecla
     const numeric = getNumeric(value);
     const unit = getUnit(value);
 
-    let activeMap: UnitName;  // a reference to the map key for the existing unit
+    let activeMap: UnitName | null = null;  // a reference to the map key for the existing unit
     for (const name in map) {
         if(map[name as UnitName] == unit){
             activeMap = name as UnitName;
@@ -115,7 +119,8 @@ export default function getUnits (target: HTMLElement, prop: keyof CSSStyleDecla
     temp.style.overflow = "hidden";  // in case baseline is set too low
     temp.style.visibility = "hidden";  // no need to show it
 
-    target.parentNode.appendChild(temp);    // insert it into the parent for em and ex
+    const parent = forceVal(target.parentNode);
+    parent.appendChild(temp);    // insert it into the parent for em and ex
 
     for (const n in map) {  // set the style for each unit, then calculate it's relative value against the baseline
         const name = n as UnitName;
@@ -128,7 +133,7 @@ export default function getUnits (target: HTMLElement, prop: keyof CSSStyleDecla
         units[name] = (numeric * (factors[name] * factors[activeMap]));
     }
 
-    target.parentNode.removeChild(temp);  // clean up
+    parent.removeChild(temp);  // clean up
 
     return (singleUnit !== null ? units[singleUnit] : units);
 }

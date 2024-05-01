@@ -26,7 +26,7 @@ app.whenReady().then(() => {
     });
 
     win.loadFile(path.join(clientDir, "index.html"));
-    win.setFullScreen(true);
+    // win.setFullScreen(true);
     win.webContents.openDevTools();
 
     remoteMain.enable(win.webContents);

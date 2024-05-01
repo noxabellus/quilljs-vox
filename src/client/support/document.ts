@@ -4,6 +4,7 @@ import { loadHistoryStack } from "./history";
 import quillBaseCss from "../../extern/quill.core.css?raw";
 import Quill from "quill";
 import { StackItem } from "quill/modules/history";
+import { Defined, forceVal } from "./nullable";
 
 export type ProtoStackItem = {
     delta: Op[],
@@ -22,7 +23,7 @@ export type History = {
 
 export type Block = {
     command: string,
-    arg: JSON,
+    arg: Defined,
     body: Block[],
 };
 
@@ -99,7 +100,7 @@ export class Document {
 export default Document;
 
 export function serializeHistoryOp (op: StackItem): string[] {
-    return [ `@ [${op.range.index}, ${op.range.length}]`
+    return [ `@ [${forceVal(op.range).index}, ${forceVal(op.range).length}]`
            ,    ...((op.delta.ops || op.delta) as Op[]).flatMap(serializeDeltaOp).map(indent)
            ];
 }
@@ -107,13 +108,13 @@ export function serializeHistoryOp (op: StackItem): string[] {
 export function serializeDeltaOp (op: Op): string[] {
     if (op.insert !== undefined) {
         return [ `I ${JSON.stringify(op.insert)}`
-               ,    ...serializeAttributes(op.attributes).map(indent)
+               ,    ...serializeAttributes(forceVal(op.attributes)).map(indent)
                ];
     } else if (op.delete !== undefined) {
         return [`D ${op.delete}`];
     } else if (op.retain !== undefined) {
         return [ `R ${op.retain}`
-               ,    ...serializeAttributes(op.attributes).map(indent)
+               ,    ...serializeAttributes(forceVal(op.attributes)).map(indent)
                ];
     } else {
         throw `unknown delta op ${op}`;
@@ -207,7 +208,7 @@ export function parseHistoryOps (blocks: Block[]): ProtoStackItem[] {
     return ops;
 }
 
-export function parseHistoryOp (arg: JSON, blocks: Block[]): ProtoStackItem {
+export function parseHistoryOp (arg: Defined, blocks: Block[]): ProtoStackItem {
     if (!(Array.isArray(arg) && arg.length === 2 && arg.every(Number.isInteger)))
         throw `invalid history range ${arg}`;
 
@@ -246,14 +247,14 @@ export function parseDeltaOp (block: Block): Op {
     }
 }
 
-export function parseInsert (arg: JSON, blocks: Block[]): Op {
+export function parseInsert (arg: Defined, blocks: Block[]): Op {
     if (typeof arg !== "string")
         throw `insert should have string arg ${arg}`;
 
     return {insert: arg, attributes: parseAttributes(blocks)};
 }
 
-export function parseDelete (arg: JSON, blocks: Block[]): Op {
+export function parseDelete (arg: Defined, blocks: Block[]): Op {
     if (blocks.length > 0)
         throw "delete should not have body";
 
@@ -263,7 +264,7 @@ export function parseDelete (arg: JSON, blocks: Block[]): Op {
     return {delete: arg};
 }
 
-export function parseRetain (arg: JSON, blocks: Block[]): Op {
+export function parseRetain (arg: Defined, blocks: Block[]): Op {
     if (typeof arg !== "number")
         throw `retain should have number arg ${arg}`;
 
@@ -289,7 +290,7 @@ export function parseAttributes (blocks: Block[]): AttributeMap {
 export type Line = [number, string];
 
 export function makeBlocks (lines: Line[], indent = 0): Block[] {
-    const block = [];
+    const block: Block[] = [];
     while (lines.length > 0) {
         const [currIndent, currLine] = lines[0];
 
@@ -314,10 +315,10 @@ export function makeBlocks (lines: Line[], indent = 0): Block[] {
     return block;
 }
 
-export function makeCommand (line: string): [string, JSON | undefined] {
+export function makeCommand (line: string): [string, Defined] {
     const index = line.search(/\s/);
     if (index < 0) {
-        return [line, undefined];
+        return [line, null];
     } else {
         return [line.slice(0, index), JSON.parse(line.slice(index + 1))];
     }

@@ -20,7 +20,7 @@ WIP rich text editor
     - 🟥 comments and other editorial kit
     - 🯄 paging mode
 + 🟨 editor themes
-    - 🟩 dark mode
+    - 🟨 dark mode
     - 🟥 light mode
     - 🟥 custom themes
 + 🟥 custom fonts
@@ -46,6 +46,8 @@ WIP rich text editor
 + quill 2
 + electron 30
 + typescript 5
++ react 18
++ styled-components 6
 + webpack 5 & various plugins
 
 #### Possible future dependencies

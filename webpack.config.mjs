@@ -29,7 +29,7 @@ export default [
         output: {
             filename: "[name].js",
             path: path.resolve(__dirname, "dist/"),
-            clean: true,
+            // clean: true,
         },
         optimization: {
             minimize: false
@@ -40,7 +40,7 @@ export default [
         target: "electron-renderer",
         entry: {
             index: [
-                "./src/client/index.ts",
+                "./src/client/index.tsx",
                 "./src/client/index.css"
             ]
         },
@@ -50,20 +50,16 @@ export default [
         module: {
             rules: [
                 {
-                    test: /\.(ts|tsx)$/i,
+                    test: /\.tsx?$/i,
                     exclude: /node_modules/,
                     use: "ts-loader",
                 },
                 {
                     resourceQuery: /raw/,
-                    type: 'asset/source',
+                    type: "asset/source",
                 },
                 {
-                    test: /\.html$/i,
-                    exclude: /index\.html/,
-                    loader: "html-loader",
-                },
-                {
+                    resourceQuery: { not: [/raw/] },
                     test: /\.(png|svg|jpg|jpeg|gif)$/i,
                     type: "asset/inline",
                 },
