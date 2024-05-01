@@ -8,7 +8,8 @@ type DropdownProps = {
     selectedDefault: number;
     children: ReactElement[];
     onChanged?: (newIndex: number, oldIndex: number) => void;
-} & React.HTMLAttributes<HTMLDivElement>;
+    style?: React.CSSProperties;
+};
 
 const Primary = styled.div`
     ${baseStyles}
@@ -36,23 +37,24 @@ const Choice = styled.div`
     padding: 5px;
 `;
 
-export default function Dropdown({selectedDefault, children, onChanged, style, ...divAttributes}: DropdownProps) {
+export default function Dropdown({selectedDefault, children, onChanged, style}: DropdownProps) {
     const [open, setOpen] = useState(false);
     const [selected, setSelected] = useState(selectedDefault);
     const [position, setPosition] = useState({left: "0px", top: "0px"});
 
-    const containerRef = useRef<HTMLDivElement>(null);
+    const popOutRef = useRef<HTMLDivElement>(null);
     const primaryRef = useRef<HTMLDivElement>(null);
 
     const clicker = (i: number) => () => {
         setOpen(false);
         setSelected(i);
-        if (onChanged) onChanged(i, selected);
+        if (onChanged && i != selected) onChanged(i, selected);
     };
 
     useEffect(() => {
         const handler = (e: MouseEvent) => {
-            if (!containerRef.current?.contains(e.target as Node)) {
+            if (!primaryRef.current?.contains(e.target as Node)
+            &&  !popOutRef.current?.contains(e.target as Node)) {
                 setOpen(false);
             }
         };
@@ -60,22 +62,23 @@ export default function Dropdown({selectedDefault, children, onChanged, style, .
         document.addEventListener("click", handler);
 
         return () => document.removeEventListener("click", handler);
-    }, [containerRef]);
+    }, [primaryRef, popOutRef]);
 
     useEffect(() => {
         const rect = forceRef(primaryRef).getBoundingClientRect();
         setPosition({left: `${rect.left}px`, top: `${rect.top}px`});
     }, [primaryRef]);
 
-    return <div ref={containerRef} style={{display: "inline-block", ...style}} {...divAttributes}>
+    return <>
         <Primary
             ref={primaryRef}
             onClick={() => setOpen(true)}
+            style={style}
         >
             {children[selected]}
         </Primary>
 
-        {open && <PopOut $position={position}>
+        {open && <PopOut ref={popOutRef} $position={position} style={{...style, margin: 0}}>
             {children.map((ch, i) =>
                 <Choice key={i}
                     onClick={clicker(i)}
@@ -85,5 +88,5 @@ export default function Dropdown({selectedDefault, children, onChanged, style, .
                 </Choice>
             )}
         </PopOut>}
-    </div>;
+    </>;
 }

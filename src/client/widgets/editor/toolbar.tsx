@@ -1,3 +1,7 @@
+import styled from "styled-components";
+import baseStyles from "../basic/base-styles";
+import { forwardRef } from "react";
+
 import Dropdown from "../basic/dropdown";
 import Icon from "../basic/icon";
 
@@ -6,11 +10,11 @@ import alignLeftImg from "../../../../assets/align-left.svg?raw";
 import alignCenterImg from "../../../../assets/align-center.svg?raw";
 import alignRightImg from "../../../../assets/align-right.svg?raw";
 import alignJustifyImg from "../../../../assets/align-justify.svg?raw";
-import styled from "styled-components";
-import baseStyles from "../basic/base-styles";
-import { forwardRef } from "react";
+import unstyleImg from "../../../../assets/circle-cross.svg?raw";
+import gearImg from "../../../../assets/gear.svg?raw";
+import exportImg from "../../../../assets/file-arrow-down.svg?raw";
 
-const Button = styled.button`
+const Button = styled.div`
     ${baseStyles}
     background: rgb(var(--element-color));
     cursor: pointer;
@@ -24,12 +28,26 @@ const Button = styled.button`
     }
 `;
 
+function IconButton({svg}: {svg: string}) {
+    return <Button><Icon svg={svg}></Icon></Button>;
+}
+
+const SerifButton = styled(Button)`
+    font-family: var(--serif-family);
+`;
+
+const ToolSet = styled.nav`
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+`;
+
 const Toolbar = forwardRef(({..._props}, _ref) => {
-    return <div>
-        <Button className="text-face bold">B</Button>
-        <Button className="text-face italic">I</Button>
-        <Button className="text-face underline">U</Button>
-        <Button className="text-face strike">S</Button>
+    return <ToolSet>
+        <SerifButton style={{fontWeight: "bold"}}>B</SerifButton>
+        <SerifButton style={{fontStyle: "italic"}}>I</SerifButton>
+        <SerifButton style={{textDecoration: "underline"}}>U</SerifButton>
+        <SerifButton style={{textDecoration: "line-through"}}>S</SerifButton>
         <Dropdown
             selectedDefault={0}
             onChanged={(newIndex, oldIndex) => console.log(newIndex, oldIndex)}
@@ -40,10 +58,10 @@ const Toolbar = forwardRef(({..._props}, _ref) => {
             <Icon svg={alignRightImg}/>
             <Icon svg={alignJustifyImg}/>
         </Dropdown>
-        <Button className="ql-clean">Clear</Button>
-        <Button className="settings-toggle no-lock">Document Settings</Button>
-        <Button className="export no-lock">Export</Button>
-    </div>;
+        <IconButton svg={unstyleImg}/>
+        <IconButton svg={gearImg}/>
+        <IconButton svg={exportImg}/>
+    </ToolSet>;
 });
 
 Toolbar.displayName = "Toolbar";
