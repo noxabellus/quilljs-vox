@@ -15,3 +15,18 @@ domNode.style.backgroundColor = "rgb(var(--background-color))";
 applyDocumentTheme(domNode, DEFAULT_DOCUMENT_THEME);
 const root = createRoot(domNode);
 root.render(<App />);
+
+
+const dbg = document.body.appendChild(document.createElement("input"));
+
+dbg.type = "number";
+dbg.value = "960";
+dbg.style.position = "absolute";
+dbg.style.bottom = "0";
+dbg.style.right = "0";
+dbg.style.background = "white";
+dbg.style.width = "4em";
+
+dbg.addEventListener("change", () => {
+    domNode.style.setProperty("--document-width", `${dbg.value}px`);
+});

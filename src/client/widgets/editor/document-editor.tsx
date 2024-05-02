@@ -1,13 +1,14 @@
-import Quill, { Range } from "quill";
-import Delta from "quill-delta";
-import { MutableRefObject, forwardRef, useEffect, useLayoutEffect, useRef } from "react";
-import { forceRef } from "../../support/nullable";
+import { MutableRefObject, forwardRef, useContext, useEffect, useRef } from "react";
 import styled from "styled-components";
+
+import Quill from "quill";
+import Delta from "quill-delta";
+
+import { forceRef } from "../../support/nullable";
+import { EditorDispatch } from "./context";
 
 export type QuillEditorProps = {
     defaultValue: Delta;
-    onTextChange: (delta: Delta, oldDelta: Delta, source: string) => void;
-    onSelectionChange: (range: Range, oldRange: Range, source: string) => void;
 }
 
 type QuillRef = MutableRefObject<Quill | null>;
@@ -41,21 +42,14 @@ const Editor = styled.div`
         color: rgb(var(--document-primary-color));
         background-color: rgb(var(--document-background-color));
         padding: var(--document-padding);
-        min-height: 100vh;
     }
 `;
 
 const DocumentEditor = forwardRef(
-    ({ defaultValue, onTextChange, onSelectionChange }: QuillEditorProps, ref: QuillRef) => {
+    ({ defaultValue }: QuillEditorProps, ref: QuillRef) => {
         const containerRef = useRef<HTMLDivElement>(null);
         const defaultValueRef = useRef(defaultValue);
-        const onTextChangeRef = useRef(onTextChange);
-        const onSelectionChangeRef = useRef(onSelectionChange);
-
-        useLayoutEffect(() => {
-            onTextChangeRef.current = onTextChange;
-            onSelectionChangeRef.current = onSelectionChange;
-        });
+        const dispatch = useContext(EditorDispatch);
 
         useEffect(() => {
             const container = forceRef(containerRef);
@@ -68,16 +62,27 @@ const DocumentEditor = forwardRef(
 
             ref.current = quill;
 
+            dispatch({
+                type: "post-width",
+                value: quill.container.offsetWidth,
+            });
+
             if (defaultValueRef.current) {
                 quill.setContents(defaultValueRef.current);
             }
 
-            quill.on("text-change", (...args) => {
-                onTextChangeRef.current?.(...args);
+            quill.on("text-change", (delta, oldContent) => {
+                dispatch({
+                    type: "post-delta",
+                    value: oldContent.compose(delta),
+                });
             });
 
-            quill.on("selection-change", (...args) => {
-                onSelectionChangeRef.current?.(...args);
+            quill.on("selection-change", (range) => {
+                dispatch({
+                    type: "post-range",
+                    value: range,
+                });
             });
 
             return () => {
@@ -86,7 +91,7 @@ const DocumentEditor = forwardRef(
             };
         }, [ref]);
 
-        return <Editor ref={containerRef}></Editor>;
+        return <Editor ref={containerRef}/>;
     }
 );
 

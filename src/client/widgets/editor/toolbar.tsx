@@ -16,25 +16,34 @@ import gearImg from "../../../../assets/gear.svg?raw";
 import exportImg from "../../../../assets/file-arrow-down.svg?raw";
 import Quill from "quill";
 
-import {EditorAlignment, EditorContext} from "./context";
+import {EDITOR_TEXT_DETAILS_PROPERTIES, EditorAlignment, EditorContext, EditorDispatch, EditorTextDetails} from "./context";
 
 
 
-const ToolSet = styled.nav`
-    /* width: calc(var(--document-width) + (var(--frame-padding) * 2) + (5px * 2)); */
+const ToolSet = styled.nav<{["$ed-width"]: number}>`
     max-width: 100vw;
     overflow-x: scroll;
     scrollbar-width: none;
     display: flex;
     padding: 5px;
     flex-direction: row;
-    justify-content: center;
-    align-items: center;
+    justify-content: flex-start;
+    align-items: stretch;
     font-family: var(--sans-family);
     font-size: var(--tool-font-size);
     background: rgb(var(--element-color));
     border-bottom: 1px solid rgb(var(--accent-color));
     cursor: default;
+
+    @media (min-width: ${p => p["$ed-width"] + (5 * 2)}px) {
+        & {
+            width: calc(var(--document-width) + (var(--frame-padding) * 2) + (5px * 2));
+            justify-content: center;
+            border: 1px solid rgb(var(--accent-color));
+            border-radius: 5px;
+            margin: 5px auto 0px;
+        }
+    }
 
     & > :not(:first-child) {
         margin-left: 5px;
@@ -43,26 +52,21 @@ const ToolSet = styled.nav`
 
 
 
-const Toolbar = forwardRef(({..._props}, ref: MutableRefObject<Quill | null>) => {
+const Toolbar = forwardRef(({..._props}, _ref: MutableRefObject<Quill | null>) => {
     const context = useContext(EditorContext);
+    const dispatch = useContext(EditorDispatch);
     const disabled = !context.focused;
 
-    const formatter = (prop: string) => (e: any) => {
-        if (disabled) return;
-
-        const q = ref.current;
-        if (!q) return;
-
-        const existing = q.getFormat();
-        q.format(prop, !existing[prop]);
+    const formatter = (prop: keyof EditorTextDetails) => (e: any) => {
+        dispatch({ type: `set-${prop}`, value: !context[prop] });
         e.preventDefault();
     };
 
     const className = (prop: keyof EditorContext): "selected" | "" =>
         context[prop] && context.focused ? "selected" : "";
 
-    const getAlignmentIndex = (align: EditorAlignment): number => {
-        switch (align) {
+    const getAlignmentIndex = (): number => {
+        switch (context.align) {
             case "center": return 1;
             case "right": return 2;
             case "justify": return 3;
@@ -71,39 +75,35 @@ const Toolbar = forwardRef(({..._props}, ref: MutableRefObject<Quill | null>) =>
     };
 
     const changeAlignment = (newIndex: number) => {
-        if (disabled) return;
-
-        const q = ref.current;
-        if (!q) return;
-
         const align: EditorAlignment = [null, "center", "right", "justify"][newIndex] as EditorAlignment;
-        q.format("align", align);
+        dispatch({ type: "set-align", value: align });
     };
 
     const unstyle = () => {
-        const q = ref.current;
-        if (!q) return;
+        dispatch({ type: "clear-format" });
+    };
 
-        const range = q.getSelection();
-        if (!range) return;
-
-        q.removeFormat(range.index, range.length);
-        q.format("align", null);
-        q.format("bold", false);
-        q.format("italic", false);
-        q.format("underline", false);
-        q.format("strike", false);
+    const TextDetailsButton = ({kind}: {kind: keyof EditorTextDetails}) => {
+        const [propName, propValue, propText] = EDITOR_TEXT_DETAILS_PROPERTIES[kind];
+        return (<Button.Serif
+            disabled={disabled}
+            style={{[propName]: propValue}}
+            onClick={formatter(kind)}
+            className={className(kind)}
+        >
+            {propText}
+        </Button.Serif>);
     };
 
 
-    return <ToolSet>
-        <Button.Serif disabled={disabled} style={{fontWeight: "bold"}} onClick={formatter("bold")} className={className("bold")}>B</Button.Serif>
-        <Button.Serif disabled={disabled} style={{fontStyle: "italic"}} onClick={formatter("italic")} className={className("italic")}>I</Button.Serif>
-        <Button.Serif disabled={disabled} style={{textDecoration: "underline"}} onClick={formatter("underline")} className={className("underline")}>U</Button.Serif>
-        <Button.Serif disabled={disabled} style={{textDecoration: "line-through"}} onClick={formatter("strike")} className={className("strike")}>S</Button.Serif>
+    return <ToolSet $ed-width={context.width}>
+        <TextDetailsButton kind="bold"/>
+        <TextDetailsButton kind="italic"/>
+        <TextDetailsButton kind="underline"/>
+        <TextDetailsButton kind="strike"/>
         <Dropdown
             disabled={disabled}
-            selected={getAlignmentIndex(context.align)}
+            selected={getAlignmentIndex()}
             onChanged={changeAlignment}
         >
             <Icon svg={alignLeftImg}/>
