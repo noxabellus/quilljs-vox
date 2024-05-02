@@ -1,7 +1,12 @@
 import { Dispatch, ReactNode, createContext } from "react";
-import { AppContext, AppStateAction, DEFAULT_APP_CONTEXT } from "./types";
+import { AppContext, AppStateAction } from "./types";
 
-const Context = createContext<AppContext>(DEFAULT_APP_CONTEXT);
+const Context = createContext<AppContext>({
+    mode: "splash",
+    data: {} as any,
+    settings: null
+});
+
 const Dispatch = createContext<Dispatch<AppStateAction>>(() => {
     throw "No provider found for AppDispatch!";
 });

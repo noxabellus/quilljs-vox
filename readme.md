@@ -19,6 +19,10 @@ WIP rich text editor
         * 🟥 table of contents
     - 🟥 comments and other editorial kit
     - 🯄 paging mode
++ 🟥 fast navigation between locations in the document
+    - 🟥 user-defined location bookmarks
+    - 🟥 serializable stack of cursor locations navigable by forward/back
+    - 🟥 section links
 + 🟨 editor themes
     - 🟨 dark mode
     - 🟥 light mode

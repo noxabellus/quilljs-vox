@@ -1,14 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+import { useReducer, useRef } from "react";
+import { PathLike } from "fs";
 
 import Splash from "../modes/splash";
 import Editor from "../modes/editor";
 import AppSettings from "../modes/app-settings";
-import AppState from "./state";
-import { AppContext, AppStateAction, APP_MODE_TITLES, DEFAULT_APP_CONTEXT } from "./types";
-import { useReducer } from "react";
-import Document from "../../support/document";
-import { PathLike } from "fs";
 
+import AppState from "./state";
+import { AppContext, AppStateAction, APP_MODE_TITLES, AppMode } from "./types";
+import Document from "../../support/document";
 
 
 function setWindowTitle (body: {dirty: boolean, title: string | null, filePath: PathLike | null} | string | null) {
@@ -38,15 +37,25 @@ function setWindowTitle (body: {dirty: boolean, title: string | null, filePath: 
 }
 
 export default function App () {
-    const [context, dispatch] = useReducer(reducer, {...DEFAULT_APP_CONTEXT});
+    const documentRef = useRef(null);
+    const [context, dispatch] = useReducer(reducer, {
+        mode: "splash",
+        data: {
+            dirty: false,
+            autoSave: false,
+            filePath: null,
+            document: documentRef
+        },
+        settings: null
+    });
 
     function reducer (state: AppContext, action: AppStateAction): AppContext {
         let out: AppContext;
 
-        console.log("dispatch", state, action.type, action.value);
+        console.log("AppDispatch", state, action.type, action.value);
 
         switch (action.type) {
-            case "set-mode":
+            case "set-mode": {
                 if (action.value === null) {
                     switch (state.data) {
                         case null:
@@ -59,11 +68,9 @@ export default function App () {
                 } else {
                     out = { ...state, mode: action.value };
                 }
-                break;
+            } break;
 
             case "set-data-x": {
-                if (!state.data) throw "Cannot set dirty without data";
-
                 switch (action.value.type) {
                     case "set-dirty":
                         out = { ...state, data: { ...state.data, dirty: action.value.value } };
@@ -77,44 +84,64 @@ export default function App () {
                         out = { ...state, data: { ...state.data, dirty: true, filePath: action.value.value } };
                         break;
                 }
-
-                break;
-            }
+            } break;
 
             case "set-doc-x": {
-                if (!state.data) throw "Cannot set doc element without data";
+                const document = state.data.document.current;
+                if (!document) throw "Cannot set document data without a document";
+
                 switch (action.value.type) {
                     case "set-doc-title":
-                        out = { ...state, data: { ...state.data, dirty: true, document: Object.setPrototypeOf({ ...state.data.document, title: action.value.value }, Document.prototype) } };
+                        document.title = action.value.value;
                         break;
 
                     case "set-doc-theme":
-                        out = { ...state, data: { ...state.data, dirty: true, document: Object.setPrototypeOf({ ...state.data.document, theme: action.value.value }, Document.prototype) } };
+                        document.theme = action.value.value;
                         break;
 
                     case "set-doc-quill-data":
-                        out = { ...state, data: { ...state.data, dirty: true, document: Object.setPrototypeOf({ ...state.data.document, delta: action.value.value.delta, history: action.value.value.history }, Document.prototype) } };
+                        document.copyEditorState(action.value.value);
                         break;
 
                     case "set-doc-delta":
-                        out = { ...state, data: { ...state.data, dirty: true, document: Object.setPrototypeOf({ ...state.data.document, delta: action.value.value }, Document.prototype) } };
+                        document.copyEditorDelta(action.value.value);
                         break;
 
                     case "set-doc-history":
-                        out = { ...state, data: { ...state.data, dirty: true, document: Object.setPrototypeOf({ ...state.data.document, history: action.value.value }, Document.prototype) } };
+                        document.copyEditorHistory(action.value.value);
                         break;
-                }
+                    }
+                out = { ...state, data: { ...state.data, dirty: true } };
             } break;
 
-            case "post-data":
-                out = { ...state, data: action.value};
-                break;
+            case "post-doc": {
+                let mode: AppMode;
+                let filePath: PathLike | null;
+
+                if (action.value) {
+                    if (action.value instanceof Document) {
+                        filePath = null;
+                        state.data.document.current = action.value;
+                        mode = "editor";
+                    } else {
+                        filePath = action.value.filePath;
+                        state.data.document.current = action.value.document;
+                        mode = "editor";
+                    }
+                } else {
+                    filePath = null;
+                    state.data.document.current = null;
+                    mode = "splash";
+                }
+
+                out = {...state, mode, data: {...state.data, filePath}};
+            } break;
         }
 
         switch (out.mode) {
             case "editor":
                 if (!out.data) throw "Cannot set editor mode without data";
-                setWindowTitle({ dirty: out.data.dirty, title: out.data.document.title, filePath: out.data.filePath });
+                setWindowTitle({ dirty: out.data.dirty, title: out.data.document.current?.title || null, filePath: out.data.filePath });
                 break;
             default:
                 setWindowTitle(APP_MODE_TITLES[out.mode]);

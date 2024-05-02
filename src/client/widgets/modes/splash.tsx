@@ -53,19 +53,10 @@ export default function Splash() {
     const [locked, setLocked] = useState(false);
 
     const newFile = () => {
-        const document = new Document();
-
         dispatch({
-            type: "post-data",
-            value: {
-                dirty: true,
-                autoSave: false,
-                filePath: null,
-                document,
-            },
+            type: "post-doc",
+            value: new Document(),
         });
-
-        dispatch({type: "set-mode", value: "editor"});
     };
 
     const openFile = async () => {
@@ -75,16 +66,12 @@ export default function Splash() {
 
         if (Result.isSuccess(result)) {
             dispatch({
-                type: "post-data",
+                type: "post-doc",
                 value: {
-                    dirty: false,
-                    autoSave: false,
                     filePath: result.body.filePath,
                     document: result.body.doc,
-                },
+                }
             });
-
-            dispatch({type: "set-mode", value: "editor"});
         } else if (Result.isError(result)) {
             alert(`Failed to open file:\n\t${result.body}`);
         } else {

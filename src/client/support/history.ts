@@ -1,8 +1,8 @@
 import Delta from "quill-delta";
-import { ProtoHistory, History } from "./document";
+import { ProtoHistory, StackHistory } from "./document";
 import Quill from "quill";
 
-export function loadHistoryStack (stack: ProtoHistory | History, quill: Quill) {
+export function loadHistoryStack (stack: ProtoHistory | StackHistory, quill: Quill) {
     quill.history.stack.undo = [];
     quill.history.stack.redo = [];
 

@@ -1,10 +1,13 @@
-import { Theme, applyDocumentTheme, isThemeKey, isValidProperty } from "./document-theme";
-import { AttributeMap, Op } from "quill-delta";
-import { loadHistoryStack } from "./history";
-import quillBaseCss from "../../extern/quill.core.css?raw";
 import Quill from "quill";
-import { StackItem } from "quill/modules/history";
+import Delta, { AttributeMap, Op } from "quill-delta";
+import History, { StackItem } from "quill/modules/history";
+
+import { Theme, applyDocumentTheme, isThemeKey, isValidProperty } from "./document-theme";
+import { loadHistoryStack } from "./history";
 import { Defined, forceVal } from "./nullable";
+
+import quillBaseCss from "../../extern/quill.core.css?raw";
+
 
 export type ProtoStackItem = {
     delta: Op[],
@@ -16,7 +19,7 @@ export type ProtoHistory = {
     redo: ProtoStackItem[],
 };
 
-export type History = {
+export type StackHistory = {
     undo: StackItem[],
     redo: StackItem[],
 };
@@ -31,7 +34,7 @@ export class Document {
     title: string | null;
     theme: Theme;
     delta: Op[];
-    history: History | ProtoHistory;
+    history: StackHistory | ProtoHistory;
 
     constructor (title?: string) {
         this.title = title || null;
@@ -60,7 +63,19 @@ export class Document {
     linkEditor (editor: Quill) {
         editor.setContents(this.delta);
         loadHistoryStack(this.history, editor);
-        this.history = editor.history.stack;
+    }
+
+    copyEditorDelta (delta: Delta) {
+        this.delta = delta.ops;
+    }
+
+    copyEditorHistory (history: History) {
+        this.history = history.stack;
+    }
+
+    copyEditorState ({delta, history}: {delta: Delta, history: History}) {
+        this.delta = delta.ops;
+        this.history = history.stack;
     }
 
     static deserialize (text: string): Document {
@@ -179,7 +194,7 @@ export function parseTheme (blocks: Block[]): Theme {
     return theme;
 }
 
-export function parseHistory (blocks: Block[]): History {
+export function parseHistory (blocks: Block[]): StackHistory {
     const history = {} as any;
 
     blocks.forEach(b => {

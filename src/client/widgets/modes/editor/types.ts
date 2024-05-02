@@ -1,5 +1,4 @@
 import { Range } from "quill";
-import Delta from "quill-delta";
 
 
 
@@ -62,7 +61,6 @@ export type EditorStateActionType
     | "set-width"
     | "clear-format"
     | "post-range"
-    | "post-delta"
     | "post-width"
     ;
 
@@ -76,7 +74,6 @@ export type EditorStateAction
     | EditorStateSetWidth
     | EditorStateClearFormat
     | EditorStatePostRange
-    | EditorStatePostDelta
     | EditorStatePostWidth
     ;
 
@@ -121,11 +118,6 @@ export type EditorStateClearFormat = {
 export type EditorStatePostRange = {
     type: "post-range";
     value: Range | null;
-};
-
-export type EditorStatePostDelta = {
-    type: "post-delta";
-    value: Delta;
 };
 
 export type EditorStatePostWidth = {

@@ -1,12 +1,13 @@
-import {MouseEvent, MutableRefObject, forwardRef, useContext} from "react";
+import {MouseEvent, useContext} from "react";
 import styled from "styled-components";
-
-import Quill from "quill";
 
 import Dropdown from "../../basic/dropdown";
 import Svg from "../../basic/svg";
 import Button from "../../basic/button";
 import ToolSet from "../../basic/tool-set";
+
+import EditorState from "./state";
+import { EDITOR_ALIGNMENT_NAMES, EDITOR_TEXT_DETAILS_PROPERTIES, EditorAlignmentIndex, EditorContext, EditorTextDetails } from "./types";
 
 // import alignColumnsImg from "../../assets/align-columns.svg";
 import alignLeftImg from "../../../../../assets/align-left.svg?raw";
@@ -16,10 +17,6 @@ import alignJustifyImg from "../../../../../assets/align-justify.svg?raw";
 import unstyleImg from "../../../../../assets/circle-cross.svg?raw";
 import gearImg from "../../../../../assets/gear.svg?raw";
 import exportImg from "../../../../../assets/file-arrow-down.svg?raw";
-
-import EditorState from "./state";
-import { EDITOR_ALIGNMENT_NAMES, EDITOR_TEXT_DETAILS_PROPERTIES, EditorAlignmentIndex, EditorContext, EditorTextDetails } from "./types";
-
 
 
 const EditorToolSet = styled(ToolSet)<{["$ed-width"]: number}>`
@@ -41,7 +38,7 @@ const EditorToolSet = styled(ToolSet)<{["$ed-width"]: number}>`
     }
 `;
 
-const Toolbar = forwardRef(({..._props}, _ref: MutableRefObject<Quill | null>) => {
+export default function Toolbar() {
     const context = useContext(EditorState.Context);
     const dispatch = useContext(EditorState.Dispatch);
     const disabled = !context.focused;
@@ -107,8 +104,4 @@ const Toolbar = forwardRef(({..._props}, _ref: MutableRefObject<Quill | null>) =
         <Button.Icon title="Document Settings" svg={gearImg}/>
         <Button.Icon title="Export Document" svg={exportImg}/>
     </EditorToolSet>;
-});
-
-Toolbar.displayName = "Toolbar";
-
-export default Toolbar;
+}

@@ -1,23 +1,22 @@
-import Quill from "quill";
-import Delta from "quill-delta";
 import { useReducer, useRef } from "react";
+import Quill from "quill";
+
 import EditorState from "./state";
 import { EditorStateAction, DEFAULT_EDITOR_CONTEXT, EditorContext } from "./types";
 import DocumentEditor from "./document-editor";
 import EditorToolbar from "./toolbar";
 
 
-
 export default function Editor () {
     const quillRef = useRef<Quill>(null);
 
-    const [context, dispatch] = useReducer(reducer, { ...DEFAULT_EDITOR_CONTEXT });
+    const [editorContext, editorDispatch] = useReducer(reducer, { ...DEFAULT_EDITOR_CONTEXT });
 
     function reducer (state: EditorContext, action: EditorStateAction): EditorContext {
         const q = quillRef.current;
         if (!q) throw "Quill editor not initialized";
 
-        console.log("dispatch", action.type, (action as any).value);
+        console.log("EditorDispatch", action.type, (action as any).value);
 
         switch (action.type) {
             case "set-bold":
@@ -81,36 +80,13 @@ export default function Editor () {
                 return { ...state, ...formats, focused, range: action.value };
             }
 
-            case "post-delta":
-                // TODO: document sync
-                return state;
-
             case "post-width":
                 return { ...state, width: action.value };
         }
     }
 
-    return <EditorState context={context} dispatch={dispatch}>
-        <EditorToolbar ref={quillRef} />
-        <DocumentEditor
-            ref={quillRef}
-            defaultValue={new Delta()
-                .insert("Hello", { bold: true, italic: true, underline: true, strike: true })
-                .insert("\n", { align: "center" })
-                .insert("\n")
-                .insert("\n")
-                .insert("Some", { bold: true })
-                .insert(" ")
-                .insert("initial", { italic: true })
-                .insert(" ")
-                .insert("content", { underline: true })
-                .insert(" ")
-                .insert("here", { strike: true })
-                .insert("\n")
-                .insert("\n")
-                .insert("\n")
-                .insert("goodbye")
-                .insert("\n", { align: "right" })}
-        />
+    return <EditorState context={editorContext} dispatch={editorDispatch}>
+        <EditorToolbar/>
+        <DocumentEditor ref={quillRef}/>
     </EditorState>;
 };

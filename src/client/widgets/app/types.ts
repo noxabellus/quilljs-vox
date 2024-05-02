@@ -4,6 +4,7 @@ import Document from "../../support/document";
 import { Theme } from "../../support/document-theme";
 import Delta from "quill-delta";
 import History from "quill/modules/history";
+import { MutableRefObject } from "react";
 
 
 export type AppMode = "splash" | "settings" | "editor";
@@ -20,12 +21,12 @@ export type AppData = {
     dirty: boolean;
     autoSave: boolean;
     filePath: PathLike | null;
-    document: Document;
+    document: MutableRefObject<Document | null>;
 };
 
 export type AppContext = {
     mode: AppMode;
-    data: AppData | null;
+    data: AppData;
     settings: AppSettings;
 };
 
@@ -33,7 +34,7 @@ export type AppStateActionType
     = "set-mode"
     | "set-data-x"
     | "set-doc-x"
-    | "post-data"
+    | "post-doc"
     ;
 
 export type AppStateDocActionType
@@ -48,7 +49,7 @@ export type AppStateAction
     = AppStateSetMode
     | AppStateSetDataX
     | AppStateSetDocX
-    | AppStatePostData
+    | AppStatePostDoc
     ;
 
 export type AppStateSetDataX = {
@@ -117,16 +118,19 @@ export type AppStateSetDocDelta = {
 
 export type AppStateSetDocHistory = {
     type: "set-doc-history";
-    value: Delta[];
+    value: History;
 };
 
-export type AppStatePostData = {
-    type: "post-data";
-    value: AppData;
+export type AppStatePostDoc = {
+    type: "post-doc";
+    value: AppStatePostDocValue
 };
 
-export const DEFAULT_APP_CONTEXT: AppContext = {
-    mode: "splash",
-    data: null,
-    settings: null,
-};
+export type AppStatePostDocValue
+    = {
+        filePath: PathLike;
+        document: Document;
+    }
+    | Document
+    | null
+    ;

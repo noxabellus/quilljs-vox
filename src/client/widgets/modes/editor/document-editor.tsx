@@ -1,14 +1,14 @@
-import { MutableRefObject, forwardRef, useContext, useEffect, useRef } from "react";
+import { MutableRefObject, forwardRef, useContext, useEffect, useLayoutEffect, useRef } from "react";
 import styled from "styled-components";
 
 import Quill from "quill";
-import Delta from "quill-delta";
 
 import { forceRef } from "../../../support/nullable";
 import EditorState from "./state";
+import AppState from "../../app/state";
 
 export type QuillEditorProps = {
-    defaultValue: Delta;
+    defaultValue?: string;
 }
 
 type QuillRef = MutableRefObject<Quill | null>;
@@ -49,47 +49,66 @@ const DocumentEditor = forwardRef(
     ({ defaultValue }: QuillEditorProps, ref: QuillRef) => {
         const containerRef = useRef<HTMLDivElement>(null);
         const defaultValueRef = useRef(defaultValue);
-        const dispatch = useContext(EditorState.Dispatch);
+        const appContext = useContext(AppState.Context);
+        const appDispatch = useContext(AppState.Dispatch);
+        const editorDispatch = useContext(EditorState.Dispatch);
+
+        useLayoutEffect(() => {
+            defaultValueRef.current = defaultValue;
+        });
 
         useEffect(() => {
+            console.log("setting up quill...");
+
             const container = forceRef(containerRef);
 
             const editorContainer = container.appendChild(
                 container.ownerDocument.createElement("div"),
             );
 
-            const quill = new Quill(editorContainer);
+            const quill = new Quill(editorContainer, {
+                placeholder: defaultValueRef.current
+            });
+
+            const doc = appContext.data.document.current;
+            if (!doc) throw "No document found!";
+            doc.linkEditor(quill);
 
             ref.current = quill;
 
-            dispatch({
+            editorDispatch({
                 type: "post-width",
                 value: quill.container.offsetWidth,
             });
 
-            if (defaultValueRef.current) {
-                quill.setContents(defaultValueRef.current);
-            }
-
             quill.on("text-change", (delta, oldContent) => {
-                dispatch({
-                    type: "post-delta",
-                    value: oldContent.compose(delta),
-                });
+                // FIXME: this is probably a terrible way to avoid the warning
+                //        about the state being updated in a render function??
+                setTimeout(() => appDispatch({
+                    type: "set-doc-x",
+                    value: {
+                        type: "set-doc-quill-data",
+                        value: {
+                            delta: oldContent.compose(delta),
+                            history: quill.history
+                        },
+                    },
+                }));
             });
 
             quill.on("selection-change", (range) => {
-                dispatch({
+                editorDispatch({
                     type: "post-range",
                     value: range,
                 });
             });
 
             return () => {
+                console.log("cleaning up quill...");
                 ref.current = null;
                 container.innerHTML = "";
             };
-        }, [ref]);
+        }, [ref, appContext.data.document]);
 
         return <Editor ref={containerRef}/>;
     }
