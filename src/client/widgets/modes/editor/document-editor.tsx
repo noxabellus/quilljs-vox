@@ -43,6 +43,16 @@ const Editor = styled.div`
         background-color: rgb(var(--document-background-color));
         padding: var(--document-padding);
     }
+
+    & .ql-disabled .ql-editor {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    & .ql-disabled .ql-editor * {
+        cursor: not-allowed;
+        user-select: none;
+    }
 `;
 
 const DocumentEditor = forwardRef(

@@ -1,4 +1,4 @@
-import {MouseEvent, useContext, useState} from "react";
+import {MouseEvent, useContext} from "react";
 import styled from "styled-components";
 
 import Dropdown from "../../basic/dropdown";
@@ -22,7 +22,7 @@ import exportImg from "../../../../../assets/file-arrow-down.svg?raw";
 import Spacer from "../../basic/spacer";
 import AppState from "../../app/state";
 import { saveVox, writeVox } from "../../../support/file";
-import { forceRef, unsafeForceVal } from "../../../support/nullable";
+import { forceRef } from "../../../support/nullable";
 import Result from "../../../support/result";
 import remote from "../../../support/remote";
 
@@ -51,8 +51,7 @@ export default function Toolbar() {
     const appDispatch = useContext(AppState.Dispatch);
     const editorContext = useContext(EditorState.Context);
     const editorDispatch = useContext(EditorState.Dispatch);
-    const [lockIO, setLockIO] = useState(false);
-    const disabled = !editorContext.focused;
+    const disabled = !editorContext.focused || editorContext.lockIO;
 
     const formatter = (prop: keyof EditorTextDetails) => (e: MouseEvent) => {
         editorDispatch({ type: `set-${prop}`, value: !editorContext[prop] });
@@ -95,90 +94,98 @@ export default function Toolbar() {
         </Button.Serif>);
     };
 
-    const saveFile = async (e: MouseEvent) => {
+    const saveFile = async () => {
+        editorDispatch({
+            type: "set-lock-io",
+            value: true,
+        });
+
         if (appContext.data.filePath) {
-            setLockIO(true);
-            setTimeout(async () => {
-                // safety: don't know why it doesn't pass through the validity, but obviously this is fine
-                const result = await writeVox(unsafeForceVal(appContext.data.filePath), forceRef(appContext.data.document));
+            const result = await writeVox(appContext.data.filePath, forceRef(appContext.data.document));
 
-                setLockIO(false);
-
-                if (Result.isSuccess(result)) {
-                    appDispatch({
-                        type: "set-data-x",
-                        value: {
-                            type: "set-dirty",
-                            value: false,
-                        },
-                    });
-                } else if (Result.isError(result)) {
-                    alert(`Failed to save file:\n\t${result.body}`);
-                }
+            editorDispatch({
+                type: "set-lock-io",
+                value: false,
             });
+
+            if (Result.isSuccess(result)) {
+                appDispatch({
+                    type: "set-data-x",
+                    value: {
+                        type: "set-dirty",
+                        value: false,
+                    },
+                });
+            } else if (Result.isError(result)) {
+                alert(`Failed to save file:\n\t${result.body}`);
+            }
         } else {
-            setLockIO(true);
+            const result = await saveVox(forceRef(appContext.data.document));
 
-            setTimeout(async () => {
-                const result = await saveVox(forceRef(appContext.data.document));
+            editorDispatch({
+                type: "set-lock-io",
+                value: false,
+            });
 
-                setLockIO(false);
+            if (Result.isSuccess(result)) {
+                appDispatch({
+                    type: "set-data-x",
+                    value: {
+                        type: "set-file-path",
+                        value: result.body,
+                    },
+                });
 
-                if (Result.isSuccess(result)) {
+                appDispatch({
+                    type: "set-data-x",
+                    value: {
+                        type: "set-dirty",
+                        value: false,
+                    },
+                });
+
+                const question = await remote.dialog.showMessageBox({
+                    title: "Auto-save",
+                    message: "Would you like to enable auto-save?",
+                    detail: "This can be changed at any time in the document settings.",
+                    type: "question",
+                    buttons: ["No", "Yes"],
+                    defaultId: 1,
+                    cancelId: 0,
+                });
+
+                if (question.response === 1) {
                     appDispatch({
                         type: "set-data-x",
                         value: {
-                            type: "set-file-path",
-                            value: result.body,
+                            type: "set-auto-save",
+                            value: true,
                         },
                     });
-
-                    appDispatch({
-                        type: "set-data-x",
-                        value: {
-                            type: "set-dirty",
-                            value: false,
-                        },
-                    });
-
-                    const question = await remote.dialog.showMessageBox({
-                        title: "Auto-save",
-                        message: "Would you like to enable auto-save?",
-                        detail: "This can be changed at any time in the document settings.",
-                        type: "question",
-                        buttons: ["No", "Yes"],
-                        defaultId: 1,
-                        cancelId: 0,
-                    });
-
-                    if (question.response === 1) {
-                        appDispatch({
-                            type: "set-data-x",
-                            value: {
-                                type: "set-auto-save",
-                                value: true,
-                            },
-                        });
-                    }
-                } else if (Result.isError(result)) {
-                    alert(`Failed to save file:\n\t${result.body}`);
                 }
+            } else if (Result.isError(result)) {
+                alert(`Failed to save file:\n\t${result.body}`);
+            }
+
+            editorDispatch({
+                type: "set-focused",
+                value: true,
             });
         }
-
-        return e.preventDefault();
     };
 
     const SaveButton = () => {
-        const canSave = lockIO || !appContext.data.dirty;
+        const cantSave = editorContext.lockIO || !appContext.data.dirty;
         const status = appContext.data.dirty ? "Unsaved changes present" : "No changes to save";
         const saveImg = appContext.data.dirty ? unsavedImg : savedImg;
-        return <Button.Icon disabled={canSave} title={`Save .vox (${status})`} svg={saveImg} onClick={saveFile}/>;
+        return <Button.Icon disabled={cantSave} title={`Save .vox (${status})`} svg={saveImg} onClick={saveFile}/>;
     };
 
 
     return <EditorToolSet $ed-width={editorContext.width}>
         <SaveButton/>
+        <Button.Icon disabled={editorContext.lockIO} title="Document Settings" svg={gearImg}/>
+        <Button.Icon disabled={editorContext.lockIO} title="Export Document" svg={exportImg}/>
         <Spacer/>
         <TextDetailsButton kind="bold"/>
         <TextDetailsButton kind="italic"/>
@@ -195,7 +202,6 @@ export default function Toolbar() {
             <Svg title="Align Left-Justify" src={alignJustifyImg}/>
         </Dropdown>
         <Button.Icon disabled={disabled} onClick={unstyle} svg={unstyleImg}/>
-        <Button.Icon title="Document Settings" svg={gearImg}/>
-        <Button.Icon title="Export Document" svg={exportImg}/>
+        <Spacer/>
     </EditorToolSet>;
 }

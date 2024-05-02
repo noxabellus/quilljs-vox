@@ -5,6 +5,7 @@ import { Range } from "quill";
 export type EditorAlignment = null | "center" | "right" | "justify";
 
 export type EditorContext = {
+    lockIO: boolean;
     focused: boolean;
     range: Range | null;
     width: number;
@@ -41,6 +42,7 @@ export const EDITOR_TEXT_DETAILS_PROPERTIES: EditorTextDetailsProperties = {
 };
 
 export const DEFAULT_EDITOR_CONTEXT: EditorContext = {
+    lockIO: false,
     focused: false,
     bold: false,
     italic: false,
@@ -58,6 +60,7 @@ export type EditorStateActionType
     | "set-strike"
     | "set-align"
     | "set-focused"
+    | "set-lock-io"
     | "set-width"
     | "clear-format"
     | "post-range"
@@ -71,6 +74,7 @@ export type EditorStateAction
     | EditorStateSetStrike
     | EditorStateSetAlign
     | EditorStateSetFocused
+    | EditorStateSetLockIO
     | EditorStateSetWidth
     | EditorStateClearFormat
     | EditorStatePostRange
@@ -106,6 +110,12 @@ export type EditorStateSetFocused = {
     type: "set-focused";
     value: boolean;
 };
+
+export type EditorStateSetLockIO = {
+    type: "set-lock-io";
+    value: boolean;
+};
+
 export type EditorStateSetWidth = {
     type: "set-width";
     value: number;

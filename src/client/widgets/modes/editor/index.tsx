@@ -45,6 +45,12 @@ export default function Editor () {
 
                 return { ...state, focused: action.value };
 
+            case "set-lock-io":
+                if (action.value) q.disable();
+                else q.enable();
+
+                return { ...state, lockIO: action.value };
+
             case "set-width":
                 q.root.style.width = `${action.value}px`;
                 return { ...state, width: q.container.offsetWidth };
