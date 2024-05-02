@@ -1,4 +1,4 @@
-import {MouseEvent, useContext} from "react";
+import {MouseEvent, useContext, useState} from "react";
 import styled from "styled-components";
 
 import Dropdown from "../../basic/dropdown";
@@ -9,6 +9,8 @@ import ToolSet from "../../basic/tool-set";
 import EditorState from "./state";
 import { EDITOR_ALIGNMENT_NAMES, EDITOR_TEXT_DETAILS_PROPERTIES, EditorAlignmentIndex, EditorContext, EditorTextDetails } from "./types";
 
+import savedImg from "../../../../../assets/file-checkmark.svg?raw";
+import unsavedImg from "../../../../../assets/file-circle-cross.svg?raw";
 // import alignColumnsImg from "../../assets/align-columns.svg";
 import alignLeftImg from "../../../../../assets/align-left.svg?raw";
 import alignCenterImg from "../../../../../assets/align-center.svg?raw";
@@ -17,6 +19,12 @@ import alignJustifyImg from "../../../../../assets/align-justify.svg?raw";
 import unstyleImg from "../../../../../assets/circle-cross.svg?raw";
 import gearImg from "../../../../../assets/gear.svg?raw";
 import exportImg from "../../../../../assets/file-arrow-down.svg?raw";
+import Spacer from "../../basic/spacer";
+import AppState from "../../app/state";
+import { saveVox, writeVox } from "../../../support/file";
+import { forceRef, unsafeForceVal } from "../../../support/nullable";
+import Result from "../../../support/result";
+import remote from "../../../support/remote";
 
 
 const EditorToolSet = styled(ToolSet)<{["$ed-width"]: number}>`
@@ -39,20 +47,23 @@ const EditorToolSet = styled(ToolSet)<{["$ed-width"]: number}>`
 `;
 
 export default function Toolbar() {
-    const context = useContext(EditorState.Context);
-    const dispatch = useContext(EditorState.Dispatch);
-    const disabled = !context.focused;
+    const appContext = useContext(AppState.Context);
+    const appDispatch = useContext(AppState.Dispatch);
+    const editorContext = useContext(EditorState.Context);
+    const editorDispatch = useContext(EditorState.Dispatch);
+    const [lockIO, setLockIO] = useState(false);
+    const disabled = !editorContext.focused;
 
     const formatter = (prop: keyof EditorTextDetails) => (e: MouseEvent) => {
-        dispatch({ type: `set-${prop}`, value: !context[prop] });
+        editorDispatch({ type: `set-${prop}`, value: !editorContext[prop] });
         e.preventDefault();
     };
 
     const className = (prop: keyof EditorContext): "selected" | "" =>
-        context[prop] && context.focused ? "selected" : "";
+        editorContext[prop] && editorContext.focused ? "selected" : "";
 
     const getAlignmentIndex = () => {
-        switch (context.align) {
+        switch (editorContext.align) {
             case "center": return 1;
             case "right": return 2;
             case "justify": return 3;
@@ -63,11 +74,11 @@ export default function Toolbar() {
     const changeAlignment = (newIndex: EditorAlignmentIndex) => {
         const align = EDITOR_ALIGNMENT_NAMES[newIndex];
 
-        dispatch({ type: "set-align", value: align });
+        editorDispatch({ type: "set-align", value: align });
     };
 
     const unstyle = () => {
-        dispatch({ type: "clear-format" });
+        editorDispatch({ type: "clear-format" });
     };
 
     const TextDetailsButton = ({kind}: {kind: keyof EditorTextDetails}) => {
@@ -84,8 +95,91 @@ export default function Toolbar() {
         </Button.Serif>);
     };
 
+    const saveFile = async (e: MouseEvent) => {
+        if (appContext.data.filePath) {
+            setLockIO(true);
+            setTimeout(async () => {
+                // safety: don't know why it doesn't pass through the validity, but obviously this is fine
+                const result = await writeVox(unsafeForceVal(appContext.data.filePath), forceRef(appContext.data.document));
 
-    return <EditorToolSet $ed-width={context.width}>
+                setLockIO(false);
+
+                if (Result.isSuccess(result)) {
+                    appDispatch({
+                        type: "set-data-x",
+                        value: {
+                            type: "set-dirty",
+                            value: false,
+                        },
+                    });
+                } else if (Result.isError(result)) {
+                    alert(`Failed to save file:\n\t${result.body}`);
+                }
+            });
+        } else {
+            setLockIO(true);
+
+            setTimeout(async () => {
+                const result = await saveVox(forceRef(appContext.data.document));
+
+                setLockIO(false);
+
+                if (Result.isSuccess(result)) {
+                    appDispatch({
+                        type: "set-data-x",
+                        value: {
+                            type: "set-file-path",
+                            value: result.body,
+                        },
+                    });
+
+                    appDispatch({
+                        type: "set-data-x",
+                        value: {
+                            type: "set-dirty",
+                            value: false,
+                        },
+                    });
+
+                    const question = await remote.dialog.showMessageBox({
+                        title: "Auto-save",
+                        message: "Would you like to enable auto-save?",
+                        detail: "This can be changed at any time in the document settings.",
+                        type: "question",
+                        buttons: ["No", "Yes"],
+                        defaultId: 1,
+                        cancelId: 0,
+                    });
+
+                    if (question.response === 1) {
+                        appDispatch({
+                            type: "set-data-x",
+                            value: {
+                                type: "set-auto-save",
+                                value: true,
+                            },
+                        });
+                    }
+                } else if (Result.isError(result)) {
+                    alert(`Failed to save file:\n\t${result.body}`);
+                }
+            });
+        }
+
+        return e.preventDefault();
+    };
+
+    const SaveButton = () => {
+        const canSave = lockIO || !appContext.data.dirty;
+        const status = appContext.data.dirty ? "Unsaved changes present" : "No changes to save";
+        const saveImg = appContext.data.dirty ? unsavedImg : savedImg;
+        return <Button.Icon disabled={canSave} title={`Save .vox (${status})`} svg={saveImg} onClick={saveFile}/>;
+    };
+
+
+    return <EditorToolSet $ed-width={editorContext.width}>
+        <SaveButton/>
+        <Spacer/>
         <TextDetailsButton kind="bold"/>
         <TextDetailsButton kind="italic"/>
         <TextDetailsButton kind="underline"/>

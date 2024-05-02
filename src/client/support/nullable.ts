@@ -11,8 +11,10 @@ export function forceRef<T> (ref: RefObject<T>): NonNullable<NonUndefined<T>> {
 }
 
 export function forceVal<T> (val: T): NonNullable<NonUndefined<T>> {
-    if (val === null || val === undefined)
+    if (val === null || val === undefined) {
+        console.trace("forced null/undefined value");
         throw "forced null/undefined value";
+    }
 
     return unsafeForceVal<T>(val);
 }

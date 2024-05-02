@@ -123,26 +123,26 @@ export function serializeHistoryOp (op: StackItem): string[] {
 export function serializeDeltaOp (op: Op): string[] {
     if (op.insert !== undefined) {
         return [ `I ${JSON.stringify(op.insert)}`
-               ,    ...serializeAttributes(forceVal(op.attributes)).map(indent)
+               ,    ...serializeAttributes(op.attributes).map(indent)
                ];
     } else if (op.delete !== undefined) {
         return [`D ${op.delete}`];
     } else if (op.retain !== undefined) {
         return [ `R ${op.retain}`
-               ,    ...serializeAttributes(forceVal(op.attributes)).map(indent)
+               ,    ...serializeAttributes(op.attributes).map(indent)
                ];
     } else {
         throw `unknown delta op ${op}`;
     }
 }
 
-export function serializeAttributes (attributes: AttributeMap): string[] {
+export function serializeAttributes (attributes?: AttributeMap): string[] {
     if (attributes === undefined) return [];
     return Object.entries(attributes).map(([key, value]) => `${key} ${JSON.stringify(value)}`);
 }
 
 export function parseBlock (doc: Document, block: Block): void {
-    if (block.arg !== undefined)
+    if (block.arg !== null)
         throw `top level block should not have arg ${block.arg}`;
 
     switch (block.command) {
@@ -198,7 +198,7 @@ export function parseHistory (blocks: Block[]): StackHistory {
     const history = {} as any;
 
     blocks.forEach(b => {
-        if (b.arg !== undefined)
+        if (b.arg !== null)
             throw `history block should not have arg ${b.arg}`;
 
         if (history[b.command] !== undefined)

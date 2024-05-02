@@ -1,6 +1,5 @@
 import { useContext, useState } from "react";
 import styled from "styled-components";
-import { PathLike } from "fs";
 
 import Result from "../../support/result";
 import Document from "../../support/document";
@@ -13,13 +12,10 @@ import ToolSet from "../basic/tool-set";
 import BasicLayout from "../basic/basic-layout";
 
 import logoImg from "../../../../assets/vox.svg?raw";
-import newFileImg from "../../../../assets/file-pencil-alt.svg?raw";
+import newFileImg from "../../../../assets/file-pencil.svg?raw";
 import openFileImg from "../../../../assets/folder.svg?raw";
 import gearImg from "../../../../assets/gear.svg?raw";
 import AppState from "../app/state";
-
-
-export type SplashResult = Result<{filePath: PathLike, doc: Document}>;
 
 
 const Logo = styled(Svg)`
@@ -72,9 +68,11 @@ export default function Splash() {
                     document: result.body.doc,
                 }
             });
-        } else if (Result.isError(result)) {
-            alert(`Failed to open file:\n\t${result.body}`);
         } else {
+            if (Result.isError(result)) {
+                alert(`Failed to open file:\n\t${result.body}`);
+            }
+
             setLocked(false);
         }
     };
