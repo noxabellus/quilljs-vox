@@ -4,7 +4,7 @@ import fs from "fs/promises";
 import remote from "./remote";
 import Result from "./result";
 import Document from "./document";
-import { PathLike } from "original-fs";
+import { PathLike } from "fs";
 import { NonNull, unsafeForceVal } from "./nullable";
 
 export async function readText (path: PathLike): Promise<Result<string>> {

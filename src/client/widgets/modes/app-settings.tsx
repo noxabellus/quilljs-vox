@@ -1,44 +1,18 @@
-import styled from "styled-components";
+import { useContext } from "react";
 
-import BaseStyles from "../basic/base-styles";
+import Block from "../basic/block";
+import BasicLayout from "../basic/basic-layout";
 import Button from "../basic/button";
 import ToolSet from "../basic/tool-set";
 
 import backImg from "../../../../assets/checkmark.svg?raw";
-import { useLayoutEffect, useRef } from "react";
+import AppState from "../app/state";
 
-const Block = styled.div`
-    ${BaseStyles.block}
-    border-radius: 5px;
-    padding: 5px;
-    color: rgb(var(--primary-color));
-    font-family: var(--sans-family);
-    width: 640px;
-    min-height: 640px;
-    text-align: center;
 
-    & h1 {
-        font-size: 1.5em;
-        text-decoration-line: underline;
-        margin: 5px;
-    }
-
-    @media (max-width: 640px) {
-        & {
-            width: 100vw;
-        }
-    }
-`;
-
-export default function AppSettings({onClose}: {onClose: () => void}) {
-    const onCloseRef = useRef(onClose);
-
-    useLayoutEffect(() => {
-        onCloseRef.current = onClose;
-    });
-
-    return <>
-        <Block>
+export default function AppSettings() {
+    const dispatch = useContext(AppState.Dispatch);
+    return <BasicLayout $minWidth="640px">
+        <Block $minWidth="640px">
             <h1>Settings</h1>
             <div>
                 todo
@@ -51,7 +25,7 @@ export default function AppSettings({onClose}: {onClose: () => void}) {
             </div>
         </Block>
         <ToolSet>
-            <Button.Icon svg={backImg} onClick={_ => onCloseRef.current?.()}/>
+            <Button.Icon title="Close Settings" svg={backImg} onClick={_ => dispatch({ type: "set-mode", value: null })}/>
         </ToolSet>
-    </>;
+    </BasicLayout>;
 }

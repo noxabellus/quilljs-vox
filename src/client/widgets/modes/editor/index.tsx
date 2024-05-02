@@ -1,7 +1,8 @@
 import Quill from "quill";
 import Delta from "quill-delta";
 import { useReducer, useRef } from "react";
-import { ContextAction, DEFAULT_EDITOR_CONTEXT,  EditorContext, EditorDispatch } from "./context";
+import EditorState from "./state";
+import { EditorStateAction, DEFAULT_EDITOR_CONTEXT, EditorContext } from "./types";
 import DocumentEditor from "./document-editor";
 import EditorToolbar from "./toolbar";
 
@@ -12,7 +13,7 @@ export default function Editor () {
 
     const [context, dispatch] = useReducer(reducer, { ...DEFAULT_EDITOR_CONTEXT });
 
-    function reducer (state: EditorContext, action: ContextAction): EditorContext {
+    function reducer (state: EditorContext, action: EditorStateAction): EditorContext {
         const q = quillRef.current;
         if (!q) throw "Quill editor not initialized";
 
@@ -89,29 +90,27 @@ export default function Editor () {
         }
     }
 
-    return <EditorContext.Provider value={context}>
-        <EditorDispatch.Provider value={dispatch}>
-            <EditorToolbar ref={quillRef} />
-            <DocumentEditor
-                ref={quillRef}
-                defaultValue={new Delta()
-                    .insert("Hello", { bold: true, italic: true, underline: true, strike: true })
-                    .insert("\n", { align: "center" })
-                    .insert("\n")
-                    .insert("\n")
-                    .insert("Some", { bold: true })
-                    .insert(" ")
-                    .insert("initial", { italic: true })
-                    .insert(" ")
-                    .insert("content", { underline: true })
-                    .insert(" ")
-                    .insert("here", { strike: true })
-                    .insert("\n")
-                    .insert("\n")
-                    .insert("\n")
-                    .insert("goodbye")
-                    .insert("\n", { align: "right" })}
-            />
-        </EditorDispatch.Provider>
-    </EditorContext.Provider>;
+    return <EditorState context={context} dispatch={dispatch}>
+        <EditorToolbar ref={quillRef} />
+        <DocumentEditor
+            ref={quillRef}
+            defaultValue={new Delta()
+                .insert("Hello", { bold: true, italic: true, underline: true, strike: true })
+                .insert("\n", { align: "center" })
+                .insert("\n")
+                .insert("\n")
+                .insert("Some", { bold: true })
+                .insert(" ")
+                .insert("initial", { italic: true })
+                .insert(" ")
+                .insert("content", { underline: true })
+                .insert(" ")
+                .insert("here", { strike: true })
+                .insert("\n")
+                .insert("\n")
+                .insert("\n")
+                .insert("goodbye")
+                .insert("\n", { align: "right" })}
+        />
+    </EditorState>;
 };

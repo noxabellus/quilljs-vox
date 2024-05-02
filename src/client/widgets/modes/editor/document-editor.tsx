@@ -5,7 +5,7 @@ import Quill from "quill";
 import Delta from "quill-delta";
 
 import { forceRef } from "../../../support/nullable";
-import { EditorDispatch } from "./context";
+import EditorState from "./state";
 
 export type QuillEditorProps = {
     defaultValue: Delta;
@@ -49,7 +49,7 @@ const DocumentEditor = forwardRef(
     ({ defaultValue }: QuillEditorProps, ref: QuillRef) => {
         const containerRef = useRef<HTMLDivElement>(null);
         const defaultValueRef = useRef(defaultValue);
-        const dispatch = useContext(EditorDispatch);
+        const dispatch = useContext(EditorState.Dispatch);
 
         useEffect(() => {
             const container = forceRef(containerRef);

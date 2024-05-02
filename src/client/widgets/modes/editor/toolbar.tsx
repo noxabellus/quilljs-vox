@@ -1,4 +1,4 @@
-import {MutableRefObject, forwardRef, useContext} from "react";
+import {MouseEvent, MutableRefObject, forwardRef, useContext} from "react";
 import styled from "styled-components";
 
 import Quill from "quill";
@@ -17,12 +17,18 @@ import unstyleImg from "../../../../../assets/circle-cross.svg?raw";
 import gearImg from "../../../../../assets/gear.svg?raw";
 import exportImg from "../../../../../assets/file-arrow-down.svg?raw";
 
-import {EDITOR_TEXT_DETAILS_PROPERTIES, EditorAlignment, EditorContext, EditorDispatch, EditorTextDetails} from "./context";
+import EditorState from "./state";
+import { EDITOR_ALIGNMENT_NAMES, EDITOR_TEXT_DETAILS_PROPERTIES, EditorAlignmentIndex, EditorContext, EditorTextDetails } from "./types";
 
 
 
 const EditorToolSet = styled(ToolSet)<{["$ed-width"]: number}>`
-    max-width: 100vw;
+    width: 100vw;
+    border-left: none;
+    border-top: none;
+    border-right: none;
+    border-radius: 0px;
+    justify-content: flex-start;
 
     @media (min-width: ${p => p["$ed-width"] + (5 * 2)}px) {
         & {
@@ -36,11 +42,11 @@ const EditorToolSet = styled(ToolSet)<{["$ed-width"]: number}>`
 `;
 
 const Toolbar = forwardRef(({..._props}, _ref: MutableRefObject<Quill | null>) => {
-    const context = useContext(EditorContext);
-    const dispatch = useContext(EditorDispatch);
+    const context = useContext(EditorState.Context);
+    const dispatch = useContext(EditorState.Dispatch);
     const disabled = !context.focused;
 
-    const formatter = (prop: keyof EditorTextDetails) => (e: any) => {
+    const formatter = (prop: keyof EditorTextDetails) => (e: MouseEvent) => {
         dispatch({ type: `set-${prop}`, value: !context[prop] });
         e.preventDefault();
     };
@@ -48,7 +54,7 @@ const Toolbar = forwardRef(({..._props}, _ref: MutableRefObject<Quill | null>) =
     const className = (prop: keyof EditorContext): "selected" | "" =>
         context[prop] && context.focused ? "selected" : "";
 
-    const getAlignmentIndex = (): number => {
+    const getAlignmentIndex = () => {
         switch (context.align) {
             case "center": return 1;
             case "right": return 2;
@@ -57,8 +63,9 @@ const Toolbar = forwardRef(({..._props}, _ref: MutableRefObject<Quill | null>) =
         }
     };
 
-    const changeAlignment = (newIndex: number) => {
-        const align: EditorAlignment = [null, "center", "right", "justify"][newIndex] as EditorAlignment;
+    const changeAlignment = (newIndex: EditorAlignmentIndex) => {
+        const align = EDITOR_ALIGNMENT_NAMES[newIndex];
+
         dispatch({ type: "set-align", value: align });
     };
 
@@ -67,12 +74,14 @@ const Toolbar = forwardRef(({..._props}, _ref: MutableRefObject<Quill | null>) =
     };
 
     const TextDetailsButton = ({kind}: {kind: keyof EditorTextDetails}) => {
-        const [propName, propValue, propText] = EDITOR_TEXT_DETAILS_PROPERTIES[kind];
+        const [propName, propValue, propText, propTitle] = EDITOR_TEXT_DETAILS_PROPERTIES[kind];
+
         return (<Button.Serif
             disabled={disabled}
             style={{[propName]: propValue}}
             onClick={formatter(kind)}
             className={className(kind)}
+            title={propTitle}
         >
             {propText}
         </Button.Serif>);
@@ -89,14 +98,14 @@ const Toolbar = forwardRef(({..._props}, _ref: MutableRefObject<Quill | null>) =
             selected={getAlignmentIndex()}
             onChanged={changeAlignment}
         >
-            <Svg src={alignLeftImg}/>
-            <Svg src={alignCenterImg}/>
-            <Svg src={alignRightImg}/>
-            <Svg src={alignJustifyImg}/>
+            <Svg title="Align Left" src={alignLeftImg}/>
+            <Svg title="Align Center" src={alignCenterImg}/>
+            <Svg title="Align Right" src={alignRightImg}/>
+            <Svg title="Align Left-Justify" src={alignJustifyImg}/>
         </Dropdown>
         <Button.Icon disabled={disabled} onClick={unstyle} svg={unstyleImg}/>
-        <Button.Icon svg={gearImg}/>
-        <Button.Icon svg={exportImg}/>
+        <Button.Icon title="Document Settings" svg={gearImg}/>
+        <Button.Icon title="Export Document" svg={exportImg}/>
     </EditorToolSet>;
 });
 

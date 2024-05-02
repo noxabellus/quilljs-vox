@@ -28,13 +28,13 @@ export type Block = {
 };
 
 export class Document {
-    title: string;
+    title: string | null;
     theme: Theme;
     delta: Op[];
     history: History | ProtoHistory;
 
-    constructor (title: string) {
-        this.title = title;
+    constructor (title?: string) {
+        this.title = title || null;
 
         this.theme = {};
 
