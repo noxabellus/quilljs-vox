@@ -1,5 +1,13 @@
 import { css } from "styled-components";
 
+const block = css`
+    margin-bottom: 10px;
+    background-color: rgb(var(--element-color));
+    border: 2px solid rgb(var(--accent-color));
+    box-shadow: 0 0 8px 4px rgba(var(--shadow-color), var(--shadow-opacity)),
+                0 0 8px 4px rgba(var(--shadow-color), var(--shadow-opacity)) inset;
+`;
+
 const primary = css`
     user-select: none;
     font-family: var(--sans-family);
@@ -17,14 +25,13 @@ const primary = css`
     box-shadow: 0 0 8px 4px rgba(var(--shadow-color), var(--shadow-opacity)),
                 0 0 8px 4px rgba(var(--shadow-color), var(--shadow-opacity)) inset;
 
-
     &:disabled {
         cursor: not-allowed;
         color: rgb(var(--disabled-color));
         stroke: rgb(var(--disabled-color));
         border-color: rgb(var(--disabled-color));
     }
-    `;
+`;
 
 const strokeActivationFx = css`
     color: rgb(var(--accent-color));
@@ -60,6 +67,8 @@ const shadowOnActivate = activation(shadowActivationFx);
 const fullFxOnActivate = activation(fullActivationFx);
 
 export default {
+    block,
+
     primary,
 
     activationFx: {

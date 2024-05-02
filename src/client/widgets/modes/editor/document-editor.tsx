@@ -4,7 +4,7 @@ import styled from "styled-components";
 import Quill from "quill";
 import Delta from "quill-delta";
 
-import { forceRef } from "../../support/nullable";
+import { forceRef } from "../../../support/nullable";
 import { EditorDispatch } from "./context";
 
 export type QuillEditorProps = {

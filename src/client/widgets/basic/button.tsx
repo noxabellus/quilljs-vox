@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import BaseStyles from "../basic/base-styles";
 
-import Icon from "../basic/icon";
+import Svg from "./svg";
 
 
 export type Button = {
@@ -18,7 +18,7 @@ const ButtonBase = styled.button`
 `;
 
 function IconButton({svg, ...props}: {svg: string} & React.DetailedHTMLProps<React.ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>) {
-    return <ButtonBase {...props}><Icon svg={svg}></Icon></ButtonBase>;
+    return <ButtonBase {...props}><Svg src={svg}></Svg></ButtonBase>;
 }
 
 const SerifButton = styled(ButtonBase)`

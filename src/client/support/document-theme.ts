@@ -36,7 +36,7 @@ export type Length
     ;
 
 export const DEFAULT_DOCUMENT_THEME: Theme = {
-    "width": {"px": 540},
+    "width": {"px": 960},
     "border-size": {"px": 1},
     "border-color": [255, 255, 255],
     "border-opacity": 0.2,

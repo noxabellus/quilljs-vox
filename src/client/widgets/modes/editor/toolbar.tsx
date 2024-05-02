@@ -1,39 +1,28 @@
 import {MutableRefObject, forwardRef, useContext} from "react";
 import styled from "styled-components";
 
+import Quill from "quill";
 
-import Dropdown from "../basic/dropdown";
-import Icon from "../basic/icon";
-import Button from "../basic/button";
+import Dropdown from "../../basic/dropdown";
+import Svg from "../../basic/svg";
+import Button from "../../basic/button";
+import ToolSet from "../../basic/tool-set";
 
 // import alignColumnsImg from "../../assets/align-columns.svg";
-import alignLeftImg from "../../../../assets/align-left.svg?raw";
-import alignCenterImg from "../../../../assets/align-center.svg?raw";
-import alignRightImg from "../../../../assets/align-right.svg?raw";
-import alignJustifyImg from "../../../../assets/align-justify.svg?raw";
-import unstyleImg from "../../../../assets/circle-cross.svg?raw";
-import gearImg from "../../../../assets/gear.svg?raw";
-import exportImg from "../../../../assets/file-arrow-down.svg?raw";
-import Quill from "quill";
+import alignLeftImg from "../../../../../assets/align-left.svg?raw";
+import alignCenterImg from "../../../../../assets/align-center.svg?raw";
+import alignRightImg from "../../../../../assets/align-right.svg?raw";
+import alignJustifyImg from "../../../../../assets/align-justify.svg?raw";
+import unstyleImg from "../../../../../assets/circle-cross.svg?raw";
+import gearImg from "../../../../../assets/gear.svg?raw";
+import exportImg from "../../../../../assets/file-arrow-down.svg?raw";
 
 import {EDITOR_TEXT_DETAILS_PROPERTIES, EditorAlignment, EditorContext, EditorDispatch, EditorTextDetails} from "./context";
 
 
 
-const ToolSet = styled.nav<{["$ed-width"]: number}>`
+const EditorToolSet = styled(ToolSet)<{["$ed-width"]: number}>`
     max-width: 100vw;
-    overflow-x: scroll;
-    scrollbar-width: none;
-    display: flex;
-    padding: 5px;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: stretch;
-    font-family: var(--sans-family);
-    font-size: var(--tool-font-size);
-    background: rgb(var(--element-color));
-    border-bottom: 1px solid rgb(var(--accent-color));
-    cursor: default;
 
     @media (min-width: ${p => p["$ed-width"] + (5 * 2)}px) {
         & {
@@ -44,13 +33,7 @@ const ToolSet = styled.nav<{["$ed-width"]: number}>`
             margin: 5px auto 0px;
         }
     }
-
-    & > :not(:first-child) {
-        margin-left: 5px;
-    }
 `;
-
-
 
 const Toolbar = forwardRef(({..._props}, _ref: MutableRefObject<Quill | null>) => {
     const context = useContext(EditorContext);
@@ -96,7 +79,7 @@ const Toolbar = forwardRef(({..._props}, _ref: MutableRefObject<Quill | null>) =
     };
 
 
-    return <ToolSet $ed-width={context.width}>
+    return <EditorToolSet $ed-width={context.width}>
         <TextDetailsButton kind="bold"/>
         <TextDetailsButton kind="italic"/>
         <TextDetailsButton kind="underline"/>
@@ -106,15 +89,15 @@ const Toolbar = forwardRef(({..._props}, _ref: MutableRefObject<Quill | null>) =
             selected={getAlignmentIndex()}
             onChanged={changeAlignment}
         >
-            <Icon svg={alignLeftImg}/>
-            <Icon svg={alignCenterImg}/>
-            <Icon svg={alignRightImg}/>
-            <Icon svg={alignJustifyImg}/>
+            <Svg src={alignLeftImg}/>
+            <Svg src={alignCenterImg}/>
+            <Svg src={alignRightImg}/>
+            <Svg src={alignJustifyImg}/>
         </Dropdown>
         <Button.Icon disabled={disabled} onClick={unstyle} svg={unstyleImg}/>
         <Button.Icon svg={gearImg}/>
         <Button.Icon svg={exportImg}/>
-    </ToolSet>;
+    </EditorToolSet>;
 });
 
 Toolbar.displayName = "Toolbar";
