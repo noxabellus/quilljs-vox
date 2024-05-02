@@ -9,7 +9,7 @@ export type Theme = {
     "primary-font-family"?: string,
     "primary-font-size"?: Length,
     "primary-font-weight"?: FontWeight,
-    "primary-text-color"?: Color,
+    "primary-color"?: Color,
     "background-color"?: Color,
     "padding"?: Dimensions,
 };
@@ -44,9 +44,9 @@ export const DEFAULT_DOCUMENT_THEME: Theme = {
     "primary-font-family": "Helvetica, Arial, sans-serif",
     "primary-font-size": {"pt": 12},
     "primary-font-weight": "normal",
-    "primary-text-color": [255, 255, 255],
-    "background-color": [0, 0, 0],
-    "padding": [{"px": 16}, {"px": 16}, {"px": 8}, {"px": 8}],
+    "primary-color": [255, 255, 255],
+    "background-color": [41, 41, 41],
+    "padding": [{"px": 14}, {"px": 14}, {"px": 16}, {"px": 16}],
 };
 
 export const THEME_KEYS = Object.keys(DEFAULT_DOCUMENT_THEME);

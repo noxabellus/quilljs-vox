@@ -1,28 +1,28 @@
 import styled, { css } from "styled-components";
 
-import { ReactElement, useEffect, useRef, useState } from "react";
+import { ReactElement, useEffect, useLayoutEffect,  useRef, useState } from "react";
 import { forceRef } from "../../support/nullable";
-import baseStyles from "./base-styles";
+import BaseStyles from "./base-styles";
+import Button from "./button";
 
 type DropdownProps = {
-    selectedDefault: number;
+    disabled?: boolean;
+    selected: number;
     children: ReactElement[];
     onChanged?: (newIndex: number, oldIndex: number) => void;
     style?: React.CSSProperties;
 };
 
-const Primary = styled.div`
-    ${baseStyles}
-    cursor: pointer;
-    display: inline-block;
-    padding: 5px;
-`;
-
 const PopOut = styled.nav<{$position: {left: string, top: string}}>`
-    ${baseStyles}
+    ${BaseStyles.primary}
+    ${BaseStyles.onActivate.shadow}
+    ${BaseStyles.onActivate.border}
+
     display: inline-block;
     list-style: none;
     position: absolute;
+    z-index: 1000;
+    padding: 0;
 
     ${({$position: {left, top}}) =>
         css`
@@ -33,22 +33,40 @@ const PopOut = styled.nav<{$position: {left: string, top: string}}>`
 `;
 
 const Choice = styled.div`
+    ${BaseStyles.onActivate.stroke}
+
     cursor: pointer;
     padding: 5px;
 `;
 
-export default function Dropdown({selectedDefault, children, onChanged, style}: DropdownProps) {
+function DropdownImpl({disabled, selected, children, onChanged, style}: DropdownProps) {
     const [open, setOpen] = useState(false);
-    const [selected, setSelected] = useState(selectedDefault);
+    const disabledRef = useRef(disabled);
+    const selectedRef = useRef(selected);
+    const onChangedRef = useRef(onChanged);
     const [position, setPosition] = useState({left: "0px", top: "0px"});
 
+    const primaryRef = useRef<HTMLButtonElement>(null);
     const popOutRef = useRef<HTMLDivElement>(null);
-    const primaryRef = useRef<HTMLDivElement>(null);
 
     const clicker = (i: number) => () => {
         setOpen(false);
-        setSelected(i);
-        if (onChanged && i != selected) onChanged(i, selected);
+        const last = selectedRef.current;
+        selectedRef.current = i;
+        if (onChangedRef.current && i != last) onChangedRef.current(i, last);
+    };
+
+    useLayoutEffect(() => {
+        disabledRef.current = disabled;
+        selectedRef.current = selected;
+        onChangedRef.current = onChanged;
+    });
+
+    const handleOpen = () => {
+        if (disabledRef.current) return;
+        const rect = forceRef(primaryRef).getBoundingClientRect();
+        setPosition({left: `${rect.left}px`, top: `${rect.top}px`});
+        setOpen(true);
     };
 
     useEffect(() => {
@@ -64,29 +82,32 @@ export default function Dropdown({selectedDefault, children, onChanged, style}: 
         return () => document.removeEventListener("click", handler);
     }, [primaryRef, popOutRef]);
 
-    useEffect(() => {
-        const rect = forceRef(primaryRef).getBoundingClientRect();
-        setPosition({left: `${rect.left}px`, top: `${rect.top}px`});
-    }, [primaryRef]);
-
     return <>
-        <Primary
+        <Button
+            disabled={disabledRef.current}
             ref={primaryRef}
-            onClick={() => setOpen(true)}
+            onClick={handleOpen}
             style={style}
         >
-            {children[selected]}
-        </Primary>
+            {children[selectedRef.current]}
+        </Button>
 
         {open && <PopOut ref={popOutRef} $position={position} style={{...style, margin: 0}}>
             {children.map((ch, i) =>
                 <Choice key={i}
                     onClick={clicker(i)}
-                    className={selected == i? "selected" : ""}
+                    className={selectedRef.current == i? "selected" : ""}
                 >
                     {ch}
                 </Choice>
             )}
         </PopOut>}
     </>;
+}
+
+export default function Dropdown({disabled, selected, children, ...props}: DropdownProps) {
+    // FIXME: this is a hack to make the selection update trigger on the same frame
+    return <DropdownImpl key={selected.toString()+(disabled || false).toString()} disabled={disabled} selected={selected} {...props}>
+        {children}
+    </DropdownImpl>;
 }
