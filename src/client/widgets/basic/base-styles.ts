@@ -27,9 +27,7 @@ const primary = css`
 
     &:disabled {
         cursor: not-allowed;
-        color: rgb(var(--disabled-color));
-        stroke: rgb(var(--disabled-color));
-        border-color: rgb(var(--disabled-color));
+        opacity: 0.5;
     }
 `;
 

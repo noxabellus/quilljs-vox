@@ -6,7 +6,6 @@
     --mono-family: 'Roboto Mono', monospace;
     --tool-font-size: 10pt;
     --primary-color: 245, 245, 245;
-    --disabled-color: 150, 150, 150;
     --accent-color: 223, 163, 252;
     --vox-color: var(--accent-color);
     --element-color: 60, 57, 75;
@@ -60,4 +59,13 @@ html, body {
     height: 100%;
     overflow: scroll;
     scrollbar-width: none;
+}
+
+#app-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+    align-items: stretch;
+    background-color: rgb(var(--background-color));
 }

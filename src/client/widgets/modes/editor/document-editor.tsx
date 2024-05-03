@@ -22,8 +22,8 @@ const Editor = styled.div`
 
     & .ql-container {
         border: 1px solid rgba(var(--frame-border-color), var(--frame-border-opacity));
-        border-top: none;
-        margin: auto;
+        border-radius: 5px;
+        margin: 5px auto;
         width: min-content;
         height: min-content;
         padding: var(--frame-padding);

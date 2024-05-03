@@ -38,6 +38,7 @@ function setWindowTitle (body: {dirty: boolean, title: string | null, filePath: 
     }
 }
 
+
 export default function App () {
     const documentRef = useRef(null);
     const [context, dispatch] = useReducer(reducer, {
@@ -52,6 +53,7 @@ export default function App () {
         settings: null
     });
 
+
     function reducer (state: AppContext, action: AppStateAction): AppContext {
         let out: AppContext;
 
@@ -65,7 +67,7 @@ export default function App () {
             switch (action.type) {
                 case "set-mode": {
                     if (action.value === null) {
-                        switch (state.data) {
+                        switch (state.data.document.current) {
                             case null:
                                 out = { ...state, mode: "splash" };
                                 break;
@@ -172,6 +174,7 @@ export default function App () {
             modal = <AppSettings />;
             break;
     }
+
 
     useLayoutEffect(() => {
         async function handler (exit: () => void) {
