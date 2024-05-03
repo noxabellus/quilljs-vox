@@ -5,7 +5,7 @@ export type FullTheme = {
     "border-size": Length,
     "border-color": Color,
     "border-opacity": number,
-    "border-radius": Length,
+    "border-radius": Dimensions,
     "primary-font-family": string,
     "primary-font-size": Length,
     "primary-font-weight": FontWeight,
@@ -108,13 +108,13 @@ export const DEFAULT_DOCUMENT_THEME: FullTheme = {
     "border-size": {"px": 1},
     "border-color": [255, 255, 255],
     "border-opacity": 0.2,
-    "border-radius": {"px": 8},
+    "border-radius": [{"px": 8}, {"px": 8}, {"px": 8}, {"px": 8}],
     "primary-font-family": "Helvetica, Arial, sans-serif",
     "primary-font-size": {"pt": 12},
     "primary-font-weight": "normal",
     "primary-color": [255, 255, 255],
     "background-color": [41, 41, 41],
-    "padding": [{"px": 14}, {"px": 14}, {"px": 16}, {"px": 16}],
+    "padding": [{"px": 14}, {"px": 16}, {"px": 14}, {"px": 16}],
 };
 
 
@@ -132,17 +132,17 @@ export function isThemeKey (key: string): key is ThemeKey {
 
 export function applyDocumentTheme (elem: HTMLElement, theme: Theme) {
     Object.entries(theme).forEach(([key, value]) => {
-        applyDocumentProperty(elem, key as keyof Theme, value);
+        applyDocumentProperty(elem, theme, key as keyof Theme, value);
     });
 }
 
-export function applyDocumentProperty (elem: HTMLElement, key: ThemeKey, value: Theme[typeof key]) {
+export function applyDocumentProperty (elem: HTMLElement, theme: Theme, key: ThemeKey, value: Theme[typeof key]) {
     const keyFull = `--document-${key}`;
 
-    let valueString = propertyString(value);
+    let valueString = propertyString(theme, value);
 
     if (valueString === null) {
-        valueString = propertyString(DEFAULT_DOCUMENT_THEME[key]);
+        valueString = propertyString(theme, DEFAULT_DOCUMENT_THEME[key]);
     }
 
     elem.style.setProperty(keyFull, valueString);
@@ -179,16 +179,21 @@ export function propertyType<K extends ThemeKey> (value: Theme[K]): PropertyType
     }
 }
 
-export function propertyString<K extends ThemeKey> (value: Theme[K]): string | null {
+export function propertyString<K extends ThemeKey> (theme: Theme, value: Theme[K]): string | null {
     switch (propertyType(value)) {
         case "string": return value as string;
         case "number": return `${value}`;
-        case "color": return (value as Color).map(propertyString).join(", ");
-        case "dimensions": return (value as Dimensions).map(propertyString).join(" ");
+        case "color": return (value as Color).map(x => propertyString(theme, x)).join(", ");
+        case "dimensions": return (value as Dimensions).map(x => propertyString(theme, x)).join(" ");
         case "length": {
             // safety: propertyType already validated that this is not undefined
             const [unit, val] = Object.entries(unsafeForceVal(value))[0];
-            return `${val}${unit}`;
+            if (unit != "rem") {
+                return `${val}${unit}`;
+            } else {
+                const px = lengthToPx(theme, unit, val);
+                return `${px}px`;
+            }
         }
         default: return null;
     }

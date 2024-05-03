@@ -6,6 +6,7 @@ import { Color, Dimensions, Length, THEME_UNITS, Theme, lengthUnit, lengthConver
 import Dropdown from "../../basic/dropdown";
 import Input from "../../basic/input";
 import styled from "styled-components";
+import { parseFloatSafe, parseIntSafe } from "../../../support/number";
 
 
 const Label = styled.label`
@@ -33,6 +34,8 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
 
     const property = theme[fieldName];
 
+    const numToFixed = (num: number) => Math.round(num * 1e2) / 1e2;
+
     switch (propertyType(property)) {
         case "length": {
             const prop = property as Length;
@@ -41,7 +44,7 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
 
             const changeUnit = (i: number) => {
                 const newUnit = THEME_UNITS[i];
-                const converted = lengthConvert(theme, value, unit, newUnit);
+                const converted = numToFixed(lengthConvert(theme, value, unit, newUnit));
 
                 appDispatch({
                     type: "set-doc-x",
@@ -57,13 +60,14 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
 
             return <div>
                 <Input
+                    step="0.01"
                     min="-9999"
                     max="9999"
                     name={fieldName}
                     type="number"
-                    value={value.toFixed(2)}
+                    value={value}
                     onChange={e => {
-                        const value = parseFloat(e.target.value);
+                        const value = parseFloatSafe(e.target.value);
                         appDispatch({
                             type: "set-doc-x",
                             value: {
@@ -96,7 +100,7 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
 
                     const changeUnit = (i: number) => {
                         const newUnit = THEME_UNITS[i];
-                        const converted = lengthConvert(theme, value, unit, newUnit);
+                        const converted = numToFixed(lengthConvert(theme, value, unit, newUnit));
 
                         const newDims: Dimensions = [...dims];
                         newDims[dimIndex] = { [newUnit]: converted } as Length;
@@ -117,13 +121,14 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
                         {dimNames[dimIndex]}
                         <div>
                             <Input
+                                step="0.01"
                                 min="-9999"
                                 max="9999"
                                 name={`${fieldName}${dimIndex? "-" + dimNames[dimIndex] : ""}`}
                                 type="number"
-                                value={value.toFixed(2)}
+                                value={value}
                                 onChange={e => {
-                                    const value = parseFloat(e.target.value);
+                                    const value = parseFloatSafe(e.target.value);
                                     const newDims: Dimensions = [...dims];
                                     newDims[dimIndex] = { [unit]: value } as Length;
                                     appDispatch({
@@ -159,13 +164,14 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
                     return <Label key={compIndex}>
                         {compNames[compIndex]}
                         <Input
+                            step="1"
                             min="0"
                             max="255"
                             name={`${fieldName}${compIndex? "-" + compNames[compIndex] : ""}`}
                             type="number"
                             value={comp}
                             onChange={e => {
-                                const value = parseFloat(e.target.value);
+                                const value = parseIntSafe(e.target.value);
                                 const newComps = [...comps] as Color;
                                 newComps[compIndex] = value;
                                 appDispatch({
@@ -214,13 +220,14 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
 
             return <div>
                 <Input
+                    step="0.01"
                     min="-9999"
                     max="9999"
                     name={fieldName}
                     type="number"
                     value={value}
                     onChange={e => {
-                        const newValue = parseFloat(e.target.value);
+                        const newValue = parseFloatSafe(e.target.value);
                         appDispatch({
                             type: "set-doc-x",
                             value: {

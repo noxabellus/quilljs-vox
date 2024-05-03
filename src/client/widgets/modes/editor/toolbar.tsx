@@ -40,7 +40,7 @@ const EditorToolSet = styled(ToolSet)<{["$ed-width"]: number}>`
 
     @media (min-width: ${p => p["$ed-width"] + (5 * 2)}px) {
         & {
-            width: calc(var(--document-width) + (var(--frame-padding) * 2) + (5px * 2));
+            width: calc(${p => p["$ed-width"]}px + (5px * 2));
             justify-content: center;
             border: 1px solid rgb(var(--accent-color));
             border-radius: 5px;

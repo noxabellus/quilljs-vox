@@ -6,6 +6,7 @@ import Quill from "quill";
 import { forceRef } from "../../../support/nullable";
 import EditorState from "./state";
 import AppState from "../../app/state";
+import { applyDocumentTheme } from "../../../support/document-theme";
 
 export type QuillEditorProps = {
     defaultValue?: string;
@@ -76,6 +77,23 @@ const DocumentEditor = forwardRef(
             }
         }, [disabled, defaultValue]);
 
+        useLayoutEffect(() => {
+            if (!ref.current) return;
+            const q = ref.current;
+
+            console.log("applying document theme...");
+
+            const doc = appContext.data.document.current;
+            if (!doc) throw "No document found!";
+
+            applyDocumentTheme(q.container, doc.theme);
+
+            setTimeout(() => editorDispatch({
+                type: "post-width",
+                value: q.container.offsetWidth,
+            }));
+        }, Object.values(appContext.data.document.current?.theme || {}));
+
         useEffect(() => {
             console.log("setting up quill...");
 
@@ -95,10 +113,10 @@ const DocumentEditor = forwardRef(
 
             ref.current = quill;
 
-            editorDispatch({
+            setTimeout(() => editorDispatch({
                 type: "post-width",
                 value: quill.container.offsetWidth,
-            });
+            }));
 
             quill.on("text-change", (delta, oldContent) => {
                 // FIXME: this is probably a terrible way to avoid the warning

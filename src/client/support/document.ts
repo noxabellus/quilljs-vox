@@ -63,6 +63,7 @@ export class Document {
     linkEditor (editor: Quill) {
         editor.setContents(this.delta);
         loadHistoryStack(this.history, editor);
+        applyDocumentTheme(editor.container, this.theme);
     }
 
     copyEditorDelta (delta: Delta) {
