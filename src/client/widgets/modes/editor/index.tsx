@@ -6,6 +6,7 @@ import { EditorStateAction, DEFAULT_EDITOR_CONTEXT, EditorContext } from "./type
 import DocumentEditor from "./document-editor";
 import EditorToolbar from "./toolbar";
 import AppState from "../../app/state";
+import DocumentSettings from "./document-settings";
 
 
 export default function Editor () {
@@ -91,5 +92,6 @@ export default function Editor () {
     return <EditorState context={editorContext} dispatch={editorDispatch}>
         <EditorToolbar/>
         <DocumentEditor ref={quillRef} disabled={appContext.lockIO}/>
+        {appContext.mode == "doc-settings" && <DocumentSettings/>}
     </EditorState>;
 };

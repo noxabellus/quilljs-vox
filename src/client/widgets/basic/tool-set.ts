@@ -6,6 +6,7 @@ export default styled.nav`
     display: flex;
     padding: 5px;
     width: max-content;
+    flex-shrink: 0;
     flex-direction: row;
     justify-content: center;
     align-items: stretch;

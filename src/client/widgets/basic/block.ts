@@ -9,15 +9,15 @@ export default styled.div<{$minWidth?: string}>`
     padding: 5px;
     color: rgb(var(--primary-color));
     font-family: var(--sans-family);
-    text-align: center;
 
     & h1 {
+        text-align: center;
         font-size: 1.5em;
         text-decoration-line: underline;
         margin: 5px;
     }
 
-    ${({$minWidth}) => css`
+    /* ${({$minWidth}) => css`
         width: ${$minWidth || "640px"};
         min-height: ${$minWidth || "640px"};
         @media (max-width: ${$minWidth || "640px"}) {
@@ -25,5 +25,5 @@ export default styled.div<{$minWidth?: string}>`
                 width: 100vw;
             }
         }
-    `}
+    `} */
 `;

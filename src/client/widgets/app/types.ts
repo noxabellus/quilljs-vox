@@ -7,13 +7,13 @@ import History from "quill/modules/history";
 import { MutableRefObject } from "react";
 
 
-export type AppMode = "splash" | "settings" | "editor";
+export type AppMode = "splash" | "settings" | "editor" | "doc-settings";
 
 export type AppModeTitles = {
     [K in AppMode]: string | null
 };
 
-export const APP_MODE_TITLES: AppModeTitles = { splash: null, settings: "App Settings", editor: "Editor" };
+export const APP_MODE_TITLES: AppModeTitles = { splash: null, settings: "App Settings", editor: "Editor", "doc-settings": "Document Settings"};
 
 export type AppSettings = null;
 
@@ -42,6 +42,7 @@ export type AppStateActionType
 export type AppStateDocActionType
     = "set-doc-title"
     | "set-doc-theme"
+    | "set-doc-theme-property"
     | "set-doc-quill-data"
     | "set-doc-delta"
     | "set-doc-history"
@@ -74,6 +75,7 @@ export type AppStateSetDocX = {
 export type AppStateDocAction
     = AppStateSetDocTitle
     | AppStateSetDocTheme
+    | AppStateSetDocThemeProperty
     | AppStateSetDocQuillData
     | AppStateSetDocDelta
     | AppStateSetDocHistory
@@ -112,6 +114,11 @@ export type AppStateSetDocTitle = {
 export type AppStateSetDocTheme = {
     type: "set-doc-theme";
     value: Theme;
+};
+
+export type AppStateSetDocThemeProperty = {
+    type: "set-doc-theme-property";
+    value: { key: keyof Theme, data: Theme[keyof Theme] };
 };
 
 export type AppStateSetDocQuillData = {

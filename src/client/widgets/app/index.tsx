@@ -109,6 +109,10 @@ export default function App () {
                             document.theme = action.value.value;
                             break;
 
+                        case "set-doc-theme-property":
+                            (document.theme as any)[action.value.value.key] = action.value.value.data;
+                            break;
+
                         case "set-doc-quill-data":
                             document.copyEditorState(action.value.value);
                             break;
@@ -150,6 +154,7 @@ export default function App () {
         }
 
         switch (out.mode) {
+            case "doc-settings":
             case "editor":
                 if (!out.data) throw "Cannot set editor mode without data";
                 setWindowTitle({ dirty: out.data.dirty, title: out.data.document.current?.title || null, filePath: out.data.filePath });
@@ -167,6 +172,7 @@ export default function App () {
         case "splash":
             modal = <Splash />;
             break;
+        case "doc-settings":
         case "editor":
             modal = <Editor />;
             break;

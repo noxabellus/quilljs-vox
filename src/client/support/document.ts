@@ -2,7 +2,7 @@ import Quill from "quill";
 import Delta, { AttributeMap, Op } from "quill-delta";
 import History, { StackItem } from "quill/modules/history";
 
-import { Theme, applyDocumentTheme, isThemeKey, isValidProperty } from "./document-theme";
+import { DEFAULT_DOCUMENT_THEME, Theme, applyDocumentTheme, isThemeKey, isValidProperty } from "./document-theme";
 import { loadHistoryStack } from "./history";
 import { Defined, forceVal } from "./nullable";
 
@@ -39,7 +39,7 @@ export class Document {
     constructor (title?: string) {
         this.title = title || null;
 
-        this.theme = {};
+        this.theme = {...DEFAULT_DOCUMENT_THEME};
 
         this.delta = [];
 

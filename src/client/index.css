@@ -37,6 +37,7 @@
     font-weight: inherit;
     font-style: inherit;
     text-decoration: inherit;
+    list-style: none;
 }
 
 strong {
@@ -54,6 +55,18 @@ u {
 s {
     text-decoration: line-through;
 }
+
+input[type="number"]::-webkit-inner-spin-button {
+    appearance: none;
+}
+
+label > div {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+}
+
 
 html, body {
     height: 100%;

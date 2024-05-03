@@ -13,6 +13,14 @@ export type Theme = {
     "background-color"?: Color,
     "padding"?: Dimensions,
 };
+export type ThemeProperty
+= Length
+| Color
+| FontWeight
+| Dimensions
+| number
+| string
+;
 export type ThemeKey = keyof typeof DEFAULT_DOCUMENT_THEME;
 export type PropertyType = "string" | "number" | "length" | "color" | "dimensions";
 export type Dimensions = [Length, Length, Length, Length];
@@ -50,7 +58,7 @@ export const DEFAULT_DOCUMENT_THEME: Theme = {
 };
 
 export const THEME_KEYS = Object.keys(DEFAULT_DOCUMENT_THEME);
-export const THEME_UNITS = [
+export const THEME_UNITS: LengthUnit[] = [
     "px", "pt", "em", "rem", "%", "vh", "vw",
     "vmin", "vmax", "cm", "mm", "in", "pc",
 ];
@@ -84,6 +92,10 @@ export function propertyTypeOfKey (key: ThemeKey): PropertyType {
 
 export function isValidProperty (key: ThemeKey, value: any): value is Theme[typeof key] {
     return propertyTypeOfKey(key) === propertyType(value);
+}
+
+export function lengthUnit (value: Length): LengthUnit {
+    return Object.keys(value)[0] as LengthUnit;
 }
 
 export function propertyType<K extends ThemeKey> (value: Theme[K]): PropertyType | null {

@@ -177,6 +177,21 @@ export default function Toolbar() {
         }
     };
 
+    const SaveButton = () => {
+        const cantSave = appContext.lockIO || !appContext.data.dirty;
+        const status = appContext.data.dirty ? "Unsaved changes present" : "No changes to save";
+        const saveImg = appContext.data.dirty ? unsavedImg : savedImg;
+        return <Button.Icon disabled={cantSave} title={`Save .vox (${status})`} svg={saveImg} onClick={saveFile}/>;
+    };
+
+    const openSettings = () => {
+        appDispatch({
+            type: "set-mode",
+            value: "doc-settings",
+        });
+    };
+
+
     const closeDocument = async () => {
         function exit () {
             appDispatch({
@@ -192,17 +207,9 @@ export default function Toolbar() {
         }
     };
 
-    const SaveButton = () => {
-        const cantSave = appContext.lockIO || !appContext.data.dirty;
-        const status = appContext.data.dirty ? "Unsaved changes present" : "No changes to save";
-        const saveImg = appContext.data.dirty ? unsavedImg : savedImg;
-        return <Button.Icon disabled={cantSave} title={`Save .vox (${status})`} svg={saveImg} onClick={saveFile}/>;
-    };
-
-
     return <EditorToolSet $ed-width={editorContext.width}>
         <SaveButton/>
-        <Button.Icon disabled={appContext.lockIO} title="Document Settings" svg={gearImg}/>
+        <Button.Icon disabled={appContext.lockIO} onClick={openSettings} title="Document Settings" svg={gearImg}/>
         <Button.Icon disabled={appContext.lockIO} title="Export Document" svg={exportImg}/>
         <Spacer/>
         <TextDetailsButton kind="bold"/>
