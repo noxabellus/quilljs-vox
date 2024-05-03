@@ -25,13 +25,15 @@ export type AppData = {
 };
 
 export type AppContext = {
+    lockIO: boolean;
     mode: AppMode;
     data: AppData;
     settings: AppSettings;
 };
 
 export type AppStateActionType
-    = "set-mode"
+    = "set-lock-io"
+    | "set-mode"
     | "set-data-x"
     | "set-doc-x"
     | "post-doc"
@@ -46,7 +48,8 @@ export type AppStateDocActionType
     ;
 
 export type AppStateAction
-    = AppStateSetMode
+    = AppStateSetLockIO
+    | AppStateSetMode
     | AppStateSetDataX
     | AppStateSetDocX
     | AppStatePostDoc
@@ -75,6 +78,11 @@ export type AppStateDocAction
     | AppStateSetDocDelta
     | AppStateSetDocHistory
     ;
+
+export type AppStateSetLockIO = {
+    type: "set-lock-io",
+    value: boolean;
+};
 
 export type AppStateSetMode = {
     type: "set-mode";

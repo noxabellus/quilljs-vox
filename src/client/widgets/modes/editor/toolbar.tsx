@@ -19,12 +19,15 @@ import alignJustifyImg from "../../../../../assets/align-justify.svg?raw";
 import unstyleImg from "../../../../../assets/circle-cross.svg?raw";
 import gearImg from "../../../../../assets/gear.svg?raw";
 import exportImg from "../../../../../assets/file-arrow-down.svg?raw";
+import closeImg from "../../../../../assets/xmark.svg?raw";
+
 import Spacer from "../../basic/spacer";
 import AppState from "../../app/state";
 import { saveVox, writeVox } from "../../../support/file";
 import { forceRef } from "../../../support/nullable";
 import Result from "../../../support/result";
 import remote from "../../../support/remote";
+import saveInterrupt from "../../app/save-interrupt";
 
 
 const EditorToolSet = styled(ToolSet)<{["$ed-width"]: number}>`
@@ -51,7 +54,7 @@ export default function Toolbar() {
     const appDispatch = useContext(AppState.Dispatch);
     const editorContext = useContext(EditorState.Context);
     const editorDispatch = useContext(EditorState.Dispatch);
-    const disabled = !editorContext.focused || editorContext.lockIO;
+    const disabled = !editorContext.focused || appContext.lockIO;
 
     const formatter = (prop: keyof EditorTextDetails) => (e: MouseEvent) => {
         editorDispatch({ type: `set-${prop}`, value: !editorContext[prop] });
@@ -95,7 +98,7 @@ export default function Toolbar() {
     };
 
     const saveFile = async () => {
-        editorDispatch({
+        appDispatch({
             type: "set-lock-io",
             value: true,
         });
@@ -103,7 +106,7 @@ export default function Toolbar() {
         if (appContext.data.filePath) {
             const result = await writeVox(appContext.data.filePath, forceRef(appContext.data.document));
 
-            editorDispatch({
+            appDispatch({
                 type: "set-lock-io",
                 value: false,
             });
@@ -122,7 +125,7 @@ export default function Toolbar() {
         } else {
             const result = await saveVox(forceRef(appContext.data.document));
 
-            editorDispatch({
+            appDispatch({
                 type: "set-lock-io",
                 value: false,
             });
@@ -174,8 +177,23 @@ export default function Toolbar() {
         }
     };
 
+    const closeDocument = async () => {
+        function exit () {
+            appDispatch({
+                type: "post-doc",
+                value: null,
+            });
+        }
+
+        if (appContext.data.dirty) {
+            saveInterrupt(appContext, appDispatch, exit);
+        } else {
+            exit();
+        }
+    };
+
     const SaveButton = () => {
-        const cantSave = editorContext.lockIO || !appContext.data.dirty;
+        const cantSave = appContext.lockIO || !appContext.data.dirty;
         const status = appContext.data.dirty ? "Unsaved changes present" : "No changes to save";
         const saveImg = appContext.data.dirty ? unsavedImg : savedImg;
         return <Button.Icon disabled={cantSave} title={`Save .vox (${status})`} svg={saveImg} onClick={saveFile}/>;
@@ -184,8 +202,8 @@ export default function Toolbar() {
 
     return <EditorToolSet $ed-width={editorContext.width}>
         <SaveButton/>
-        <Button.Icon disabled={editorContext.lockIO} title="Document Settings" svg={gearImg}/>
-        <Button.Icon disabled={editorContext.lockIO} title="Export Document" svg={exportImg}/>
+        <Button.Icon disabled={appContext.lockIO} title="Document Settings" svg={gearImg}/>
+        <Button.Icon disabled={appContext.lockIO} title="Export Document" svg={exportImg}/>
         <Spacer/>
         <TextDetailsButton kind="bold"/>
         <TextDetailsButton kind="italic"/>
@@ -203,5 +221,6 @@ export default function Toolbar() {
         </Dropdown>
         <Button.Icon disabled={disabled} onClick={unstyle} svg={unstyleImg}/>
         <Spacer/>
+        <Button.Icon disabled={appContext.lockIO} onClick={closeDocument} title="Close Document (return to splash screen)" svg={closeImg}/>
     </EditorToolSet>;
 }

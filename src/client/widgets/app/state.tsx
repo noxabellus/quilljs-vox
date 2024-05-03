@@ -2,6 +2,7 @@ import { Dispatch, ReactNode, createContext } from "react";
 import { AppContext, AppStateAction } from "./types";
 
 const Context = createContext<AppContext>({
+    lockIO: false,
     mode: "splash",
     data: {} as any,
     settings: null

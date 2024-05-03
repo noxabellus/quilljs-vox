@@ -9,6 +9,7 @@ import AppState from "../../app/state";
 
 export type QuillEditorProps = {
     defaultValue?: string;
+    disabled?: boolean;
 }
 
 type QuillRef = MutableRefObject<Quill | null>;
@@ -56,16 +57,24 @@ const Editor = styled.div`
 `;
 
 const DocumentEditor = forwardRef(
-    ({ defaultValue }: QuillEditorProps, ref: QuillRef) => {
+    ({ defaultValue, disabled }: QuillEditorProps, ref: QuillRef) => {
         const containerRef = useRef<HTMLDivElement>(null);
         const defaultValueRef = useRef(defaultValue);
+        const disabledRef = useRef(disabled);
         const appContext = useContext(AppState.Context);
         const appDispatch = useContext(AppState.Dispatch);
         const editorDispatch = useContext(EditorState.Dispatch);
 
         useLayoutEffect(() => {
             defaultValueRef.current = defaultValue;
-        });
+            disabledRef.current = disabled;
+
+            if (disabled) {
+                ref.current?.disable();
+            } else {
+                ref.current?.enable();
+            }
+        }, [disabled, defaultValue]);
 
         useEffect(() => {
             console.log("setting up quill...");

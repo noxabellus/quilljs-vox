@@ -1,16 +1,18 @@
-import { useReducer, useRef } from "react";
+import { useContext, useReducer, useRef } from "react";
 import Quill from "quill";
 
 import EditorState from "./state";
 import { EditorStateAction, DEFAULT_EDITOR_CONTEXT, EditorContext } from "./types";
 import DocumentEditor from "./document-editor";
 import EditorToolbar from "./toolbar";
+import AppState from "../../app/state";
 
 
 export default function Editor () {
     const quillRef = useRef<Quill>(null);
 
     const [editorContext, editorDispatch] = useReducer(reducer, { ...DEFAULT_EDITOR_CONTEXT });
+    const appContext = useContext(AppState.Context);
 
     function reducer (state: EditorContext, action: EditorStateAction): EditorContext {
         const q = quillRef.current;
@@ -44,12 +46,6 @@ export default function Editor () {
                 else q.blur();
 
                 return { ...state, focused: action.value };
-
-            case "set-lock-io":
-                if (action.value) q.disable();
-                else q.enable();
-
-                return { ...state, lockIO: action.value };
 
             case "set-width":
                 q.root.style.width = `${action.value}px`;
@@ -91,8 +87,9 @@ export default function Editor () {
         }
     }
 
+
     return <EditorState context={editorContext} dispatch={editorDispatch}>
         <EditorToolbar/>
-        <DocumentEditor ref={quillRef}/>
+        <DocumentEditor ref={quillRef} disabled={appContext.lockIO}/>
     </EditorState>;
 };
