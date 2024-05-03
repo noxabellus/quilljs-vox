@@ -60,14 +60,6 @@ input[type="number"]::-webkit-inner-spin-button {
     appearance: none;
 }
 
-label > div {
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-end;
-    align-items: center;
-}
-
-
 html, body {
     height: 100%;
     overflow: scroll;

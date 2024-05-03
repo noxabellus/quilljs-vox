@@ -92,6 +92,6 @@ export default function Editor () {
     return <EditorState context={editorContext} dispatch={editorDispatch}>
         <EditorToolbar/>
         <DocumentEditor ref={quillRef} disabled={appContext.lockIO}/>
-        {appContext.mode == "doc-settings" && <DocumentSettings/>}
+        {appContext.mode == "doc-settings" && <DocumentSettings key="doc-settings"/>}
     </EditorState>;
 };

@@ -10,19 +10,27 @@ import ThemeEditor from "./theme-editor";
 
 import backImg from "../../../../../assets/checkmark.svg?raw";
 import Center from "../../basic/center";
+import EditorState from "./state";
 
 
-const Settings = styled(Center)`
+const Settings = styled(Center)<{["$ed-width"]: number}>`
     position: absolute;
     top: 50px;
-    right: 0;
+    right: 0px;
+
+    margin-right: 10px;
+
+    @media (min-width: ${p => p["$ed-width"] + (5 * 2)}px) {
+        margin-right: 5px;
+    }
 `;
 
 
 export default function DocumentSettings () {
+    const editorState = useContext(EditorState.Context);
     const appDispatch = useContext(AppState.Dispatch);
 
-    return <Settings>
+    return <Settings $ed-width={editorState.width}>
         <ThemeEditor />
         <Button.Icon
             title="Close Document Settings"

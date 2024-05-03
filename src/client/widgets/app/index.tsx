@@ -174,7 +174,7 @@ export default function App () {
             break;
         case "doc-settings":
         case "editor":
-            modal = <Editor />;
+            modal = <Editor key={`${context.data.filePath} | ${context.data.document.current?.title}`} />;
             break;
         case "settings":
             modal = <AppSettings />;

@@ -1,10 +1,10 @@
-import { LengthUnit, Theme, applyDocumentTheme } from "./document-theme";
+import { LengthUnit, Theme } from "./document-theme";
 
-export default function convertUnit (theme: Theme, value: number, unit: LengthUnit, returnUnit?: LengthUnit): number {
-    const target = document.createElement("div");
-    target.style.visibility = "hidden";
-    document.body.appendChild(target);
-    applyDocumentTheme(target, theme);
+export default function convertUnit (_theme: Theme, value: number, unit: LengthUnit, returnUnit?: LengthUnit): number {
+    const target = document.body;
+    // target.style.visibility = "hidden";
+    // document.body.appendChild(target);
+    // applyDocumentTheme(target, theme);
 
     const temp = document.createElement("div");
     temp.style.overflow = "hidden";
@@ -21,7 +21,6 @@ export default function convertUnit (theme: Theme, value: number, unit: LengthUn
     const result = value * (newFactor * baseFactor);
 
     target.removeChild(temp);
-    document.body.removeChild(target);
 
     return result;
 }

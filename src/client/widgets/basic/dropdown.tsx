@@ -20,7 +20,7 @@ const PopOut = styled.nav<{$position: {left: string, top: string}}>`
 
     display: inline-block;
     list-style: none;
-    position: absolute;
+    position: fixed;
     z-index: 1000;
     padding: 0;
 

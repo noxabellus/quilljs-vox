@@ -1,49 +1,109 @@
 import { unsafeForceVal } from "./nullable";
 
-export type Theme = {
-    "width"?: Length,
-    "border-size"?: Length,
-    "border-color"?: Color,
-    "border-opacity"?: number,
-    "border-radius"?: Length,
-    "primary-font-family"?: string,
-    "primary-font-size"?: Length,
-    "primary-font-weight"?: FontWeight,
-    "primary-color"?: Color,
-    "background-color"?: Color,
-    "padding"?: Dimensions,
+export type FullTheme = {
+    "width": Length,
+    "border-size": Length,
+    "border-color": Color,
+    "border-opacity": number,
+    "border-radius": Length,
+    "primary-font-family": string,
+    "primary-font-size": Length,
+    "primary-font-weight": FontWeight,
+    "primary-color": Color,
+    "background-color": Color,
+    "padding": Dimensions,
 };
+
+export type Theme = Partial<FullTheme>;
+
 export type ThemeProperty
-= Length
-| Color
-| FontWeight
-| Dimensions
-| number
-| string
-;
-export type ThemeKey = keyof typeof DEFAULT_DOCUMENT_THEME;
+    = Length
+    | Color
+    | FontWeight
+    | Dimensions
+    | number
+    | string
+    ;
+export type ThemeKey = keyof FullTheme;
 export type PropertyType = "string" | "number" | "length" | "color" | "dimensions";
 export type Dimensions = [Length, Length, Length, Length];
 export type FontWeight = "normal" | "bold" | "bolder" | "light" | "lighter" | number;
 export type Color = [number, number, number];
-export type LengthUnit = "px" | "pt" | "em" | "rem" | "%" | "vh" | "vw" | "vmin" | "vmax" | "cm" | "mm" | "in" | "pc";
+export type LengthUnit = "px" | "pt" | "rem" | "cm" | "mm" | "in" | "pc";
 export type Length
     = {"px":number}
     | {"pt":number}
     | {"em":number}
-    | {"rem":number}
-    | {"%":number}
-    | {"vh":number}
-    | {"vw":number}
-    | {"vmin":number}
-    | {"vmax":number}
     | {"cm":number}
     | {"mm":number}
     | {"in":number}
     | {"pc":number}
     ;
 
-export const DEFAULT_DOCUMENT_THEME: Theme = {
+
+
+export const LengthUnitRatios = {
+    px: 1,
+    pt: 1.33,
+    pc: 16,
+    in: 96,
+    mm: 3.78,
+    cm: 37.8,
+};
+
+export function lengthConvert (theme: Theme, value: number, unit: LengthUnit, returnUnit: LengthUnit): number {
+    const basePx = lengthToPx(theme, unit);
+    const returnPx = lengthToPx(theme, returnUnit);
+    return value * (basePx / returnPx);
+}
+
+export function lengthToPx (theme: Theme, unit: LengthUnit, value?: number): number;
+export function lengthToPx (theme: Theme, unit: Length): number;
+
+export function lengthToPx (theme: Theme, ...args: any[]): number {
+    let x: [LengthUnit, number];
+    if (args.length == 1) {
+        if (typeof args[0] == "string") {
+            x = [args[0] as LengthUnit, 1];
+        } else {
+            x = Object.entries(args[0])[0] as any;
+        }
+    } else {
+        x = args as any;
+    }
+
+    const [unit, val] = x;
+
+    if (unit == "px") return val;
+
+    const ratio = (LengthUnitRatios as any)[unit] as number | undefined;
+    if (ratio) {
+        return val * ratio;
+    } else {
+        const base = theme["primary-font-size"];
+
+        let basePx;
+
+        if (base) {
+            basePx = lengthToPx(DEFAULT_DOCUMENT_THEME, base);
+        } else {
+            const defaultBase = DEFAULT_DOCUMENT_THEME["primary-font-size"];
+            basePx = lengthToPx({}, defaultBase);
+        }
+
+        return val * basePx;
+    }
+}
+
+export function isRelativeUnit (unit: LengthUnit): boolean {
+    return unit == "rem";
+}
+
+export function isRelativeLength (length: Length): boolean {
+    return isRelativeUnit(Object.keys(length)[0] as LengthUnit);
+}
+
+export const DEFAULT_DOCUMENT_THEME: FullTheme = {
     "width": {"px": 960},
     "border-size": {"px": 1},
     "border-color": [255, 255, 255],
@@ -57,10 +117,13 @@ export const DEFAULT_DOCUMENT_THEME: Theme = {
     "padding": [{"px": 14}, {"px": 14}, {"px": 16}, {"px": 16}],
 };
 
+
+if (lengthUnit(DEFAULT_DOCUMENT_THEME["primary-font-size"] as Length) == "rem")
+    throw "Primary font size of default theme cannot be a relative unit";
+
 export const THEME_KEYS = Object.keys(DEFAULT_DOCUMENT_THEME);
-export const THEME_UNITS: LengthUnit[] = [
-    "px", "pt", "em", "rem", "%", "vh", "vw",
-    "vmin", "vmax", "cm", "mm", "in", "pc",
+export const THEME_UNITS: [LengthUnit, LengthUnit, LengthUnit, LengthUnit, LengthUnit, LengthUnit, LengthUnit] = [
+    "px", "pt", "rem", "cm", "mm", "in", "pc",
 ];
 
 export function isThemeKey (key: string): key is ThemeKey {

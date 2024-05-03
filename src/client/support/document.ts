@@ -263,10 +263,10 @@ export function parseDeltaOp (block: Block): Op {
 }
 
 export function parseInsert (arg: Defined, blocks: Block[]): Op {
-    if (typeof arg !== "string")
-        throw `insert should have string arg ${arg}`;
+    // if (typeof arg !== "string")
+    //     throw `insert should have string arg ${arg}`;
 
-    return {insert: arg, attributes: parseAttributes(blocks)};
+    return {insert: arg as string | Record<string, unknown>, attributes: parseAttributes(blocks)};
 }
 
 export function parseDelete (arg: Defined, blocks: Block[]): Op {
