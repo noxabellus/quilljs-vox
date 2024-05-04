@@ -13,17 +13,20 @@ class ClipboardWrap extends Clipboard {
         e.preventDefault();
         e.stopPropagation();
 
-        const clipboard = e.clipboardData;
+        const clipboard = e.clipboardData?.getData("text/html");
         if (!clipboard) return;
 
         const tmp = document.createElement("div");
-        tmp.innerHTML = clipboard.getData("text/html");
+        tmp.innerHTML = clipboard;
 
         const images = tmp.querySelectorAll("img");
 
         for (const img of images) {
             const src = img.src;
-            if (!src) continue;
+            if (src.startsWith("data:")) {
+                console.log("skipping img already in data format");
+                continue;
+            }
 
             const result = await toDataURL(src);
             if (Result.isSuccess(result)) {
@@ -33,7 +36,20 @@ class ClipboardWrap extends Clipboard {
             }
         }
 
-        this.dangerouslyPasteHTML(tmp.innerHTML);
+        const selection = this.quill.getSelection();
+
+        if (!selection) return;
+
+        const paste = this.convertHTML(tmp.innerHTML);
+
+        const delta = [
+            {retain: selection.index},
+            {delete: selection.length},
+            ...paste.ops,
+        ];
+
+        this.quill.updateContents(delta, "user");
+        this.quill.setSelection(selection.index + paste.transformPosition(0), 0, "silent");
     }
 }
 
