@@ -6,12 +6,42 @@ import { html_beautify } from "js-beautify";
 
 export type SectionFn = (sectionIndex: number, section: Section, options: Options) => string;
 export type DocumentTemplate = (title: string, theme: FullTheme, content: string) => string;
-export type LineTemplate = (lineNumber: number, style: string[], content: string[]) => string;
-export type AttributeProcessor = (node: Node, options: Options) => void;
-export type ElemTemplate = (nodeData: NodeData) => string;
-export type Node = { data: NodeData, template: ElemTemplate | null };
-export type NodeData = { style: string } & AttributeMap;
-export type Section = { ops: Op[], attributes: AttributeMap};
+export type EmptyTemplate = (sectionIndex: number, style: string, attributes: AttributeMap) => string;
+export type SectionTemplate = (sectionIndex: number, style: string, content: string, attributes: AttributeMap) => string;
+export type EmbedTemplate = (sectionIndex: number, style: string, embed: Embed, attributes: AttributeMap) => string;
+export type AttributeProcessor = (attributes: AttributeMap, options: Options) => ElemTemplate;
+export type ElemTemplate = (content: string, attributes: AttributeMap) => string;
+
+export type Attributes = {
+    attributes: AttributeMap,
+}
+
+export type Section
+    = OpSection
+    | EmbedSection
+    ;
+
+export type OpSection = OpSectionContent & Attributes;
+export type EmbedSection = EmbedSectionContent & Attributes;
+
+export type SectionContent
+    = OpSectionContent
+    | EmbedSectionContent
+    ;
+
+export type OpSectionContent = {
+    ops: Op[],
+};
+
+export type EmbedSectionContent
+    = { embed: Embed }
+    ;
+
+export type Embed
+    = ImageEmbed
+    ;
+
+export type ImageEmbed= { "image": string };
 
 export type Format = {
     section: SectionFn,
@@ -22,16 +52,27 @@ export type Format = {
 
 export type Options = {
     documentTemplate: DocumentTemplate,
-    lineTemplate: LineTemplate,
-    linkTemplate: ElemTemplate,
-    styleTemplates: StyleTemplates,
-    embedTemplates: Partial<Record<number, ElemTemplate>>,
+    sectionTemplates: SectionTemplates,
+    inlineTemplates: InlineTemplates,
     attributeProcessors: Partial<Record<string, AttributeProcessor>>,
     postProcess: "minify" | "beautify" | null,
 };
 
-export type StyleTemplates = {
+export type SectionTemplates = {
+    empty: EmptyTemplate,
+    line: SectionTemplate,
+    header: SectionTemplate,
+    embeds: EmbedTemplates,
+};
+
+export type EmbedTemplates = {
+    image: EmbedTemplate,
+};
+
+export type InlineTemplates = {
+    link: ElemTemplate,
     color: ElemTemplate,
+    background: ElemTemplate,
     bold: ElemTemplate,
     italic: ElemTemplate,
     underline: ElemTemplate,
@@ -40,15 +81,22 @@ export type StyleTemplates = {
 };
 
 
+export function isOpSection (section: Section): section is OpSection {
+    return "ops" in section;
+}
+
 
 
 export default function convertDocument (doc: Document, format: Format, userOptions?: Partial<Options>): string {
 	const options: Options = {
         documentTemplate: userOptions?.documentTemplate || format.defaultOptions.documentTemplate,
-        lineTemplate: userOptions?.lineTemplate || format.defaultOptions.lineTemplate,
-        linkTemplate: userOptions?.linkTemplate || format.defaultOptions.linkTemplate,
-        styleTemplates: { ...format.defaultOptions.styleTemplates, ...(userOptions?.styleTemplates || {}) },
-        embedTemplates: { ...format.defaultOptions.embedTemplates, ...(userOptions?.embedTemplates || {}) },
+        sectionTemplates: {
+            ...format.defaultOptions.sectionTemplates,
+            ...(userOptions?.sectionTemplates || {}),
+            embeds: { ...format.defaultOptions.sectionTemplates.embeds, ...(userOptions?.sectionTemplates?.embeds || {}) },
+        },
+
+        inlineTemplates: { ...format.defaultOptions.inlineTemplates, ...(userOptions?.inlineTemplates || {}) },
         attributeProcessors: { ...format.defaultOptions.attributeProcessors, ...(userOptions?.attributeProcessors || {}) },
         postProcess: userOptions?.postProcess || format.defaultOptions.postProcess,
     };
@@ -57,47 +105,76 @@ export default function convertDocument (doc: Document, format: Format, userOpti
 
     let currentSection: Section;
 
-	const newSection = () => {
+	const newOpSection = () => {
         currentSection = {ops: [], attributes: {}};
 		sections.push(currentSection);
 	};
 
-	newSection();
+	newOpSection();
 
 	doc.delta.forEach((op: Op) => {
 		if (op.insert === "\n") {
-            // handle eol
+            // handle section endings
 			currentSection.attributes = op.attributes || {};
-			newSection();
-		} else if (typeof op.insert === "number") {
-            // handle embeds
-			if (currentSection.ops.length) {
-				newSection();
-			}
+			newOpSection();
+		} else if (typeof op.insert === "object") {
+            let embedSection: EmbedSection;
 
-			currentSection.ops.push(op);
+            const keys = Object.keys(op.insert);
+            if (keys.length !== 1) {
+                console.warn("unexpected embed object", op);
+                throw "unexpected embed object";
+            }
 
-			newSection();
+            switch (keys[0]) {
+                case "image":
+                    if (typeof op.insert.image !== "string") {
+                        console.warn("unexpected image object content", op.insert.image);
+                        throw "unexpected image object content";
+                    }
+                    embedSection = {
+                        embed: op.insert as ImageEmbed,
+                        attributes: op.attributes || {},
+                    };
+                break;
+
+                default:
+                    console.warn("unexpected embed object", op);
+                    throw "unexpected embed object";
+            }
+
+            sections.push(embedSection);
+
+            currentSection = embedSection;
 		} else if (typeof op.insert == "string" && op.insert.indexOf("\n") >= 0) {
             // break up interior new lines into separate section objs
 			const chunks = op.insert.split("\n");
 
-			chunks.forEach((chunk: any, index: any): void => {
-                currentSection.ops.push({
-                    insert: chunk, attributes: op.attributes
+			chunks.forEach((chunk: string, index: number): void => {
+                if (!isOpSection(currentSection)) {
+                    newOpSection();
+                }
+
+                (currentSection as OpSection).ops.push({
+                    insert: chunk,
+                    attributes: op.attributes,
                 });
 
-                if (chunks.length - 1 !== index) newSection();
+                if (chunks.length - 1 !== index) newOpSection();
             });
 		} else {
             // inline text segment
-			currentSection.ops.push(op);
+            if (!isOpSection(currentSection)) {
+                newOpSection();
+            }
+
+			(currentSection as OpSection).ops.push(op);
 		}
 	});
 
     const interiorHtml = sections
-        .map((line, index) =>
-            format.section(index, line, options))
+        .map((section, index) =>
+            format.section(index, section, options))
         .join("\n");
 
 	const fullHtml = options.documentTemplate(doc.title || "untitled", makeFullTheme(doc.theme), interiorHtml);
@@ -113,14 +190,26 @@ export default function convertDocument (doc: Document, format: Format, userOpti
 }
 
 export const HtmlFormat: Format = {
-    section: (sectionIndex, section, options) => {
-        const attrs = Object.keys(section.attributes || { });
+    section: (sectionIndex, section: Section, options) => {
+        const styleInner = sectionAttributesToCss(section.attributes);
+        const style = styleInner.length > 0 ? ` style="${styleInner}"` : "";
 
-        return options.lineTemplate(
-            sectionIndex,
-            attrs.map(attr => attributeToCss(section, attr)),
-            section.ops.map(op => lineToContent(op, options))
-        );
+        if (isOpSection(section)) {
+            const content = section.ops.map(op => opToContent(op, options)).join("");
+
+            if (content === "") {
+                return options.sectionTemplates.empty(sectionIndex, style, section.attributes);
+            } else if (section.attributes.header) {
+                return options.sectionTemplates.header(sectionIndex, style, content, section.attributes);
+            } else {
+                return options.sectionTemplates.line(sectionIndex, style, content, section.attributes);
+            }
+        } else {
+            const embedType = Object.keys(section.embed)[0] as keyof EmbedTemplates;
+            const embedTemplate = options.sectionTemplates.embeds[embedType];
+
+            return embedTemplate(sectionIndex, style, section.embed, section.attributes);
+        }
     },
 
     minifier: _ => { throw "not implemented yet"; },
@@ -161,29 +250,52 @@ export const HtmlFormat: Format = {
             `;
         },
 
-        lineTemplate: (_lineNumber, style, content) => {
-            let contentStr = content.join("");
-            if (contentStr.length === 0) return "<br/>";
+        sectionTemplates: {
+            empty: (_sectionNumber, _style) => "<br/>",
 
-            contentStr = contentStr.replace(/^[ ]+/, w => "&nbsp;".repeat(w.length));
+            line: (_sectionNumber, style, content) => {
+                if (content.length === 0) return "<br/>";
 
-            const styleStr = style.length > 0 ? ` style="${style.join("")}"` : "";
-            return `<p${styleStr}>${contentStr}</p>`;
+                content = content.replace(/^[ ]+/, w => "&nbsp;".repeat(w.length));
+
+                return `<p${style}>${content}</p>`;
+            },
+
+            header: (_sectionNumber, style, content, attrs) => `<h${attrs.header}${style}>${content}</h${attrs.header}>`,
+
+            embeds: {
+                image: (_sectionNumber, _style, embed, attrs) => {
+                    let size = "";
+                    if (attrs.width) size += ` width=${attrs.width}`;
+                    if (attrs.height) size += ` height=${attrs.height}`;
+
+                    let style = "";
+                    switch (attrs.align) {
+                        case "center":
+                            style += " display: block; margin-left: auto; margin-right: auto;";
+                        break;
+                        case "right":
+                            style += " float: right;";
+                        break;
+                        case "left":
+                            style += " float: left;";
+                        break;
+                    }
+                    if (style.length > 0) style = ` style="${style}"`;
+                    return `<img src="${embed.image}" alt="${attrs.alt}"${size}${style}/>`;
+                },
+            }
         },
 
-        linkTemplate: nodeData => `<a href="${nodeData.link}" style="${nodeData.style}">{content}</a>`,
-
-        styleTemplates: {
-            color: nodeData => `<span style="color:${nodeData.color}">${nodeData.content}</span>`,
-            bold: nodeData => `<b>${nodeData.content}</b>`,
-            italic: nodeData => `<i>${nodeData.content}</i>`,
-            underline: nodeData => `<u>${nodeData.content}</u>`,
-            strike: nodeData => `<s>${nodeData.content}</s>`,
-            font: nodeData => `<span style="font-family:${nodeData.font}">${nodeData.content}</span>`
-        },
-
-        embedTemplates: {
-            1: (attrs) => `<img src="${attrs.image}" alt="${attrs.alt}" />`,
+        inlineTemplates: {
+            link: (content, attrs) => `<a href="${attrs.link}">${content}</a>`,
+            background: (content, attrs) => `<span style="background:${attrs.color}">${content}</span>`,
+            color: (content, attrs) => `<span style="color:${attrs.color}">${content}</span>`,
+            bold: content => `<b>${content}</b>`,
+            italic: content => `<i>${content}</i>`,
+            underline: content => `<u>${content}</u>`,
+            strike: content => `<s>${content}</s>`,
+            font: (content, attrs) => `<span style="font-family:${attrs.font}">${content}</span>`
         },
 
         attributeProcessors: {},
@@ -193,74 +305,67 @@ export const HtmlFormat: Format = {
 };
 
 
-function lineToContent (op: Op, options: Options): string {
-    if (typeof op.insert === "number") {
-        const embedTemplate = options.embedTemplates[op.insert];
-        if (!embedTemplate) throw `missing template for embed id ${op.insert}`;
-
-        return embedTemplate({...(op.attributes || {}), style: ""});
-    }
-
-    if (typeof op.insert !== "string")
+function opToContent (op: Op, options: Options): string {
+    if (typeof op.insert !== "string") {
+        console.warn("unexpected op configuration", op);
         throw "unexpected op configuration";
+    }
 
     if (!op.attributes) {
         return op.insert;
     }
 
+    // FIXME: move embed dispatch HERE
+
     return innerHtml(op.insert, op.attributes, options);
 }
 
-function attributeToCss (section: Section, attr: any): string {
-    const value = section.attributes[attr];
-
-    switch (attr) {
-        case "align":
-            return `text-align: ${value?.toString() || "left"};`;
-        default:
-            throw `unknown attribute ${attr}`;
-    }
+function sectionAttributesToCss (attributes: AttributeMap): string {
+    return Object.entries(attributes).map(([attr, value]) => {
+        switch (attr) {
+            case "align":
+                return `text-align: ${value?.toString() || "left"};`;
+            default:
+                return "";
+        }
+    }).join("");
 }
 
 function innerHtml (content: string, attrs: AttributeMap, options: Options): string {
     Object.keys(attrs).forEach((attr) => {
-        const node: Node = {
-            template: null,
-            data: {...attrs, content, style: ""}
-        };
+        let template: ElemTemplate | null = null;
 
         switch (attr) {
+            case "background":
             case "link":
-                node.template = options.linkTemplate;
-            break;
-
             case "color":
             case "bold":
             case "italic":
             case "underline":
             case "strike":
             case "font":
-                node.template = options.styleTemplates[attr];
+                template = options.inlineTemplates[attr];
             break;
 
             default:
                 if (options.attributeProcessors) {
                     const attributor = options.attributeProcessors[attr];
                     if (attributor) {
-                        attributor(node, options);
+                        template = attributor(attrs, options);
                     }
                 } else {
-                    console.warn("unknown attribute", attr);
+                    console.warn("unknown attribute", attr, attrs[attr]);
+                    throw `unknown attribute ${attr}`;
                 }
             break;
         }
 
-        if (!node.template) {
-            console.log("missing template for node:", node);
+        if (!template) {
+            console.log("missing template for node:", content, attrs, options);
             throw "missing node template";
         }
 
-        content = node.template(node.data);
+        content = template(content, attrs);
     });
 
     return content;

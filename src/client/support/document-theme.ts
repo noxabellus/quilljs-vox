@@ -168,7 +168,7 @@ export function themeCss (theme: FullTheme, documentSelector: string): string {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: stretch;
             background: ${"grey"/*FIXME: theme this*/};
         }
 
