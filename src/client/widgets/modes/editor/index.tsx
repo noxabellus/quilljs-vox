@@ -1,5 +1,5 @@
 import { useContext, useReducer, useRef } from "react";
-import Quill from "quill";
+import Quill from "quill/core";
 
 import EditorState from "./state";
 import { EditorStateAction, DEFAULT_EDITOR_CONTEXT, EditorContext } from "./types";

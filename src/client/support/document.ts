@@ -1,4 +1,4 @@
-import Quill from "quill";
+import Quill from "quill/core";
 import Delta, { AttributeMap, Op } from "quill-delta";
 import History, { StackItem } from "quill/modules/history";
 

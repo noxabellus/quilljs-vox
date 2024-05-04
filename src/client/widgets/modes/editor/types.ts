@@ -1,4 +1,4 @@
-import { Range } from "quill";
+import { Range } from "quill/core";
 
 
 

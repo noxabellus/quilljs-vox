@@ -2,11 +2,52 @@ import { MutableRefObject, forwardRef, useContext, useEffect, useLayoutEffect, u
 import styled from "styled-components";
 
 import Quill from "quill";
+import Clipboard from "quill/modules/clipboard";
+
+class ClipboardWrap extends Clipboard {
+    constructor (quill: Quill, options: Partial<typeof Clipboard.DEFAULTS>) {
+        super(quill, options);
+    }
+
+    async onCapturePaste(e: ClipboardEvent) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const clipboard = e.clipboardData;
+        if (!clipboard) return;
+
+        const tmp = document.createElement("div");
+        tmp.innerHTML = clipboard.getData("text/html");
+
+        const images = tmp.querySelectorAll("img");
+
+        for (const img of images) {
+            const src = img.src;
+            if (!src) continue;
+
+            const result = await toDataURL(src);
+            if (Result.isSuccess(result)) {
+                const newImg = document.createElement("img");
+                newImg.src = result.body;
+                img.replaceWith(newImg);
+            } else {
+                alert(`Failed to load image:\n${Result.problemMessage(result)}`);
+            }
+        }
+
+        this.dangerouslyPasteHTML(tmp.innerHTML);
+    }
+}
+
+Quill.register("modules/clipboard", ClipboardWrap as any, true);
+
 
 import { forceRef } from "../../../support/nullable";
 import EditorState from "./state";
 import AppState from "../../app/state";
 import { applyDocumentTheme } from "../../../support/document-theme";
+import Result from "../../../support/result";
+import { toDataURL } from "../../../support/xhr";
 
 export type QuillEditorProps = {
     defaultValue?: string;
@@ -119,18 +160,18 @@ const DocumentEditor = forwardRef(
             }));
 
             quill.on("text-change", (delta, oldContent) => {
-                // FIXME: this is probably a terrible way to avoid the warning
-                //        about the state being updated in a render function??
-                setTimeout(() => appDispatch({
-                    type: "set-doc-x",
-                    value: {
-                        type: "set-doc-quill-data",
+                setTimeout(() => {
+                    appDispatch({
+                        type: "set-doc-x",
                         value: {
-                            delta: oldContent.compose(delta),
-                            history: quill.history
+                            type: "set-doc-quill-data",
+                            value: {
+                                delta: oldContent.compose(delta),
+                                history: quill.history
+                            },
                         },
-                    },
-                }));
+                    });
+                });
             });
 
             quill.on("selection-change", (range) => {

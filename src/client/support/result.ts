@@ -16,10 +16,10 @@ export type Error<E> = {
     body: E
 }
 
-export type Result<T extends NonNull, E extends NonNull = string> = Success<T> | Failure | Error<E>;
+export type Result<T, E extends NonNull = string> = Success<T> | Failure | Error<E>;
 
 export const Result = {
-    Success<T extends NonNull>(body: T): Success<T> {
+    Success<T>(body: T): Success<T> {
         return { status: "success", body };
     },
 
@@ -31,23 +31,23 @@ export const Result = {
         return { status: "error", body };
     },
 
-    isSuccess<T extends NonNull, E extends NonNull>(res: Result<T, E>): res is Success<T> {
+    isSuccess<T, E extends NonNull>(res: Result<T, E>): res is Success<T> {
         return res.status === "success";
     },
 
-    notSuccess<T extends NonNull, E extends NonNull>(res: Result<T, E>): res is Failure | Error<E> {
+    notSuccess<T, E extends NonNull>(res: Result<T, E>): res is Failure | Error<E> {
         return res.status !== "success";
     },
 
-    isFailure<T extends NonNull, E extends NonNull>(res: Result<T, E>): res is Failure {
+    isFailure<T, E extends NonNull>(res: Result<T, E>): res is Failure {
         return res.status === "failure";
     },
 
-    isError<T extends NonNull, E extends NonNull>(res: Result<T, E>): res is Error<E> {
+    isError<T, E extends NonNull>(res: Result<T, E>): res is Error<E> {
         return res.status === "error";
     },
 
-    problemMessage<T extends NonNull, E extends NonNull>(res: Result<T, E>): string {
+    problemMessage<T, E extends NonNull>(res: Result<T, E>): string {
         if (Result.isFailure(res)) {
             return "unknown failure";
         } else if (Result.isError(res)) {
