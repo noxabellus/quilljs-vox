@@ -3,10 +3,12 @@ import Delta, { AttributeMap, Op } from "quill-delta";
 import History, { StackItem } from "quill/modules/history";
 
 import { DEFAULT_DOCUMENT_THEME, Theme, applyDocumentTheme, isThemeKey, isValidProperty } from "./document-theme";
-import { loadHistoryStack } from "./history";
 import { Defined, forceVal } from "./nullable";
 
-import quillBaseCss from "../../extern/quill.core.css?raw";
+// import quillBaseCss from "../../extern/quill.core.css?raw";
+// import { html_beautify } from "js-beautify";
+
+import documentRender, { HtmlFormat } from "./document-render";
 
 
 export type ProtoStackItem = {
@@ -47,13 +49,6 @@ export class Document {
             undo: [],
             redo: [],
         };
-    }
-
-    generateStyles (): string {
-        console.log("TODO");
-        return `
-            ${quillBaseCss}
-        `;
     }
 
     applyTheme (elem: HTMLElement) {
@@ -110,6 +105,31 @@ export class Document {
                 ).map(indent)
             ];
         return lines.join("\n");
+    }
+
+    render (): string {
+        return documentRender(this, HtmlFormat) as string;
+        // return html_beautify(`
+        //     <!DOCTYPE html>
+        //     <html>
+        //     <head>
+        //         <meta charset="utf-8">
+        //         <title>${this.title}</title>
+        //         <style>${quillBaseCss}</style>
+        //     </head>
+        //     <body>${editor.root.innerHTML}</body>
+        //     </html>
+        // `, { /* eslint-disable camelcase */
+        //     indent_size: 4,
+        //     wrap_line_length: 80,
+        //     wrap_attributes: "auto",
+        //     wrap_attributes_indent_size: 2,
+        //     end_with_newline: true,
+        //     preserve_newlines: true,
+        //     max_preserve_newlines: 2,
+        //     indent_inner_html: true,
+        //     extra_liners: [],
+        // } /* eslint-enable camelcase */);
     }
 }
 
@@ -349,6 +369,25 @@ export function makeLines (text: string): Line[] {
                 return [indent, line.slice(indent)];
             })
             .filter(([_, line]: [number, string]) => line.length > 0) as Line[]
+    );
+}
+
+export function loadHistoryStack (stack: ProtoHistory | StackHistory, quill: Quill) {
+    quill.history.stack.undo = [];
+    quill.history.stack.redo = [];
+
+    stack.undo.forEach(elem =>
+        quill.history.stack.undo.push({
+            delta: new Delta(elem.delta),
+            range: elem.range,
+        })
+    );
+
+    stack.redo.forEach(elem =>
+        quill.history.stack.redo.push({
+            delta: new Delta(elem.delta),
+            range: elem.range,
+        })
     );
 }
 

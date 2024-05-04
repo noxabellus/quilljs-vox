@@ -1,5 +1,7 @@
 import { unsafeForceVal } from "./nullable";
 
+import resetCss from "../reset.css?raw";
+
 export type FullTheme = {
     "width": Length,
     "border-size": Length,
@@ -136,6 +138,10 @@ export function applyDocumentTheme (elem: HTMLElement, theme: Theme) {
     });
 }
 
+export function makeFullTheme (theme: Theme): FullTheme {
+    return {...DEFAULT_DOCUMENT_THEME, ...theme};
+}
+
 export function applyDocumentProperty (elem: HTMLElement, theme: Theme, key: ThemeKey, value: Theme[typeof key]) {
     const keyFull = `--document-${key}`;
 
@@ -148,8 +154,40 @@ export function applyDocumentProperty (elem: HTMLElement, theme: Theme, key: The
     elem.style.setProperty(keyFull, valueString);
 }
 
+export function themeCss (theme: FullTheme, documentSelector: string): string {
+    return `
+        ${resetCss}
+
+        :root {
+            ${Object.entries(theme).map(([key, value]) =>
+                `${`--document-${key}`}: ${propertyString(theme, value)};`
+            ).join("\n")}
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: ${"grey"/*FIXME: theme this*/};
+        }
+
+        ${documentSelector} {
+            width: var(--document-width);
+            border: var(--document-border-size) solid rgba(var(--document-border-color), var(--document-border-opacity));
+            border-radius: var(--document-border-radius);
+            font-family: var(--document-primary-font-family);
+            font-size: var(--document-primary-font-size);
+            font-weight: var(--document-primary-font-weight);
+            color: rgb(var(--document-primary-color));
+            background-color: rgb(var(--document-background-color));
+            padding: var(--document-padding);
+        }
+    `;
+}
+
 export function propertyTypeOfKey (key: ThemeKey): PropertyType {
-    // safety: ThemeKey is by definition a key of Theme
+    // safety: DEFAULT_DOCUMENT_THEME is statically validated
     return unsafeForceVal(propertyType(DEFAULT_DOCUMENT_THEME[key]));
 }
 

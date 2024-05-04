@@ -1,7 +1,6 @@
 import { useContext } from "react";
 import styled from "styled-components";
 
-// import BaseStyles from "../../basic/base-styles";
 import Button from "../../basic/button";
 
 import AppState from "../../app/state";

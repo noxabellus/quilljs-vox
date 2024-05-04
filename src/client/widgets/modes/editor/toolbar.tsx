@@ -23,7 +23,7 @@ import closeImg from "../../../../../assets/xmark.svg?raw";
 
 import Spacer from "../../basic/spacer";
 import AppState from "../../app/state";
-import { saveVox, writeVox } from "../../../support/file";
+import { saveHtml, saveVox, writeVox } from "../../../support/file";
 import { forceRef } from "../../../support/nullable";
 import Result from "../../../support/result";
 import remote from "../../../support/remote";
@@ -49,7 +49,7 @@ const EditorToolSet = styled(ToolSet)<{["$ed-width"]: number}>`
     }
 `;
 
-export default function Toolbar() {
+export default function Toolbar () {
     const appContext = useContext(AppState.Context);
     const appDispatch = useContext(AppState.Dispatch);
     const editorContext = useContext(EditorState.Context);
@@ -187,8 +187,23 @@ export default function Toolbar() {
     const openSettings = () => {
         appDispatch({
             type: "set-mode",
-            value: "doc-settings",
+            value: appContext.mode == "doc-settings"? "editor" : "doc-settings",
         });
+    };
+
+    const exportHtml = async () => {
+        const doc = forceRef(appContext.data.document);
+        const html = doc.render();
+
+        appDispatch({ type: "set-lock-io", value: true });
+
+        const result = await saveHtml(html);
+
+        appDispatch({ type: "set-lock-io", value: false });
+
+        if (Result.isError(result)) {
+            alert(`Failed to save HTML file:\n\t${result.body}`);
+        }
     };
 
 
@@ -210,7 +225,7 @@ export default function Toolbar() {
     return <EditorToolSet $ed-width={editorContext.width}>
         <SaveButton/>
         <Button.Icon disabled={appContext.lockIO} onClick={openSettings} title="Document Settings" svg={gearImg}/>
-        <Button.Icon disabled={appContext.lockIO} title="Export Document" svg={exportImg}/>
+        <Button.Icon disabled={appContext.lockIO} onClick={exportHtml} title="Export Document" svg={exportImg}/>
         <Spacer/>
         <TextDetailsButton kind="bold"/>
         <TextDetailsButton kind="italic"/>

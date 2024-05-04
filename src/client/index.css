@@ -21,47 +21,9 @@
     --frame-border-opacity: 0.35;
 }
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    border: none;
-    border-radius: 0;
-    background: none;
-    color: inherit;
-    appearance: none;
-    outline: none;
-    cursor: inherit;
-    font-family: inherit;
-    font-size: inherit;
-    font-weight: inherit;
-    font-style: inherit;
-    text-decoration: inherit;
-    list-style: none;
-}
-
-strong {
-    font-weight: bold;
-}
-
-em {
-    font-style: italic;
-}
-
-u {
-    text-decoration: underline;
-}
-
-s {
-    text-decoration: line-through;
-}
-
-input[type="number"]::-webkit-inner-spin-button {
-    appearance: none;
-}
+@import "./reset.css";
 
 html, body {
-    height: 100%;
     overflow: scroll;
     scrollbar-width: none;
 }
