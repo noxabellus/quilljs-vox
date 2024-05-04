@@ -27,9 +27,7 @@ class ClipboardWrap extends Clipboard {
 
             const result = await toDataURL(src);
             if (Result.isSuccess(result)) {
-                const newImg = document.createElement("img");
-                newImg.src = result.body;
-                img.replaceWith(newImg);
+                img.src = result.body;
             } else {
                 alert(`Failed to load image:\n${Result.problemMessage(result)}`);
             }
