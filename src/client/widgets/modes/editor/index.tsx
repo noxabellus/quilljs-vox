@@ -19,8 +19,6 @@ export default function Editor () {
         const q = quillRef.current;
         if (!q) throw "Quill editor not initialized";
 
-        console.log("EditorDispatch", action.type, (action as any).value);
-
         switch (action.type) {
             case "set-bold":
                 q.format("bold", action.value);

@@ -5,6 +5,7 @@ import Button from "../../basic/button";
 
 import AppState from "../../app/state";
 
+import LocalSettingsEditor from "./local-settings-editor";
 import ThemeEditor from "./theme-editor";
 
 import backImg from "../../../../../assets/checkmark.svg?raw";
@@ -30,6 +31,7 @@ export default function DocumentSettings () {
     const appDispatch = useContext(AppState.Dispatch);
 
     return <Settings $ed-width={editorState.width}>
+        <LocalSettingsEditor />
         <ThemeEditor />
         <Button.Icon
             title="Close Document Settings"

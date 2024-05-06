@@ -180,6 +180,7 @@ export function themeCss (theme: FullTheme, documentSelector: string): string {
             align-items: center;
             justify-content: stretch;
             background: rgb(var(--document-background-color));
+            height: fit-content;
         }
 
         ${documentSelector} {

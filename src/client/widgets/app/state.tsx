@@ -1,4 +1,4 @@
-import { Dispatch, ReactNode, createContext } from "react";
+import { Dispatch, ReactNode, createContext, useContext } from "react";
 import { AppContext, AppStateAction } from "./types";
 
 const Context = createContext<AppContext>({
@@ -24,6 +24,14 @@ export default function AppState ({context, dispatch, children}: AppStateProps) 
             {children}
         </Dispatch.Provider>
     </Context.Provider>;
+}
+
+export function useAppState () {
+    return [useContext(Context), useContext(Dispatch)] as const;
+}
+
+export function dataIsDirty (appContext: AppContext) {
+    return appContext.data.lastUpdated > appContext.data.lastSaved;
 }
 
 AppState.Context = Context;

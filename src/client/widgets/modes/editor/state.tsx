@@ -1,4 +1,4 @@
-import { Dispatch, ReactNode, createContext } from "react";
+import { Dispatch, ReactNode, createContext, useContext } from "react";
 import { EditorContext, DEFAULT_EDITOR_CONTEXT, EditorStateAction } from "./types";
 
 const Context = createContext<EditorContext>(DEFAULT_EDITOR_CONTEXT);
@@ -18,6 +18,10 @@ export default function EditorState ({context, dispatch, children}: EditorStateP
             {children}
         </Dispatch.Provider>
     </Context.Provider>;
+}
+
+export function useEditorState () {
+    return [useContext(Context), useContext(Dispatch)] as const;
 }
 
 EditorState.Context = Context;

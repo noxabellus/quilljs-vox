@@ -14,9 +14,6 @@
     --shadow-opacity: 0.35;
     --light-color: var(--accent-color);
     --light-opacity: 0.35;
-    --frame-padding: 20px;
-    --frame-background-color: 255, 255, 255;
-    --frame-background-opacity: 0.05;
     --frame-border-color: var(--accent-color);
     --frame-border-opacity: 0.35;
 }

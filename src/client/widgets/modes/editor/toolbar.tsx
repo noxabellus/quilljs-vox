@@ -1,4 +1,4 @@
-import {MouseEvent, useContext} from "react";
+import { MouseEvent } from "react";
 import styled from "styled-components";
 
 import Dropdown from "../../basic/dropdown";
@@ -6,7 +6,7 @@ import Svg from "../../basic/svg";
 import Button from "../../basic/button";
 import ToolSet from "../../basic/tool-set";
 
-import EditorState from "./state";
+import { useEditorState } from "./state";
 import { EDITOR_ALIGNMENT_NAMES, EDITOR_TEXT_DETAILS_PROPERTIES, EditorAlignmentIndex, EditorContext, EditorTextDetails } from "./types";
 
 import savedImg from "../../../../../assets/file-checkmark.svg?raw";
@@ -22,7 +22,7 @@ import exportImg from "../../../../../assets/file-arrow-down.svg?raw";
 import closeImg from "../../../../../assets/xmark.svg?raw";
 
 import Spacer from "../../basic/spacer";
-import AppState from "../../app/state";
+import { dataIsDirty, useAppState } from "../../app/state";
 import { saveHtml, saveVox, writeVox } from "../../../support/file";
 import { forceRef } from "../../../support/nullable";
 import Result from "../../../support/result";
@@ -50,10 +50,8 @@ const EditorToolSet = styled(ToolSet)<{["$ed-width"]: number}>`
 `;
 
 export default function Toolbar () {
-    const appContext = useContext(AppState.Context);
-    const appDispatch = useContext(AppState.Dispatch);
-    const editorContext = useContext(EditorState.Context);
-    const editorDispatch = useContext(EditorState.Dispatch);
+    const [appContext, appDispatch] = useAppState();
+    const [editorContext, editorDispatch] = useEditorState();
     const disabled = !editorContext.focused || appContext.lockIO;
 
     const formatter = (prop: keyof EditorTextDetails) => (e: MouseEvent) => {
@@ -98,6 +96,8 @@ export default function Toolbar () {
     };
 
     const saveFile = async () => {
+        const time = appContext.data.lastUpdated;
+
         appDispatch({
             type: "set-lock-io",
             value: true,
@@ -115,8 +115,8 @@ export default function Toolbar () {
                 appDispatch({
                     type: "set-data-x",
                     value: {
-                        type: "set-dirty",
-                        value: false,
+                        type: "set-last-saved",
+                        value: time,
                     },
                 });
             } else if (Result.isError(result)) {
@@ -124,6 +124,7 @@ export default function Toolbar () {
             }
         } else {
             const result = await saveVox(forceRef(appContext.data.document));
+            const time = appContext.data.lastUpdated;
 
             appDispatch({
                 type: "set-lock-io",
@@ -142,29 +143,31 @@ export default function Toolbar () {
                 appDispatch({
                     type: "set-data-x",
                     value: {
-                        type: "set-dirty",
-                        value: false,
+                        type: "set-last-saved",
+                        value: time,
                     },
                 });
 
-                const question = await remote.dialog.showMessageBox({
-                    title: "Auto-save",
-                    message: "Would you like to enable auto-save?",
-                    detail: "This can be changed at any time in the document settings.",
-                    type: "question",
-                    buttons: ["No", "Yes"],
-                    defaultId: 1,
-                    cancelId: 0,
-                });
-
-                if (question.response === 1) {
-                    appDispatch({
-                        type: "set-data-x",
-                        value: {
-                            type: "set-auto-save",
-                            value: true,
-                        },
+                if (!appContext.data.localSettings["Auto Save"]) {
+                    const question = await remote.dialog.showMessageBox({
+                        title: "Auto-save",
+                        message: "Would you like to enable auto-save?",
+                        detail: "This can be changed at any time in the document settings.",
+                        type: "question",
+                        buttons: ["No", "Yes"],
+                        defaultId: 1,
+                        cancelId: 0,
                     });
+
+                    if (question.response === 1) {
+                        appDispatch({
+                            type: "set-local-settings-x",
+                            value: {
+                                type: "set-auto-save",
+                                value: true,
+                            },
+                        });
+                    }
                 }
             } else if (Result.isError(result)) {
                 alert(`Failed to save file:\n\t${result.body}`);
@@ -178,9 +181,10 @@ export default function Toolbar () {
     };
 
     const SaveButton = () => {
-        const cantSave = appContext.lockIO || !appContext.data.dirty;
-        const status = appContext.data.dirty ? "Unsaved changes present" : "No changes to save";
-        const saveImg = appContext.data.dirty ? unsavedImg : savedImg;
+        const dirty = dataIsDirty(appContext);
+        const cantSave = appContext.lockIO || !dirty;
+        const status = dirty? "Unsaved changes present" : "No changes to save";
+        const saveImg = dirty? unsavedImg : savedImg;
         return <Button.Icon disabled={cantSave} title={`Save .vox (${status})`} svg={saveImg} onClick={saveFile}/>;
     };
 
@@ -215,7 +219,7 @@ export default function Toolbar () {
             });
         }
 
-        if (appContext.data.dirty) {
+        if (dataIsDirty(appContext)) {
             saveInterrupt(appContext, appDispatch, exit);
         } else {
             exit();

@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 
-import AppState from "../../app/state";
+import AppState, { useAppState } from "../../app/state";
 import Block from "../../basic/block";
 import { Color, Dimensions, Length, THEME_UNITS, Theme, lengthUnit, lengthConvert, propertyType, themeValue, DEFAULT_DOCUMENT_THEME } from "../../../support/document-theme";
 import Dropdown from "../../basic/dropdown";
@@ -26,8 +26,7 @@ const Label = styled.label`
 
 
 const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
-    const appState = useContext(AppState.Context);
-    const appDispatch = useContext(AppState.Dispatch);
+    const [appState, appDispatch] = useAppState();
 
     const theme = appState.data.document.current?.theme;
     if (!theme) throw "no document found";

@@ -18,40 +18,29 @@ export const APP_MODE_TITLES: AppModeTitles = { splash: null, settings: "App Set
 export type AppSettings = null;
 
 export type AppData = {
-    dirty: boolean;
-    autoSave: boolean;
-    filePath: PathLike | null;
-    document: MutableRefObject<Document | null>;
+    lastUpdated: number,
+    lastSaved: number,
+    localSettings: AppLocalSettings,
+    filePath: PathLike | null,
+    document: MutableRefObject<Document | null>,
+};
+
+export type AppLocalSettings = {
+    ["Auto Save"]: boolean,
 };
 
 export type AppContext = {
-    lockIO: boolean;
-    mode: AppMode;
-    data: AppData;
-    settings: AppSettings;
+    lockIO: boolean,
+    mode: AppMode,
+    data: AppData,
+    settings: AppSettings,
 };
-
-export type AppStateActionType
-    = "set-lock-io"
-    | "set-mode"
-    | "set-data-x"
-    | "set-doc-x"
-    | "post-doc"
-    ;
-
-export type AppStateDocActionType
-    = "set-doc-title"
-    | "set-doc-theme"
-    | "set-doc-theme-property"
-    | "set-doc-quill-data"
-    | "set-doc-delta"
-    | "set-doc-history"
-    ;
 
 export type AppStateAction
     = AppStateSetLockIO
     | AppStateSetMode
     | AppStateSetDataX
+    | AppStateSetLocalSettingsX
     | AppStateSetDocX
     | AppStatePostDoc
     ;
@@ -61,9 +50,23 @@ export type AppStateSetDataX = {
     value: AppStateDataAction;
 };
 
+export type AppStateSetLocalSettingsX = {
+    type: "set-local-settings-x";
+    value: AppStateLocalSettingsAction;
+};
+
+export type AppStateLocalSettingsAction
+    = AppStateSetAutoSave
+    ;
+
+export type AppStateSetAutoSave = {
+    type: "set-auto-save";
+    value: boolean;
+};
+
 export type AppStateDataAction
-    = AppStateSetDirty
-    | AppStateSetAutoSave
+    = AppStateSetLastUpdated
+    | AppStateSetLastSaved
     | AppStateSetFilePath
     ;
 
@@ -83,68 +86,69 @@ export type AppStateDocAction
 
 export type AppStateSetLockIO = {
     type: "set-lock-io",
-    value: boolean;
+    value: boolean,
 };
 
 export type AppStateSetMode = {
-    type: "set-mode";
-    value: AppMode | null;
+    type: "set-mode",
+    value: AppMode | null,
 };
 
-export type AppStateSetDirty = {
-    type: "set-dirty";
-    value: boolean;
+export type AppStateSetLastUpdated = {
+    type: "set-last-updated",
+    value: number,
 };
 
-export type AppStateSetAutoSave = {
-    type: "set-auto-save";
-    value: boolean;
+export type AppStateSetLastSaved = {
+    type: "set-last-saved",
+    value: number,
 };
+
 
 export type AppStateSetFilePath = {
-    type: "set-file-path";
-    value: PathLike;
+    type: "set-file-path",
+    value: PathLike,
 };
 
 export type AppStateSetDocTitle = {
-    type: "set-doc-title";
-    value: string;
+    type: "set-doc-title",
+    value: string,
 };
 
 export type AppStateSetDocTheme = {
-    type: "set-doc-theme";
-    value: Theme;
+    type: "set-doc-theme",
+    value: Theme,
 };
 
 export type AppStateSetDocThemeProperty = {
-    type: "set-doc-theme-property";
-    value: { key: keyof Theme, data: Theme[keyof Theme] };
+    type: "set-doc-theme-property",
+    value: { key: keyof Theme, data: Theme[keyof Theme] },
 };
 
 export type AppStateSetDocQuillData = {
-    type: "set-doc-quill-data";
-    value: { delta: Delta, history: History };
+    type: "set-doc-quill-data",
+    value: { delta: Delta, history: History },
 };
 
 export type AppStateSetDocDelta = {
-    type: "set-doc-delta";
-    value: Delta;
+    type: "set-doc-delta",
+    value: Delta,
 };
 
 export type AppStateSetDocHistory = {
-    type: "set-doc-history";
-    value: History;
+    type: "set-doc-history",
+    value: History,
 };
 
 export type AppStatePostDoc = {
-    type: "post-doc";
-    value: AppStatePostDocValue
+    type: "post-doc",
+    value: AppStatePostDocValue,
 };
 
 export type AppStatePostDocValue
     = {
-        filePath: PathLike;
-        document: Document;
+        filePath: PathLike,
+        document: Document,
     }
     | Document
     | null

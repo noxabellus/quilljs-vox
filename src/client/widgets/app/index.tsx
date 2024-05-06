@@ -5,11 +5,13 @@ import Splash from "../modes/splash";
 import Editor from "../modes/editor";
 import AppSettings from "../modes/app-settings";
 
-import AppState from "./state";
-import { AppContext, AppStateAction, APP_MODE_TITLES, AppMode } from "./types";
+import AppState, { dataIsDirty } from "./state";
+import { AppContext, AppStateAction, APP_MODE_TITLES, AppMode, AppLocalSettings } from "./types";
 import Document from "../../support/document";
 import remote from "../../support/remote";
 import saveInterrupt from "./save-interrupt";
+import { writeVox } from "../../support/file";
+import Result from "../../support/result";
 
 
 function setWindowTitle (body: {dirty: boolean, title: string | null, filePath: PathLike | null} | string | null) {
@@ -45,8 +47,11 @@ export default function App () {
         lockIO: false,
         mode: "splash",
         data: {
-            dirty: false,
-            autoSave: false,
+            lastSaved: 0,
+            lastUpdated: 0,
+            localSettings: {
+                "Auto Save": false,
+            },
             filePath: null,
             document: documentRef
         },
@@ -80,16 +85,24 @@ export default function App () {
 
                 case "set-data-x": {
                     switch (action.value.type) {
-                        case "set-dirty":
-                            out = { ...state, data: { ...state.data, dirty: action.value.value } };
+                        case "set-last-saved":
+                            out = { ...state, data: { ...state.data, lastSaved: action.value.value } };
                             break;
 
-                        case "set-auto-save":
-                            out = { ...state, data: { ...state.data, autoSave: action.value.value } };
+                        case "set-last-updated":
+                            out = { ...state, data: { ...state.data, lastUpdated: action.value.value } };
                             break;
 
                         case "set-file-path":
-                            out = { ...state, data: { ...state.data, dirty: true, filePath: action.value.value } };
+                            out = { ...state, data: { ...state.data, lastUpdated: Date.now(), filePath: action.value.value } };
+                            break;
+                    }
+                } break;
+
+                case "set-local-settings-x": {
+                    switch (action.value.type) {
+                        case "set-auto-save":
+                            out = { ...state, data: { ...state.data, localSettings: { ...state.data.localSettings, "Auto Save": action.value.value } } };
                             break;
                     }
                 } break;
@@ -123,7 +136,7 @@ export default function App () {
                             document.copyEditorHistory(action.value.value);
                             break;
                         }
-                    out = { ...state, data: { ...state.data, dirty: true } };
+                    out = { ...state, data: { ...state.data, lastUpdated: Date.now() } };
                 } break;
 
                 case "post-doc": {
@@ -146,17 +159,80 @@ export default function App () {
                         mode = "splash";
                     }
 
-                    out = {...state, mode, data: {...state.data, dirty: false, autoSave: false, filePath}};
+                    const localSettings: AppLocalSettings = { "Auto Save": false };
+
+                    if (filePath) {
+                        const json = JSON.parse(localStorage[`settings[${filePath}]`]);
+
+                        let reset = false;
+                        if (typeof json === "object") {
+                            const keys = Object.keys(localSettings) as (keyof AppLocalSettings)[];
+                            for (const key of keys) {
+                                if (key in json) {
+                                    if (typeof json[key] === typeof localSettings[key]) {
+                                        localSettings[key] = json[key];
+                                    } else {
+                                        console.error(`local storage is corrupt at ${key}, resetting to default value`, json[key], localSettings[key]);
+                                        reset = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        } else {
+                            reset = true;
+                        }
+
+                        if (reset) {
+                            localStorage[`settings[${filePath}]`] = JSON.stringify(localSettings);
+                        }
+                    }
+
+                    out = {...state, mode, data: {...state.data, lastSaved: 0, lastUpdated: Date.now(), localSettings, filePath}};
                 } break;
             }
         }
 
         switch (out.mode) {
             case "doc-settings":
-            case "editor":
+            case "editor": {
+                const dirty = dataIsDirty(out);
+
                 if (!out.data) throw "Cannot set editor mode without data";
-                setWindowTitle({ dirty: out.data.dirty, title: out.data.document.current?.title || null, filePath: out.data.filePath });
-                break;
+                setWindowTitle({ dirty, title: out.data.document.current?.title || null, filePath: out.data.filePath });
+
+                if (out.data.filePath) {
+                    setTimeout(() => localStorage[`settings[${out.data.filePath}]`] = JSON.stringify(out.data.localSettings));
+                }
+
+                if (dirty && out.data.localSettings["Auto Save"] && out.data.filePath && out.data.document.current) {
+                    const path = out.data.filePath;
+                    const doc = out.data.document.current;
+                    const time = out.data.lastUpdated;
+
+                    setTimeout(async () => {
+                        const result = await writeVox(path, doc);
+
+                        if (Result.isSuccess(result)) {
+                            dispatch({
+                                type: "set-data-x",
+                                value: {
+                                    type: "set-last-saved",
+                                    value: time,
+                                },
+                            });
+                        } else {
+                            alert(`Failed to auto-save file:\n\t${Result.problemMessage(result)}\n(Disabling auto-save)`);
+                            dispatch({
+                                type: "set-local-settings-x",
+                                value: {
+                                    type: "set-auto-save",
+                                    value: false,
+                                },
+                            });
+                        }
+                    });
+                }
+            } break;
             default:
                 setWindowTitle(APP_MODE_TITLES[out.mode]);
                 break;
@@ -182,7 +258,7 @@ export default function App () {
 
     useLayoutEffect(() => {
         async function handler (exit: () => void) {
-            if (context.data.dirty) {
+            if (dataIsDirty(context)) {
                 saveInterrupt(context, dispatch, exit);
             } else {
                 exit();
@@ -194,7 +270,7 @@ export default function App () {
         return () => {
             remote.window.onClose = null;
         };
-    }, [context.data.dirty]);
+    }, [dataIsDirty(context)]);
 
 
     return <AppState context={context} dispatch={dispatch}>
