@@ -596,9 +596,8 @@ container.style.whiteSpace = "break-spaces";
 const [sections, documentNodes] = convertDocument({data, theme: {}, title: "woah"}, HtmlFormat);
 container.append(...documentNodes);
 
-container.addEventListener("selectstart", (e: Event) => {
-    console.log("selection start", e);
-});
+
+
 
 container.addEventListener("beforeinput", (e: InputEvent) => {
     e.preventDefault();
@@ -705,6 +704,20 @@ container.addEventListener("beforeinput", (e: InputEvent) => {
     setSelection(internal.index + selectionOffset);
 });
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function applySectionDelta (sectionDelta: SectionDelta) {
     console.log("applying selection delta", sectionDelta, sections.flatMap(section => section.ops.slice().map(op => deepCopy(op))));
 
@@ -764,6 +777,9 @@ function applySectionDelta (sectionDelta: SectionDelta) {
 
     console.log("selection delta applied", sections.flatMap(section => section.ops.slice().map(op => deepCopy(op))));
 }
+
+
+
 
 function applyDelta (delta: Delta, data: InsertOp[]) {
     let searchBaseIndex = 0;
@@ -889,6 +905,21 @@ function opLength (op: InsertOp): number {
     }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function calculateLocalOffset (node: Node): number {
     const root = findSectionNode(node);
 
@@ -946,6 +977,16 @@ function findSectionId (node: Node): number {
 }
 
 
+
+
+
+
+
+
+
+
+
+
 function setSelection (start: number, end?: number) {
     const selection = window.getSelection();
     if (!selection) throw "what the fuck do we do now";
@@ -983,6 +1024,7 @@ function getBrowserContainerAndOffset (index: number): [Node, number] {
             console.log(`picking node ${i}`, a, documentNodes[i], `recursing with ${index - a.index}`);
             return getBrowserContainerAndOffsetInNode(documentNodes[i], index - a.index);
         }
+
         console.log(`skipping node ${i}`, a, documentNodes[i], index);
     }
 
