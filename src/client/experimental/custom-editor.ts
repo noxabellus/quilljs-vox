@@ -168,6 +168,63 @@ export type Doc = {
     theme: Theme,
 };
 
+
+
+
+
+
+
+function deepCompare(a: any, b: any): boolean {
+    if (a === b) return true;
+
+    if (typeof a !== typeof b) return false;
+
+    if (Array.isArray(a)) {
+        if (!Array.isArray(b)) return false;
+
+        if (a.length !== b.length) return false;
+
+        return a.every((v, i) => deepCompare(v, b[i]));
+    }
+
+    if (typeof a === "object") {
+        const aKeys = Object.keys(a);
+        const bKeys = Object.keys(b);
+
+        if (aKeys.length !== bKeys.length) return false;
+
+        return aKeys.every(key => deepCompare(a[key], b[key]));
+    }
+
+    return false;
+}
+
+function deepCopy (value: any): any {
+    if (Array.isArray(value)) {
+        return value.map(deepCopy);
+    }
+
+    if (typeof value === "object") {
+        const out: any = {};
+
+        for (const key in value) {
+            out[key] = deepCopy(value[key]);
+        }
+
+        return out;
+    }
+
+    return value;
+}
+
+function representationError(message: string, ...args: any[]): never {
+    console.warn(message, ...args);
+    throw message;
+}
+
+
+
+
 export default function convertDocument (doc: Doc, format: Format, userOptions?: Partial<Options>, offsets: [number, number] = [0,0]): [Section[], HTMLElement[]] {
 	const options: Options = {
         sectionTemplates: {
@@ -192,21 +249,29 @@ export default function convertDocument (doc: Doc, format: Format, userOptions?:
 	const sections: Section[] = [];
     let currentSection: Section;
 
-	const newOpSection = () => {
+	const newSection = () => {
         currentSection = {ops: [], attributes: {}, index, length: 0};
 		sections.push(currentSection);
 	};
 
-	newOpSection();
+    const lastOp = (): InsertOp | null => {
+        if (currentSection.ops.length === 0) {
+            return null;
+        }
+
+        return currentSection.ops[currentSection.ops.length - 1];
+    };
+
+	newSection();
 
 	doc.data.forEach((op: InsertOp) => {
         // TODO: transfer learnings from here to the other document rendering
 		if (typeof op.insert == "string" && op.insert.indexOf("\n") >= 0) {  // terminator segment
             if (op.insert.match(/[^\n]g/)) {
-                return representationError("invalid insert, interior newline", op);
+                representationError("invalid insert, interior newline", op);
             }
 
-            currentSection.attributes = op.attributes || {};
+            currentSection.attributes = deepCopy(op.attributes) || {};
 
             let i = 0;
 
@@ -227,10 +292,15 @@ export default function convertDocument (doc: Doc, format: Format, userOptions?:
                 index += 1;
             }
 
-            newOpSection();
+            newSection();
 		} else { // inline segment
-            const lytOp = {...op};
-			currentSection.ops.push(lytOp);
+            const prev = lastOp();
+
+            if (prev && typeof prev.insert == "string" && typeof op.insert == "string" && prev.insert !== "\n" && deepCompare(prev.attributes, op.attributes)) {
+                prev.insert += op.insert;
+            } else {
+                currentSection.ops.push(deepCopy(op));
+            }
 
             let len;
             if (typeof op.insert == "string") {
@@ -260,13 +330,14 @@ export const HtmlFormat: Format = {
         const style = sectionAttributesToCss(section.attributes);
 
         if (section.ops.length === 0) {
-            return representationError("invalid section", section);
+            representationError("invalid section", section);
         }
 
         let out;
-        if (section.ops.length === 1 && section.ops[0].insert === "\n") {
-            out = options.sectionTemplates.empty(sectionId, style, section.attributes);
-        } else {
+        // this is a bad idea here, because you cant really properly edit a br
+        // if (section.ops.length === 1 && section.ops[0].insert === "\n") {
+        //     out = options.sectionTemplates.empty(sectionId, style, section.attributes);
+        // } else {
             const content = section.ops.map(op => opToContent(op, options));
 
             if (section.attributes.header) {
@@ -274,7 +345,7 @@ export const HtmlFormat: Format = {
             } else {
                 out = options.sectionTemplates.line(sectionId, style, content, section.attributes);
             }
-        }
+        // }
 
         out.dataset.sectionId = sectionId.toString();
 
@@ -373,10 +444,10 @@ export const HtmlFormat: Format = {
 
 function opToContent (op: InsertOp, options: Options): SingleContent {
     if (typeof op.insert !== "string") {
-        return embedHtml(op.insert, op.attributes || {}, options);
+        return embedHtml(op.insert, op.attributes, options);
     }
 
-    return innerHtml(op.insert, op.attributes || {}, options);
+    return innerHtml(op.insert, op.attributes, options);
 }
 
 function sectionAttributesToCss (attributes: AttributeMap): Style {
@@ -397,14 +468,14 @@ function embedHtml (embed: Embed, attributes: AttributeMap, options: Options): S
     const keys = Object.keys(embed);
 
     if (keys.length !== 1) {
-        return representationError("invalid embed", embed, attributes);
+        representationError("invalid embed", embed, attributes);
     }
 
     const embedType = keys[0];
     const embedTemplate = (options.inlineTemplates.embeds as any)[embedType];
 
     if (!embedTemplate) {
-        return representationError("missing embed template", embed, attributes, options);
+        representationError("missing embed template", embed, attributes, options);
     }
 
     return embedTemplate(embed, attributes);
@@ -435,13 +506,13 @@ function innerHtml (content: string, attrs: AttributeMap, options: Options): Sin
                         template = attributor(attrs, options);
                     }
                 } else {
-                    return representationError("unknown attribute", attr, attrs[attr]);
+                    representationError("unknown attribute", attr, attrs[attr]);
                 }
             break;
         }
 
         if (!template) {
-            return representationError("missing template for node", content, attr, attrs, options);
+            representationError("missing template for node", content, attr, attrs, options);
         }
 
         body = template(body, attrs);
@@ -486,29 +557,48 @@ function setContent(elem: HTMLElement, content: Content) {
     }
 }
 
-function representationError(message: string, ...args: any[]): never {
-    console.warn(message, ...args);
-    throw message;
-}
 
 
 
 
-// const doc = await readVox("/home/nox/projects/vox/working_dir/red.vox");
 
-// if (!Result.isSuccess(doc))
-//     throw "fuck";
 
-// const data = doc.body.delta as InsertOp[];
 
-const data: InsertOp[] = [
-    {insert: "hello world", attributes: {}}
-];
+
+
+
+
+
+
+
+
+
+
+
+
+
+const doc = await readVox("/home/nox/projects/vox/working_dir/woah.vox");
+
+if (!Result.isSuccess(doc))
+    throw "fuck";
+
+const data = doc.body.delta as InsertOp[];
+
+// const data: InsertOp[] = [
+//     {insert: "hello world", attributes: {}},
+//     {insert: "\n", attributes: {}},
+//     {insert: "i am an editor", attributes: {}},
+// ];
 
 const container = document.body.appendChild(document.createElement("div"));
 container.contentEditable = "true";
-const [sections, documentNodes] = convertDocument({data, theme: {}, title: "red"}, HtmlFormat);
+container.style.whiteSpace = "break-spaces";
+const [sections, documentNodes] = convertDocument({data, theme: {}, title: "woah"}, HtmlFormat);
 container.append(...documentNodes);
+
+container.addEventListener("selectstart", (e: Event) => {
+    console.log("selection start", e);
+});
 
 container.addEventListener("beforeinput", (e: InputEvent) => {
     e.preventDefault();
@@ -576,6 +666,13 @@ container.addEventListener("beforeinput", (e: InputEvent) => {
             }
         break;
 
+        case "insertParagraph":
+            delta.push({ retain: internal.index });
+            if (internal.length > 0) delta.push({ delete: internal.length });
+            delta.push({ insert: "\n", attributes: {} });
+            selectionOffset = 1;
+        break;
+
         case "deleteContentBackward":
             if (internal.length > 0) {
                 delta.push({ retain: internal.index - internal.length });
@@ -597,9 +694,10 @@ container.addEventListener("beforeinput", (e: InputEvent) => {
             }
         break;
 
+
         default:
             console.warn("unhandled input type", e.inputType);
-        break;
+            return;
     }
 
     applySectionDelta(sectionDelta);
@@ -608,15 +706,14 @@ container.addEventListener("beforeinput", (e: InputEvent) => {
 });
 
 function applySectionDelta (sectionDelta: SectionDelta) {
-    console.log("applying selection delta", sectionDelta, sections.flatMap(section => section.ops.slice().map(op => ({...op, attributes: {...op.attributes}}))));
+    console.log("applying selection delta", sectionDelta, sections.flatMap(section => section.ops.slice().map(op => deepCopy(op))));
 
     const mutatedSections = sections.splice(sectionDelta.start, sectionDelta.length);
     const droppedNodes = documentNodes.splice(sectionDelta.start, sectionDelta.length);
 
     const flatOffset = mutatedSections[0].index;
-    const flatMutatedOps = mutatedSections.flatMap(section => [...section.ops, { insert: "\n", attributes: section.attributes }]);
-    if (flatMutatedOps.length === 0) return;
-
+    const flatMutatedOps = mutatedSections.flatMap(section => [...deepCopy(section.ops), { insert: "\n", attributes: deepCopy(section.attributes) }]);
+    if (flatMutatedOps.length === 0) return;                                          // ^ this is necessary because we've removed it in section conversion?
 
     if ("retain" in sectionDelta.opDelta[0]) {
         sectionDelta.opDelta[0].retain -= flatOffset;
@@ -627,12 +724,6 @@ function applySectionDelta (sectionDelta: SectionDelta) {
     const [newSections, newNodes] = convertDocument({data: flatMutatedOps, theme: {}, title: "woah"}, HtmlFormat, {}, [sectionDelta.start, flatOffset]);
 
     sections.splice(sectionDelta.start, 0, ...newSections);
-
-    if (newSections.length !== mutatedSections.length) {
-        for (let i = sectionDelta.start + newNodes.length; i < documentNodes.length; i++) {
-            documentNodes[i].dataset.sectionId = i.toString();
-        }
-    }
 
     droppedNodes.forEach(node => node.remove());
 
@@ -651,7 +742,27 @@ function applySectionDelta (sectionDelta: SectionDelta) {
         documentNodes.splice(sectionDelta.start, 0, ...newNodes);
     }
 
-    console.log("selection delta applied", sections.flatMap(section => section.ops.slice().map(op => ({...op, attributes: {...op.attributes}}))));
+    const lastMutated = mutatedSections[mutatedSections.length - 1];
+    const lastNew = newSections[newSections.length - 1];
+    const indexOffset = lastNew.index - lastMutated.index;
+    const lengthOffset = lastNew.length - lastMutated.length;
+    const offset = indexOffset + lengthOffset;
+
+    console.log("offsets", indexOffset, lengthOffset, offset);
+
+    if (offset !== 0) {
+        for (let i = sectionDelta.start + newSections.length; i < sections.length; i++) {
+            sections[i].index += offset;
+        }
+    }
+
+    if (newSections.length !== mutatedSections.length) {
+        for (let i = sectionDelta.start + newNodes.length; i < documentNodes.length; i++) {
+            documentNodes[i].dataset.sectionId = i.toString();
+        }
+    }
+
+    console.log("selection delta applied", sections.flatMap(section => section.ops.slice().map(op => deepCopy(op))));
 }
 
 function applyDelta (delta: Delta, data: InsertOp[]) {
@@ -660,7 +771,7 @@ function applyDelta (delta: Delta, data: InsertOp[]) {
 
     delta.forEach(op => {
         if ("retain" in op) {
-            console.log("retain started", searchBaseIndex, searchBaseOffset, data.slice());
+            console.log("retain started", searchBaseIndex, searchBaseOffset, deepCopy(data));
 
             const [newBaseIndex, opInternalOffset] =
                 findOpLocation(searchBaseIndex, searchBaseOffset + (op as RetainOp).retain, data);
@@ -668,9 +779,9 @@ function applyDelta (delta: Delta, data: InsertOp[]) {
             searchBaseIndex = newBaseIndex;
             searchBaseOffset = opInternalOffset;
 
-            console.log("retain finished", searchBaseIndex, searchBaseOffset, data.slice());
+            console.log("retain finished", searchBaseIndex, searchBaseOffset, deepCopy(data));
         } else if ("insert" in op) {
-            console.log("insert started", searchBaseIndex, searchBaseOffset, op.insert, data.slice());
+            console.log("insert started", searchBaseIndex, searchBaseOffset, op.insert, deepCopy(data));
 
             const [opIndex, opInternalOffset] = findOpLocation(searchBaseIndex, searchBaseOffset, data);
 
@@ -687,9 +798,9 @@ function applyDelta (delta: Delta, data: InsertOp[]) {
             searchBaseIndex = opIndex + 1;
             searchBaseOffset = 0;
 
-            console.log("insert finished", searchBaseIndex, searchBaseOffset, data.slice());
+            console.log("insert finished", searchBaseIndex, searchBaseOffset, deepCopy(data));
         } else if ("delete" in op) {
-            console.log("delete started", searchBaseIndex, searchBaseOffset, op.delete, data.slice());
+            console.log("delete started", searchBaseIndex, searchBaseOffset, op.delete, deepCopy(data));
             // eslint-disable-next-line prefer-const
             let [startIndex, startInternalOffset] = findOpLocation(searchBaseIndex, searchBaseOffset, data);
 
@@ -702,10 +813,9 @@ function applyDelta (delta: Delta, data: InsertOp[]) {
             const endOp = data[endIndex];
 
             if (typeof startOp.insert != "string" || typeof endOp.insert != "string")
-                return representationError("delete of non-string op nyi", startOp, endOp);
+                representationError("delete of non-string op nyi", startOp, endOp);
 
             if (startIndex === endIndex) {
-                console.log("startIndex === endIndex");
                 if (startInternalOffset > 0 && endInternalOffset < opLength(startOp)) {
                     startOp.insert = startOp.insert.slice(0, startInternalOffset) + startOp.insert.slice(endInternalOffset);
                 } else if (startInternalOffset > 0) {
@@ -716,28 +826,28 @@ function applyDelta (delta: Delta, data: InsertOp[]) {
             } else {
                 if (startInternalOffset > 0) {
                     if (startInternalOffset >= startOp.insert.length)
-                        return representationError("invalid start offset", startOp, startInternalOffset);
+                        representationError("invalid start offset", startOp, startInternalOffset);
 
-                    startOp.insert = startOp.insert.slice(startInternalOffset);
+                    startOp.insert = startOp.insert.slice(0, startInternalOffset);
                     startIndex += 1;
                 }
 
                 if (endInternalOffset > 0) {
                     if (endInternalOffset >= endOp.insert.length)
-                        return representationError("invalid end offset", endOp, endOp.insert.length, endInternalOffset, endInternalOffset - endOp.insert.length);
+                        representationError("invalid end offset", endOp, endOp.insert.length, endInternalOffset, endInternalOffset - endOp.insert.length);
 
-                    endOp.insert = endOp.insert.slice(0, endInternalOffset);
+                    endOp.insert = endOp.insert.slice(endInternalOffset);
                     endIndex -= 1;
                 }
 
                 data.splice(
                     startIndex,
-                    endIndex - startIndex,
+                    endIndex - startIndex + 1,
                 );
-
-                // FIXME: this should definitely be changing the searchBaseOffset, maybe the index
-                console.log("delete finished", searchBaseIndex, searchBaseOffset, data.slice());
             }
+
+            // FIXME: this should definitely be changing the searchBaseOffset, maybe the index
+            console.log("delete finished", searchBaseIndex, searchBaseOffset, deepCopy(data));
         } else {
             representationError("invalid op", op);
         }
@@ -763,11 +873,11 @@ function findOpLocation (searchBaseIndex: number, offset: number, data: InsertOp
 
 function splitOp (op: InsertOp, offset: number): [InsertOp, InsertOp] {
     if (typeof op.insert !== "string")
-        return representationError("cannot split non-string op", op, offset);
+        representationError("cannot split non-string op", op, offset);
 
     return [
-        { insert: op.insert.slice(0, offset), attributes: {...op.attributes} },
-        { insert: op.insert.slice(offset), attributes: {...op.attributes} },
+        { insert: op.insert.slice(0, offset), attributes: deepCopy(op.attributes) },
+        { insert: op.insert.slice(offset), attributes: deepCopy(op.attributes) },
     ];
 }
 
@@ -785,7 +895,7 @@ function calculateLocalOffset (node: Node): number {
     if (node === root) return 0;
 
     if (node.parentNode === null)
-        return representationError("measured text node has no parent");
+        representationError("measured text node has no parent");
 
     return calculateLocalOffset(node.parentNode) + calculateSiblingOffset(node);
 }
@@ -824,7 +934,7 @@ function findNearestContentNode (node: Node, offset: number): Node {
         node = children[offset];
 
         if (node === undefined)
-            return representationError("invalid offset if findSectionId", offset);
+            representationError("invalid offset if findSectionId", offset);
     }
 
     return node;
@@ -840,10 +950,14 @@ function setSelection (start: number, end?: number) {
     const selection = window.getSelection();
     if (!selection) throw "what the fuck do we do now";
     selection.removeAllRanges();
-    selection.addRange(getBrowserRange(start, end));
+
+    const range = getBrowserRange(start, end);
+    selection.addRange(range);
 }
 
 function getBrowserRange (start: number, end?: number): Range {
+    console.log("get browser range", start, end);
+
     const range = new Range();
     const startData = getBrowserContainerAndOffset(start);
 
@@ -854,20 +968,25 @@ function getBrowserRange (start: number, end?: number): Range {
         range.setEnd(...startData);
     }
 
+    console.log("got selection range", range);
     return range;
 }
 
 function getBrowserContainerAndOffset (index: number): [Node, number] {
+    console.log("calculating container and offset for index", index);
+
     for (let i = 0; i < sections.length; i ++) {
         const a = sections[i];
         const b = sections[i + 1];
 
-        if (!b || b.index > index) {
+        if (!b || b.index >= index) {
+            console.log(`picking node ${i}`, a, documentNodes[i], `recursing with ${index - a.index}`);
             return getBrowserContainerAndOffsetInNode(documentNodes[i], index - a.index);
         }
+        console.log(`skipping node ${i}`, a, documentNodes[i], index);
     }
 
-    return representationError("cannot get browser container and offset for index", index);
+    representationError("cannot get browser container and offset for index", index);
 }
 
 function getBrowserContainerAndOffsetInNode (node: Node, index: number): [Node, number] {
