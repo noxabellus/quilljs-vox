@@ -9,6 +9,8 @@ import { Defined, forceVal } from "./nullable";
 // import { html_beautify } from "js-beautify";
 
 import documentRender, { HtmlFormat } from "./document-render";
+import Result from "./result";
+import { toDataURL } from "./xhr";
 
 
 export type ProtoStackItem = {
@@ -32,9 +34,15 @@ export type Block = {
     body: Block[],
 };
 
+export type ImageDb = {
+    lookup: Partial<Record<string, number>>,
+    data: string[],
+};
+
 export class Document {
     title: string | null;
     theme: Theme;
+    images: ImageDb;
     delta: Op[];
     history: StackHistory | ProtoHistory;
 
@@ -43,12 +51,48 @@ export class Document {
 
         this.theme = {...DEFAULT_DOCUMENT_THEME};
 
+        this.images = {
+            lookup: {},
+            data: [],
+        };
+
         this.delta = [];
 
         this.history = {
             undo: [],
             redo: [],
         };
+    }
+
+    async registerImage (src: string): Promise<Result<number>> {
+        const existingIndex = this.images.lookup[src];
+        if (existingIndex !== undefined) {
+            return Result.Success(existingIndex);
+        }
+
+        let dataUrl;
+        if (src.startsWith("data:")) {
+            dataUrl = src;
+        } else {
+            const result = await toDataURL(src);
+
+            if (Result.isSuccess(result)) {
+                dataUrl = result.body;
+            } else {
+                return result;
+            }
+        }
+
+        const index = this.images.data.length;
+
+        this.images.lookup[src] = index;
+        this.images.data.push(dataUrl);
+
+        return Result.Success(index);
+    }
+
+    applyImages (elem: HTMLElement) {
+        return applyDocumentImages(elem, this.images);
     }
 
     applyTheme (elem: HTMLElement) {
@@ -59,6 +103,7 @@ export class Document {
         editor.setContents(this.delta);
         loadHistoryStack(this.history, editor);
         applyDocumentTheme(editor.container, this.theme);
+        applyDocumentImages(editor.container, this.images);
     }
 
     copyEditorDelta (delta: Delta) {
@@ -80,6 +125,7 @@ export class Document {
         const blocks = makeBlocks(makeLines(text));
         blocks.forEach(b => parseBlock(doc, b));
 
+        if (doc.images === undefined) doc.images = {lookup: {}, data: []};
         if (doc.theme === undefined) doc.theme = {};
         if (doc.delta === undefined) doc.delta = [];
         if (doc.history === undefined) doc.history = {undo: [], redo: []};
@@ -109,27 +155,6 @@ export class Document {
 
     render (): string {
         return documentRender(this, HtmlFormat) as string;
-        // return html_beautify(`
-        //     <!DOCTYPE html>
-        //     <html>
-        //     <head>
-        //         <meta charset="utf-8">
-        //         <title>${this.title}</title>
-        //         <style>${quillBaseCss}</style>
-        //     </head>
-        //     <body>${editor.root.innerHTML}</body>
-        //     </html>
-        // `, { /* eslint-disable camelcase */
-        //     indent_size: 4,
-        //     wrap_line_length: 80,
-        //     wrap_attributes: "auto",
-        //     wrap_attributes_indent_size: 2,
-        //     end_with_newline: true,
-        //     preserve_newlines: true,
-        //     max_preserve_newlines: 2,
-        //     indent_inner_html: true,
-        //     extra_liners: [],
-        // } /* eslint-enable camelcase */);
     }
 }
 
@@ -401,4 +426,20 @@ function getIndent (line: string): number {
         i++;
     }
     return i;
+}
+
+
+function applyDocumentImages (elem: HTMLElement, images: ImageDb) {
+    let style = elem.querySelector("#image-sources");
+
+    if (!style) {
+        style = elem.appendChild(document.createElement("style"));
+        style.id = "image-sources";
+    }
+
+    const css = images.data.map((value, key) => {
+        return `img[data-img-id="${key}"] { content: url("${value}"); }`;
+    }).join("\n");
+
+    style.innerHTML = css;
 }

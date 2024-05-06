@@ -21,33 +21,6 @@ export type Section = {
     attributes: AttributeMap,
 }
 
-// export type Section
-//     = OpSection
-//     | EmbedSection
-//     ;
-
-// export type OpSection = OpSectionContent & Attributes;
-// export type EmbedSection = EmbedSectionContent & Attributes;
-
-// export type SectionContent
-//     = OpSectionContent
-//     | EmbedSectionContent
-//     ;
-
-// export type OpSectionContent = {
-//     ops: Op[],
-// };
-
-// export type EmbedSectionContent
-//     = { embed: Embed }
-//     ;
-
-// export type Embed
-//     = ImageEmbed
-//     ;
-
-// export type ImageEmbed= { "image": string };
-
 export type Format = {
     section: SectionFn,
     beautifier: (content: string) => string,
@@ -262,8 +235,6 @@ function opToContent (op: Op, options: Options): string {
     if (!op.attributes) {
         return op.insert;
     }
-
-    // FIXME: move embed dispatch HERE
 
     return innerHtml(op.insert, op.attributes, options);
 }
