@@ -1,11 +1,11 @@
-import Document from "./document";
+import Document, { ImageDb } from "./document";
 import { AttributeMap, Op } from "quill-delta";
 import { FullTheme, makeFullTheme, themeCss } from "./document-theme";
 import { html_beautify } from "js-beautify";
 
 
 export type SectionFn = (sectionIndex: number, section: Section, options: Options) => string;
-export type DocumentTemplate = (title: string, theme: FullTheme, content: string) => string;
+export type DocumentTemplate = (title: string, theme: FullTheme, images: ImageDb, content: string) => string;
 export type EmptyTemplate = (sectionIndex: number, style: string, attributes: AttributeMap) => string;
 export type SectionTemplate = (sectionIndex: number, style: string, content: string, attributes: AttributeMap) => string;
 export type AttributeProcessor = (attributes: AttributeMap, options: Options) => ElemTemplate;
@@ -119,7 +119,7 @@ export default function convertDocument (doc: Document, format: Format, userOpti
             format.section(index, section, options))
         .join("\n");
 
-	const fullHtml = options.documentTemplate(doc.title || "untitled", makeFullTheme(doc.theme), interiorHtml);
+	const fullHtml = options.documentTemplate(doc.title || "untitled", makeFullTheme(doc.theme), doc.images, interiorHtml);
 
     switch (options.postProcess) {
         case "minify":
@@ -167,14 +167,18 @@ export const HtmlFormat: Format = {
         }),
 
     defaultOptions: {
-        documentTemplate: (title, theme, content) => {
+        documentTemplate: (title, theme, images, content) => {
             return `
                 <!DOCTYPE html>
                 <html>
                     <head>
                         <meta charset="utf-8">
                         <title>${title}</title>
-                        <style>${themeCss(theme, "#document")}</style>
+                        <style>
+                            ${themeCss(theme, "#document")}
+                            ${images.data.map(({value}, index) =>
+                                `img[data-img-id="${index}"] { content: url("${value}"); }`).join("\n")}
+                        </style>
                     </head>
                     <body>
                         <div id="document">
@@ -211,11 +215,13 @@ export const HtmlFormat: Format = {
 
             embeds: {
                 image: (embed, attrs) => {
-                    let size = "";
-                    if (attrs.width) size += ` width=${attrs.width}`;
-                    if (attrs.height) size += ` height=${attrs.height}`;
+                    let attrStr = "";
+                    if (attrs.title) attrStr += ` title="${attrs.title}"`;
+                    if (attrs.alt) attrStr += ` alt="${attrs.alt}"`;
+                    if (attrs.width) attrStr += ` width=${attrs.width}`;
+                    if (attrs.height) attrStr += ` height=${attrs.height}`;
 
-                    return `<img src="${embed.image}" alt="${attrs.alt}"${size}/>`;
+                    return `<img data-img-id="${embed.image}"${attrStr}/>`;
                 },
             }
         },

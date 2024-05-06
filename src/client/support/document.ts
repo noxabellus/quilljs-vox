@@ -36,14 +36,19 @@ export type Block = {
 
 export type ImageDb = {
     lookup: Partial<Record<string, number>>,
-    data: string[],
+    data: ImageEntry[],
+};
+
+export type ImageEntry = {
+    hash: number,
+    value: string,
 };
 
 export class Document {
     title: string | null;
     theme: Theme;
-    images: ImageDb;
     delta: Op[];
+    images: ImageDb;
     history: StackHistory | ProtoHistory;
 
     constructor (title?: string) {
@@ -51,12 +56,12 @@ export class Document {
 
         this.theme = {...DEFAULT_DOCUMENT_THEME};
 
+        this.delta = [];
+
         this.images = {
             lookup: {},
             data: [],
         };
-
-        this.delta = [];
 
         this.history = {
             undo: [],
@@ -64,29 +69,54 @@ export class Document {
         };
     }
 
+    hasImage (id: number): boolean {
+        return this.images.data[id] !== undefined;
+    }
+
     async registerImage (src: string): Promise<Result<number>> {
+        console.log("registering", src);
+        if (src.startsWith("data:")) {
+            console.log("data url");
+            const hash = hashString(src);
+            const index = this.images.data.findIndex(({hash: h, value}) => {
+                if (h !== hash) return false;
+                console.log("found matching hash");
+                return value == src;
+            });
+            if (index !== -1) {
+                console.log("found", index);
+                return Result.Success(index);
+            } else {
+                console.log("not found");
+                const newIndex = this.images.data.length;
+                this.images.data.push({hash, value: src});
+                return Result.Success(newIndex);
+            }
+        }
+
+        console.log("fetching url", src);
+
         const existingIndex = this.images.lookup[src];
         if (existingIndex !== undefined) {
+            console.log("found existing");
             return Result.Success(existingIndex);
         }
 
-        let dataUrl;
-        if (src.startsWith("data:")) {
-            dataUrl = src;
-        } else {
-            const result = await toDataURL(src);
+        console.log("creating dataUrl");
 
-            if (Result.isSuccess(result)) {
-                dataUrl = result.body;
-            } else {
-                return result;
-            }
+        let dataUrl;
+        const result = await toDataURL(src);
+
+        if (Result.isSuccess(result)) {
+            dataUrl = result.body;
+        } else {
+            return result;
         }
 
         const index = this.images.data.length;
 
         this.images.lookup[src] = index;
-        this.images.data.push(dataUrl);
+        this.images.data.push({hash: hashString(dataUrl), value: dataUrl});
 
         return Result.Success(index);
     }
@@ -132,6 +162,8 @@ export class Document {
 
         Object.setPrototypeOf(doc, Document.prototype);
 
+        console.log(doc);
+
         return doc as Document;
     }
 
@@ -144,6 +176,12 @@ export class Document {
 
             , "delta"
             ,   ...this.delta.flatMap(serializeDeltaOp).map(indent)
+
+            , "images"
+            ,   ...[ "lookup", ...Object.entries(this.images.lookup).map(([key,value]) => indent(`${JSON.stringify(key)} ${JSON.stringify(value)}`))
+                   , "data", ...this.images.data.map(({hash, value}) => indent(`${hash} ${JSON.stringify(value)}`))
+                   ]
+                   .map(indent)
 
             , "history"
             ,   ...Object.entries(this.history).flatMap(([key, ops]) =>
@@ -216,6 +254,14 @@ export function parseBlock (doc: Document, block: Block): void {
 
             break;
 
+        case "images":
+            if (doc.images !== undefined)
+                throw "duplicate images block";
+
+            doc.images = parseImages(block.body);
+
+            break;
+
         default:
             throw `unknown top level command ${block.command}`;
     }
@@ -240,6 +286,71 @@ export function parseTheme (blocks: Block[]): Theme {
     return theme;
 }
 
+export function parseImages (blocks: Block[]): ImageDb {
+    const images = {} as any;
+
+    blocks.forEach(b => {
+        if (b.arg !== null)
+            throw `images block should not have arg ${b.arg}`;
+
+        if (images[b.command] !== undefined)
+            throw `duplicate images block ${b.command}`;
+
+        switch (b.command) {
+            case "lookup":
+                images.lookup = parseLookup(b.body);
+                break;
+            case "data":
+                images.data = parseData(b.body);
+                break;
+            default:
+                throw `unknown images block ${b.command}`;
+        }
+    });
+
+    return images;
+}
+
+export function parseLookup (blocks: Block[]): Record<string, number> {
+    const lookup = {} as Record<string, number>;
+
+    blocks.forEach(b => {
+        if (b.body.length > 0)
+            throw "lookup should not have body";
+
+        if (typeof b.arg !== "number")
+            throw `lookup value should be number ${b.arg}`;
+
+        const key = JSON.parse(b.command);
+
+        lookup[key] = b.arg;
+    });
+
+    return lookup;
+}
+
+export function parseData (blocks: Block[]): ImageEntry[] {
+    const data = [] as ImageEntry[];
+
+    blocks.forEach(b => {
+        if (b.body.length > 0)
+            throw "data should not have body";
+
+        if (typeof b.arg !== "string")
+            throw `data value should be string ${b.arg}`;
+
+        const hash = parseInt(b.command);
+
+        if (isNaN(hash)) {
+            throw `data hash is not a number ${b.command}`;
+        }
+
+        data.push({hash, value: b.arg});
+    });
+
+    return data;
+}
+
 export function parseHistory (blocks: Block[]): StackHistory {
     const history = {} as any;
 
@@ -249,6 +360,9 @@ export function parseHistory (blocks: Block[]): StackHistory {
 
         if (history[b.command] !== undefined)
             throw `duplicate history block ${b.command}`;
+
+        if (["undo", "redo"].indexOf(b.command as any) < 0)
+            throw `unknown history block ${b.command}`;
 
         history[b.command] = parseHistoryOps(b.body);
     });
@@ -437,9 +551,24 @@ function applyDocumentImages (elem: HTMLElement, images: ImageDb) {
         style.id = "image-sources";
     }
 
-    const css = images.data.map((value, key) => {
-        return `img[data-img-id="${key}"] { content: url("${value}"); }`;
+    const css = images.data.map(({value}, index) => {
+        return `img[data-img-id="${index}"] { content: url("${value}"); }`;
     }).join("\n");
 
     style.innerHTML = css;
+}
+
+
+function hashString (str: string): number {
+    let hash = 0;
+
+    if (str.length === 0) return hash;
+
+    for (let i = 0; i < str.length; i++) {
+        const chr = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + chr;
+        hash |= 0;
+    }
+
+    return hash;
 }
