@@ -27,8 +27,7 @@ const Editor = styled.div`
         margin: 5px auto;
         width: min-content;
         height: min-content;
-        padding: var(--frame-padding);
-        background-color: rgba(var(--frame-background-color), var(--frame-background-opacity));
+        background-color: rgb(var(--document-background-color));
         color: rgb(var(--primary-color));
         box-shadow: 0 0 10px 10px rgba(var(--shadow-color), calc(var(--shadow-opacity) / 4)),
                     0 0 10px 10px rgba(var(--shadow-color), calc(var(--shadow-opacity) / 4)) inset;
@@ -42,8 +41,9 @@ const Editor = styled.div`
         font-size: var(--document-primary-font-size);
         font-weight: var(--document-primary-font-weight);
         color: rgb(var(--document-primary-color));
-        background-color: rgb(var(--document-background-color));
+        background-color: rgb(var(--document-page-color));
         padding: var(--document-padding);
+        margin: var(--document-margin);
     }
 
     & .ql-disabled .ql-editor {
@@ -103,8 +103,6 @@ const DocumentEditor = forwardRef(
         }, [appContext.data.document.current?.images.data.length]);
 
         useEffect(() => {
-            console.log("setting up quill...");
-
             const doc = appContext.data.document.current;
             if (!doc) throw "No document found!";
 
@@ -153,7 +151,6 @@ const DocumentEditor = forwardRef(
             });
 
             return () => {
-                console.log("cleaning up quill...");
                 ref.current = null;
                 container.innerHTML = "";
             };

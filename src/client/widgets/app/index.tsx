@@ -57,8 +57,6 @@ export default function App () {
     function reducer (state: AppContext, action: AppStateAction): AppContext {
         let out: AppContext;
 
-        console.log("AppDispatch", state, action.type, action.value);
-
         if (action.type === "set-lock-io") {
             out = { ...state, lockIO: action.value };
         } else if (state.lockIO) {

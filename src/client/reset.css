@@ -19,6 +19,11 @@
     list-style: none;
 }
 
+p, span, h1, h2, h3, h4, h5, h6 {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
 strong, b {
     font-weight: bold;
 }

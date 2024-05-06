@@ -13,6 +13,8 @@ export type FullTheme = {
     "primary-font-weight": FontWeight,
     "primary-color": Color,
     "background-color": Color,
+    "page-color": Color,
+    "margin": Dimensions,
     "padding": Dimensions,
 };
 
@@ -115,7 +117,9 @@ export const DEFAULT_DOCUMENT_THEME: FullTheme = {
     "primary-font-size": {"pt": 12},
     "primary-font-weight": "normal",
     "primary-color": [255, 255, 255],
-    "background-color": [41, 41, 41],
+    "background-color": [0, 0, 0],
+    "page-color": [41, 41, 41],
+    "margin": [{"px": 16}, {"px": 16}, {"px": 16}, {"px": 16}],
     "padding": [{"px": 14}, {"px": 16}, {"px": 14}, {"px": 16}],
 };
 
@@ -175,7 +179,7 @@ export function themeCss (theme: FullTheme, documentSelector: string): string {
             flex-direction: column;
             align-items: center;
             justify-content: stretch;
-            background: ${"grey"/*FIXME: theme this*/};
+            background: rgb(var(--document-background-color));
         }
 
         ${documentSelector} {
@@ -186,8 +190,11 @@ export function themeCss (theme: FullTheme, documentSelector: string): string {
             font-size: var(--document-primary-font-size);
             font-weight: var(--document-primary-font-weight);
             color: rgb(var(--document-primary-color));
-            background-color: rgb(var(--document-background-color));
+            background-color: rgb(var(--document-page-color));
+            margin: var(--document-margin);
             padding: var(--document-padding);
+            line-height: 1.42;
+            tab-size: 4;
         }
     `;
 }

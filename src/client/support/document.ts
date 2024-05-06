@@ -74,35 +74,26 @@ export class Document {
     }
 
     async registerImage (src: string): Promise<Result<number>> {
-        console.log("registering", src);
         if (src.startsWith("data:")) {
-            console.log("data url");
             const hash = hashString(src);
             const index = this.images.data.findIndex(({hash: h, value}) => {
                 if (h !== hash) return false;
-                console.log("found matching hash");
                 return value == src;
             });
+
             if (index !== -1) {
-                console.log("found", index);
                 return Result.Success(index);
             } else {
-                console.log("not found");
                 const newIndex = this.images.data.length;
                 this.images.data.push({hash, value: src});
                 return Result.Success(newIndex);
             }
         }
 
-        console.log("fetching url", src);
-
         const existingIndex = this.images.lookup[src];
         if (existingIndex !== undefined) {
-            console.log("found existing");
             return Result.Success(existingIndex);
         }
-
-        console.log("creating dataUrl");
 
         let dataUrl;
         const result = await toDataURL(src);
@@ -161,8 +152,6 @@ export class Document {
         if (doc.history === undefined) doc.history = {undo: [], redo: []};
 
         Object.setPrototypeOf(doc, Document.prototype);
-
-        console.log(doc);
 
         return doc as Document;
     }
