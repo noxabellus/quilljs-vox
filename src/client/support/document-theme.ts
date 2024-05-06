@@ -132,9 +132,15 @@ export function isThemeKey (key: string): key is ThemeKey {
     return THEME_KEYS.includes(key);
 }
 
+export function themeValue (theme: Theme, key: ThemeKey): ThemeProperty {
+    const value = theme[key];
+    if (value !== undefined) return value;
+    else return DEFAULT_DOCUMENT_THEME[key];
+}
+
 export function applyDocumentTheme (elem: HTMLElement, theme: Theme) {
-    Object.entries(theme).forEach(([key, value]) => {
-        applyDocumentProperty(elem, theme, key as keyof Theme, value);
+    Object.keys(DEFAULT_DOCUMENT_THEME).forEach((key: keyof Theme) => {
+        applyDocumentProperty(elem, theme, key, theme[key]);
     });
 }
 
@@ -142,7 +148,7 @@ export function makeFullTheme (theme: Theme): FullTheme {
     return {...DEFAULT_DOCUMENT_THEME, ...theme};
 }
 
-export function applyDocumentProperty (elem: HTMLElement, theme: Theme, key: ThemeKey, value: Theme[typeof key]) {
+export function applyDocumentProperty (elem: HTMLElement, theme: Theme, key: ThemeKey, value?: Theme[typeof key]) {
     const keyFull = `--document-${key}`;
 
     let valueString = propertyString(theme, value);

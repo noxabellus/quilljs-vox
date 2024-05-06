@@ -2,7 +2,7 @@ import Quill from "quill/core";
 import Delta, { AttributeMap, Op } from "quill-delta";
 import History, { StackItem } from "quill/modules/history";
 
-import { DEFAULT_DOCUMENT_THEME, Theme, applyDocumentTheme, isThemeKey, isValidProperty } from "./document-theme";
+import { Theme, applyDocumentTheme, isThemeKey, isValidProperty } from "./document-theme";
 import { Defined, forceVal } from "./nullable";
 
 // import quillBaseCss from "../../extern/quill.core.css?raw";
@@ -54,7 +54,7 @@ export class Document {
     constructor (title?: string) {
         this.title = title || null;
 
-        this.theme = {...DEFAULT_DOCUMENT_THEME};
+        this.theme = {};
 
         this.delta = [];
 

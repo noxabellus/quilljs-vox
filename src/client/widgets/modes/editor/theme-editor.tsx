@@ -2,7 +2,7 @@ import React, { useContext } from "react";
 
 import AppState from "../../app/state";
 import Block from "../../basic/block";
-import { Color, Dimensions, Length, THEME_UNITS, Theme, lengthUnit, lengthConvert, propertyType } from "../../../support/document-theme";
+import { Color, Dimensions, Length, THEME_UNITS, Theme, lengthUnit, lengthConvert, propertyType, themeValue, DEFAULT_DOCUMENT_THEME } from "../../../support/document-theme";
 import Dropdown from "../../basic/dropdown";
 import Input from "../../basic/input";
 import styled from "styled-components";
@@ -32,7 +32,7 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
     const theme = appState.data.document.current?.theme;
     if (!theme) throw "no document found";
 
-    const property = theme[fieldName];
+    const property = themeValue(theme, fieldName);
 
     const numToFixed = (num: number) => Math.round(num * 1e2) / 1e2;
 
@@ -253,7 +253,7 @@ export default function ThemeEditor () {
 
     if (!theme) throw "no document found";
 
-    const fieldNames = Object.keys(theme) as (keyof Theme)[];
+    const fieldNames = Object.keys(DEFAULT_DOCUMENT_THEME) as (keyof Theme)[];
 
     const fields = fieldNames.map(fieldName =>
         <li key={fieldName}>

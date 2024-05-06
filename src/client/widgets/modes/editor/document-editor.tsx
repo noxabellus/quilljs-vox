@@ -7,6 +7,7 @@ import "./quill-extensions";
 import { forceRef } from "../../../support/nullable";
 import EditorState from "./state";
 import AppState from "../../app/state";
+import { makeFullTheme } from "../../../support/document-theme";
 
 export type QuillEditorProps = {
     defaultValue?: string;
@@ -89,7 +90,7 @@ const DocumentEditor = forwardRef(
                 type: "post-width",
                 value: q.container.offsetWidth,
             }));
-        }, Object.values(appContext.data.document.current?.theme || {}));
+        }, Object.values(makeFullTheme(appContext.data.document.current?.theme || {})));
 
         useLayoutEffect(() => {
             const q = ref.current;
