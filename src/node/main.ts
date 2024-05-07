@@ -1,5 +1,4 @@
 import { app, BrowserWindow, Menu } from "electron";
-
 import * as remoteMain from "@electron/remote/main";
 
 import path from "path";

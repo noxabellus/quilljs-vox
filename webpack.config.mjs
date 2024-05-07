@@ -45,6 +45,12 @@ export default [
             ]
         },
         resolve: {
+            alias: {
+                Assets: path.resolve(__dirname, "src/assets/"),
+                Elements: path.resolve(__dirname, "src/elements/"),
+                Support: path.resolve(__dirname, "src/support/"),
+                Extern: path.resolve(__dirname, "src/extern/"),
+            },
             extensions: [".tsx", ".ts", ".jsx", ".js"],
         },
         module: {

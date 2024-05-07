@@ -15,5 +15,10 @@
                 "name": "@styled/typescript-styled-plugin"
             }
         ],
+        "baseUrl": "./",
+        "paths": {
+            "Support/*": ["src/support/*"],
+            "Elements/*": ["src/elements/*"],
+        }
     }
 }

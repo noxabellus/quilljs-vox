@@ -1,4 +1,6 @@
-@import "../extern/quill.base.css";
+@import "Extern/quill.base.css";
+@import "Extern/reset.css";
+
 
 :root {
     --serif-family: 'Merriweather', serif;
@@ -17,8 +19,6 @@
     --frame-border-color: var(--accent-color);
     --frame-border-opacity: 0.35;
 }
-
-@import "./reset.css";
 
 html, body {
     overflow: scroll;
