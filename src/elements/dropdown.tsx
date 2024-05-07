@@ -51,18 +51,21 @@ export default function Dropdown({disabled, selected, children, onChange, style}
     const primaryRef = useRef<HTMLButtonElement>(null);
     const popOutRef = useRef<HTMLDivElement>(null);
 
-    const clicker = (i: number) => () => {
+    const clicker = (i: number) => (e: React.MouseEvent<any>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const last = isSelected;
         setOpen(false);
-        if (onChange && i != isSelected) {
-            setTimeout(() => {
-                setIsSelected(i);
-                onChange(i, selected);
-            });
-        }
+        setTimeout(() => {
+            setIsSelected(i);
+            if (onChange) onChange(i, last);
+        });
     };
 
-    const handleOpen = () => {
+    const handleOpen = (e: React.MouseEvent<HTMLButtonElement>) => {
         if (disabled) return;
+        e.preventDefault();
+        e.stopPropagation();
         const rect = forceRef(primaryRef).getBoundingClientRect();
         setPosition({left: `${rect.left}px`, top: `${rect.top}px`});
         setOpen(true);

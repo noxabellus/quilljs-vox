@@ -2,12 +2,12 @@ import Quill from "quill/core";
 import Delta, { AttributeMap, Op } from "quill-delta";
 import History, { StackItem } from "quill/modules/history";
 
-import { Defined, forceVal } from "./nullable";
-import Result from "./result";
-import { toDataURL } from "./xhr";
+import { Defined, forceVal } from "Support/nullable";
+import Result from "Support/result";
+import { toDataURL } from "Support/xhr";
 
-import { Theme, applyDocumentTheme, isThemeKey, isValidProperty } from "./document-theme";
-import documentRender, { HtmlFormat } from "./document-render";
+import { Theme, applyDocumentTheme, isThemeKey, isValidProperty } from "./theme";
+import documentRender, { HtmlFormat } from "./render";
 
 
 export type ProtoStackItem = {
@@ -64,6 +64,12 @@ export class Document {
             undo: [],
             redo: [],
         };
+    }
+
+    isBlank (): boolean {
+        return this.delta.length === 0
+            || (this.delta.length === 1 && this.delta[0].insert === "\n"
+                && Object.keys(this.delta[0].attributes ?? {}).length === 0);
     }
 
     hasImage (id: number): boolean {

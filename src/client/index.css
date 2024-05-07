@@ -20,16 +20,13 @@
     --frame-border-opacity: 0.35;
 }
 
-html, body {
-    overflow: scroll;
-    scrollbar-width: none;
-}
 
-#app-container {
-    height: 100vh;
+html, body, #app-container {
     display: flex;
+    flex-grow: 1;
+    width: 100vw;
+    height: 100vh;
     flex-direction: column;
     justify-content: stretch;
     align-items: stretch;
-    background-color: rgb(var(--background-color));
 }

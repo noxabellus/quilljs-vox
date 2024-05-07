@@ -1,31 +1,16 @@
 import React, { useContext } from "react";
-import styled from "styled-components";
 
 import { parseFloatSafe, parseIntSafe } from "Support/number";
-import { Color, Dimensions, Length, THEME_UNITS, Theme, lengthUnit, lengthConvert, propertyType, themeValue, DEFAULT_DOCUMENT_THEME } from "Support/document-theme";
+
+import { Color, Dimensions, Length, THEME_UNITS, Theme, lengthUnit, lengthConvert, propertyType, themeValue, DEFAULT_DOCUMENT_THEME } from "Document/theme";
 
 import Dropdown from "Elements/dropdown";
 import Input from "Elements/input";
-import Block from "Elements/block";
+import Label from "Elements/label";
 
 import AppState, { useAppState } from "../../app/state";
 
 
-
-const Label = styled.label`
-    user-select: none;
-
-    & > div {
-        display: flex;
-        flex-direction: row;
-        justify-content: flex-end;
-        align-items: center;
-
-    }
-    & > div > *:not(:first-child) {
-        margin-left: 5px;
-    }
-`;
 
 
 const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
@@ -38,7 +23,7 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
 
     const numToFixed = (num: number) => Math.round(num * 1e2) / 1e2;
 
-    switch (propertyType(property)) {
+    switch (propertyType(property as any)) {
         case "length": {
             const prop = property as Length;
             const unit = lengthUnit(prop);
@@ -236,7 +221,7 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
                                 type: "set-doc-theme-property",
                                 value: {
                                     key: fieldName,
-                                    data: newValue,
+                                    data: newValue as any,
                                 },
                             },
                         });
@@ -262,8 +247,8 @@ export default function ThemeEditor () {
             <Label>{fieldName.replace(/(?:-|^)(\w)/g, (_, w) => " " + w.toUpperCase())}<ThemeField fieldName={fieldName}/></Label>
         </li>);
 
-    return <Block>
+    return <>
         <h1>Theme</h1>
         <ul>{fields}</ul>
-    </Block>;
+    </>;
 }

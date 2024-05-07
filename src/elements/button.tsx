@@ -22,6 +22,9 @@ const ButtonBase = styled.button`
 
     background: rgb(var(--element-color));
     cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 `;
 
 

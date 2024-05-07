@@ -4,7 +4,7 @@ import fs from "fs/promises";
 
 import remote from "./remote";
 import Result from "./result";
-import Document from "./document";
+import Document from "Document";
 import { NonNull, unsafeForceVal } from "./nullable";
 
 

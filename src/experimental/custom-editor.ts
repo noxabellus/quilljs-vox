@@ -1,7 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
-import Document from "Support/document";
-import { FullTheme, Theme, makeFullTheme, themeCss } from "Support/document-theme";
+import { Theme } from "Document/theme";
 import { readVox } from "Support/file";
 import Result from "Support/result";
 
@@ -609,17 +606,6 @@ container.addEventListener("beforeinput", (e: InputEvent) => {
         representationError("beforeinput event fired with no selection", e);
 
     const range: Range = selection?.getRangeAt(0);
-
-    const selectedElems =
-        documentNodes
-            .filter(elem => elem instanceof HTMLElement
-                         && range.intersectsNode(elem)
-                         && elem.dataset.sectionId !== undefined) as SectionNode[];
-
-    const selectedSectionIds =
-        selectedElems
-            .map(elem =>
-                parseInt(elem.dataset.sectionId));
 
     const startNode = findNearestContentNode(range.startContainer, range.startOffset);
     const endNode = findNearestContentNode(range.endContainer, range.endOffset);

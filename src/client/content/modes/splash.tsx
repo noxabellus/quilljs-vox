@@ -2,8 +2,9 @@ import { useContext, useState } from "react";
 import styled from "styled-components";
 
 import Result from "Support/result";
-import Document from "Support/document";
 import { openVox } from "Support/file";
+
+import Document from "Document";
 
 import BaseStyles from "Elements/base-styles";
 import Button from "Elements/button";
@@ -25,12 +26,7 @@ const Logo = styled(Svg)`
     border-radius: 30px;
     padding: 30px;
     fill: rgb(var(--vox-color));
-
-    @media (max-width: 640px) {
-        & {
-            width: 100vw;
-        }
-    }
+    max-width: 100vw;
 `;
 
 const Toolbar = styled(ToolSet)`

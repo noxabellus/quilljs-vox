@@ -1,22 +1,34 @@
 import resetCss from "Extern/reset.css?raw";
 
-import { unsafeForceVal } from "./nullable";
+import { unsafeForceVal } from "Support/nullable";
+
+import documentStyles from "./styles";
 
 
 export type FullTheme = {
-    "width": Length,
-    "border-size": Length,
+    "base-font-family": string,
+    "base-font-size": Length,
+    "heading-1-font-family": string,
+    "heading-1-font-size": Length,
+    "heading-2-font-family": string,
+    "heading-2-font-size": Length,
+    "heading-3-font-family": string,
+    "heading-3-font-size": Length,
+    "heading-4-font-family": string,
+    "heading-4-font-size": Length,
+    "heading-5-font-family": string,
+    "heading-5-font-size": Length,
+    "heading-6-font-family": string,
+    "heading-6-font-size": Length,
+    "base-font-color": Color,
     "border-color": Color,
-    "border-opacity": number,
-    "border-radius": Dimensions,
-    "primary-font-family": string,
-    "primary-font-size": Length,
-    "primary-font-weight": FontWeight,
-    "primary-color": Color,
     "background-color": Color,
     "page-color": Color,
+    "width": Length,
     "margin": Dimensions,
     "padding": Dimensions,
+    "border-size": Length,
+    "border-radius": Dimensions,
 };
 
 export type Theme = Partial<FullTheme>;
@@ -34,7 +46,7 @@ export type PropertyType = "string" | "number" | "length" | "color" | "dimension
 export type Dimensions = [Length, Length, Length, Length];
 export type FontWeight = "normal" | "bold" | "bolder" | "light" | "lighter" | number;
 export type Color = [number, number, number];
-export type LengthUnit = "px" | "pt" | "rem" | "cm" | "mm" | "in" | "pc";
+export type LengthUnit = "px" | "pt" | "em" | "cm" | "mm" | "in" | "pc";
 export type Length
     = {"px":number}
     | {"pt":number}
@@ -85,14 +97,14 @@ export function lengthToPx (theme: Theme, ...args: any[]): number {
     if (ratio) {
         return val * ratio;
     } else {
-        const base = theme["primary-font-size"];
+        const base = theme["base-font-size"];
 
         let basePx;
 
         if (base) {
             basePx = lengthToPx(DEFAULT_DOCUMENT_THEME, base);
         } else {
-            const defaultBase = DEFAULT_DOCUMENT_THEME["primary-font-size"];
+            const defaultBase = DEFAULT_DOCUMENT_THEME["base-font-size"];
             basePx = lengthToPx({}, defaultBase);
         }
 
@@ -101,7 +113,7 @@ export function lengthToPx (theme: Theme, ...args: any[]): number {
 }
 
 export function isRelativeUnit (unit: LengthUnit): boolean {
-    return unit == "rem";
+    return unit == "em";
 }
 
 export function isRelativeLength (length: Length): boolean {
@@ -109,28 +121,38 @@ export function isRelativeLength (length: Length): boolean {
 }
 
 export const DEFAULT_DOCUMENT_THEME: FullTheme = {
-    "width": {"px": 960},
-    "border-size": {"px": 1},
-    "border-color": [255, 255, 255],
-    "border-opacity": 0.2,
-    "border-radius": [{"px": 8}, {"px": 8}, {"px": 8}, {"px": 8}],
-    "primary-font-family": "Helvetica, Arial, sans-serif",
-    "primary-font-size": {"pt": 12},
-    "primary-font-weight": "normal",
-    "primary-color": [255, 255, 255],
-    "background-color": [0, 0, 0],
+    "base-font-family": "Helvetica, Arial, sans-serif",
+    "base-font-size": {"pt": 12},
+    "base-font-color": [255, 255, 255],
+    "heading-1-font-family": "inherit",
+    "heading-1-font-size": {"em": 2.8},
+    "heading-2-font-family": "inherit",
+    "heading-2-font-size": {"em": 2.4},
+    "heading-3-font-family": "inherit",
+    "heading-3-font-size": {"em": 2.0},
+    "heading-4-font-family": "inherit",
+    "heading-4-font-size": {"em": 1.8},
+    "heading-5-font-family": "inherit",
+    "heading-5-font-size": {"em": 1.6},
+    "heading-6-font-family": "inherit",
+    "heading-6-font-size": {"em": 1.4},
     "page-color": [41, 41, 41],
+    "background-color": [0, 0, 0],
+    "width": {"in": 8.5},
     "margin": [{"px": 16}, {"px": 16}, {"px": 16}, {"px": 16}],
     "padding": [{"px": 14}, {"px": 16}, {"px": 14}, {"px": 16}],
+    "border-size": {"px": 1},
+    "border-color": [255, 255, 255],
+    "border-radius": [{"px": 8}, {"px": 8}, {"px": 8}, {"px": 8}],
 };
 
 
-if (lengthUnit(DEFAULT_DOCUMENT_THEME["primary-font-size"] as Length) == "rem")
+if (lengthUnit(DEFAULT_DOCUMENT_THEME["base-font-size"] as Length) == "em")
     throw "Primary font size of default theme cannot be a relative unit";
 
 export const THEME_KEYS = Object.keys(DEFAULT_DOCUMENT_THEME);
 export const THEME_UNITS: [LengthUnit, LengthUnit, LengthUnit, LengthUnit, LengthUnit, LengthUnit, LengthUnit] = [
-    "px", "pt", "rem", "cm", "mm", "in", "pc",
+    "px", "pt", "em", "cm", "mm", "in", "pc",
 ];
 
 export function isThemeKey (key: string): key is ThemeKey {
@@ -184,20 +206,7 @@ export function themeCss (theme: FullTheme, documentSelector: string): string {
             height: fit-content;
         }
 
-        ${documentSelector} {
-            width: var(--document-width);
-            border: var(--document-border-size) solid rgba(var(--document-border-color), var(--document-border-opacity));
-            border-radius: var(--document-border-radius);
-            font-family: var(--document-primary-font-family);
-            font-size: var(--document-primary-font-size);
-            font-weight: var(--document-primary-font-weight);
-            color: rgb(var(--document-primary-color));
-            background-color: rgb(var(--document-page-color));
-            margin: var(--document-margin);
-            padding: var(--document-padding);
-            line-height: 1.42;
-            tab-size: 4;
-        }
+        ${documentStyles(documentSelector)}
     `;
 }
 
@@ -236,18 +245,20 @@ export function propertyString<K extends ThemeKey> (theme: Theme, value: Theme[K
     switch (propertyType(value)) {
         case "string": return value as string;
         case "number": return `${value}`;
-        case "color": return (value as Color).map(x => propertyString(theme, x)).join(", ");
-        case "dimensions": return (value as Dimensions).map(x => propertyString(theme, x)).join(" ");
-        case "length": {
-            // safety: propertyType already validated that this is not undefined
-            const [unit, val] = Object.entries(unsafeForceVal(value))[0];
-            if (unit != "rem") {
-                return `${val}${unit}`;
-            } else {
-                const px = lengthToPx(theme, unit, val);
-                return `${px}px`;
-            }
-        }
+        case "color": return (value as Color).join(", ");
+        case "dimensions": return (value as Dimensions).map(x => lengthString(theme, x)).join(" ");
+        case "length": return lengthString(theme, value as Length);
         default: return null;
+    }
+}
+
+export function lengthString (theme: Theme, value: Length): string {
+    // safety: propertyType already validated that this is not undefined
+    const [unit, val] = Object.entries(unsafeForceVal(value))[0];
+    if (unit != "em") {
+        return `${val}${unit}`;
+    } else {
+        const px = lengthToPx(theme, unit, val);
+        return `${px}px`;
     }
 }

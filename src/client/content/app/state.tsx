@@ -36,5 +36,10 @@ export function dataIsDirty (appContext: AppContext) {
     return appContext.data.lastUpdated > appContext.data.lastSaved;
 }
 
+export function dataNeedsSave (appContext: AppContext) {
+    if (appContext.data.startedFromBlankDocument === true && (appContext.data.document.current?.isBlank() ?? true)) return false;
+    return dataIsDirty(appContext);
+}
+
 AppState.Context = Context;
 AppState.Dispatch = Dispatch;

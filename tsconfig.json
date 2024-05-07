@@ -19,6 +19,8 @@
         "paths": {
             "Support/*": ["src/support/*"],
             "Elements/*": ["src/elements/*"],
+            "Document/*": ["src/document/*"],
+            "Document": ["src/document/index.js"],
         }
     }
 }

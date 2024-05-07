@@ -1,8 +1,8 @@
 import { useContext } from "react";
 import styled from "styled-components";
 
+import Block from "Elements/block";
 import Button from "Elements/button";
-import Center from "Elements/center";
 
 import AppState from "../../app/state";
 
@@ -13,15 +13,30 @@ import EditorState from "./state";
 import backImg from "Assets/checkmark.svg?raw";
 
 
-const Settings = styled(Center)<{["$ed-width"]: number}>`
+const Settings = styled(Block)<{["$ed-width"]: number}>`
     position: absolute;
     top: 50px;
-    right: 0px;
+    right: 5px;
+    max-height: calc(100vh - 55px);
+    overflow-y: scroll;
+    scrollbar-width: none;
 
-    margin-right: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
 
-    @media (min-width: ${p => p["$ed-width"] + (5 * 2)}px) {
-        margin-right: 5px;
+    & li {
+        margin-top: 5px;
+    }
+
+    & > button {
+        margin-top: 10px;
+    }
+
+    @media (max-width: ${p => p["$ed-width"] + (5 * 2) - 1}px) {
+        top: 45px;
+        max-height: calc(100vh - 50px);
     }
 `;
 

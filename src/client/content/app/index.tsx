@@ -2,7 +2,7 @@ import { useLayoutEffect, useReducer, useRef } from "react";
 
 import { PathLike } from "fs";
 
-import Document from "Support/document";
+import Document from "Document";
 import remote from "Support/remote";
 import saveInterrupt from "./save-interrupt";
 import { writeVox } from "Support/file";
@@ -12,7 +12,7 @@ import Splash from "../modes/splash";
 import Editor from "../modes/editor";
 import AppSettings from "../modes/app-settings";
 
-import AppState, { dataIsDirty } from "./state";
+import AppState, { dataIsDirty, dataNeedsSave } from "./state";
 import { AppContext, AppStateAction, APP_MODE_TITLES, AppMode, AppLocalSettings } from "./types";
 
 
@@ -55,7 +55,8 @@ export default function App () {
                 "Auto Save": false,
             },
             filePath: null,
-            document: documentRef
+            document: documentRef,
+            startedFromBlankDocument: true,
         },
         settings: null
     });
@@ -88,7 +89,7 @@ export default function App () {
                 case "set-data-x": {
                     switch (action.value.type) {
                         case "set-last-saved":
-                            out = { ...state, data: { ...state.data, lastSaved: action.value.value } };
+                            out = { ...state, data: { ...state.data, lastSaved: action.value.value, startedFromBlankDocument: false } };
                             break;
 
                         case "set-last-updated":
@@ -96,7 +97,7 @@ export default function App () {
                             break;
 
                         case "set-file-path":
-                            out = { ...state, data: { ...state.data, lastUpdated: Date.now(), filePath: action.value.value } };
+                            out = { ...state, data: { ...state.data, lastUpdated: Date.now(), filePath: action.value.value, startedFromBlankDocument: false } };
                             break;
                     }
                 } break;
@@ -144,20 +145,21 @@ export default function App () {
                 case "post-doc": {
                     let mode: AppMode;
                     let filePath: PathLike | null;
+                    let document: Document | null;
 
                     if (action.value) {
                         if (action.value instanceof Document) {
                             filePath = null;
-                            state.data.document.current = action.value;
+                            document = action.value;
                             mode = "editor";
                         } else {
                             filePath = action.value.filePath;
-                            state.data.document.current = action.value.document;
+                            document = action.value.document;
                             mode = "editor";
                         }
                     } else {
                         filePath = null;
-                        state.data.document.current = null;
+                        document = null;
                         mode = "splash";
                     }
 
@@ -169,6 +171,7 @@ export default function App () {
                         let reset = false;
                         if (typeof json === "object") {
                             const keys = Object.keys(localSettings) as (keyof AppLocalSettings)[];
+
                             for (const key of keys) {
                                 if (key in json) {
                                     if (typeof json[key] === typeof localSettings[key]) {
@@ -189,7 +192,9 @@ export default function App () {
                         }
                     }
 
-                    out = {...state, mode, data: {...state.data, lastSaved: 0, lastUpdated: Date.now(), localSettings, filePath}};
+                    state.data.document.current = document;
+
+                    out = {...state, mode, data: {...state.data, lastUpdated: Date.now(), lastSaved: 0, localSettings, filePath, startedFromBlankDocument: document?.isBlank() ?? true}};
                 } break;
             }
         }
@@ -260,7 +265,7 @@ export default function App () {
 
     useLayoutEffect(() => {
         async function handler (exit: () => void) {
-            if (dataIsDirty(context)) {
+            if (dataNeedsSave(context)) {
                 saveInterrupt(context, dispatch, exit);
             } else {
                 exit();

@@ -1,14 +1,16 @@
-import { MutableRefObject, forwardRef, useContext, useEffect, useLayoutEffect, useRef } from "react";
+import { MutableRefObject, forwardRef, useEffect, useLayoutEffect, useRef } from "react";
 import styled from "styled-components";
 
 import Quill from "quill";
 import "./quill-extensions";
 
-import { makeFullTheme } from "Support/document-theme";
 import { forceRef } from "Support/nullable";
 
-import AppState from "../../app/state";
-import EditorState from "./state";
+import { makeFullTheme } from "Document/theme";
+import documentStyles from "Document/styles";
+
+import { useAppState } from "../../app/state";
+import { useEditorState } from "./state";
 
 
 export type QuillEditorProps = {
@@ -18,15 +20,17 @@ export type QuillEditorProps = {
 
 type QuillRef = MutableRefObject<Quill | null>;
 
-const Editor = styled.div`
+const Editor = styled.div<{$edWidth: number}>`
     overflow: scroll;
     scrollbar-width: none;
+    max-width: 100%;
+    max-height: 100%;
     flex-grow: 1;
 
     & .ql-container {
         border: 1px solid rgba(var(--frame-border-color), var(--frame-border-opacity));
         border-radius: 5px;
-        margin: 5px auto;
+        margin: 7px auto;
         width: min-content;
         height: min-content;
         background-color: rgb(var(--document-background-color));
@@ -35,18 +39,13 @@ const Editor = styled.div`
                     0 0 10px 10px rgba(var(--shadow-color), calc(var(--shadow-opacity) / 4)) inset;
     }
 
-    & .ql-container .ql-editor {
-        width: var(--document-width);
-        border: var(--document-border-size) solid rgba(var(--document-border-color), var(--document-border-opacity));
-        border-radius: var(--document-border-radius);
-        font-family: var(--document-primary-font-family);
-        font-size: var(--document-primary-font-size);
-        font-weight: var(--document-primary-font-weight);
-        color: rgb(var(--document-primary-color));
-        background-color: rgb(var(--document-page-color));
-        padding: var(--document-padding);
-        margin: var(--document-margin);
+    @media (max-width: ${p => `${p.$edWidth + 5 * 2}px`}) {
+        & .ql-container {
+            margin: 7px 5px;
+        }
     }
+
+    ${documentStyles("& .ql-container .ql-editor")}
 
     & .ql-disabled .ql-editor {
         opacity: 0.5;
@@ -64,9 +63,8 @@ const DocumentEditor = forwardRef(
         const containerRef = useRef<HTMLDivElement>(null);
         const defaultValueRef = useRef(defaultValue);
         const disabledRef = useRef(disabled);
-        const appContext = useContext(AppState.Context);
-        const appDispatch = useContext(AppState.Dispatch);
-        const editorDispatch = useContext(EditorState.Dispatch);
+        const [appContext, appDispatch] = useAppState();
+        const [editorContext, editorDispatch] = useEditorState();
 
         useLayoutEffect(() => {
             defaultValueRef.current = defaultValue;
@@ -142,6 +140,10 @@ const DocumentEditor = forwardRef(
                             },
                         },
                     });
+                    editorDispatch({
+                        type: "post-range",
+                        value: quill.getSelection(),
+                    });
                 });
             });
 
@@ -158,7 +160,7 @@ const DocumentEditor = forwardRef(
             };
         }, [ref, appContext.data.document]);
 
-        return <Editor ref={containerRef}/>;
+        return <Editor $edWidth={editorContext.width} ref={containerRef}/>;
     }
 );
 

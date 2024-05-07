@@ -9,6 +9,6 @@ export type SvgProps
     ;
 
 
-export default function Svg({src, ...props}: SvgProps) {
-    return <div dangerouslySetInnerHTML={{__html: src}} {...props}></div>;
+export default function Svg({src, style, ...props}: SvgProps) {
+    return <div dangerouslySetInnerHTML={{__html: src}} style={{...style, display: "flex", alignItems: "center", justifyContent: "center", flexGrow: 1}} {...props}></div>;
 };

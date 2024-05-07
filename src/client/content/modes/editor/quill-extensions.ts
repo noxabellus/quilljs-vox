@@ -6,7 +6,8 @@ import { sanitize } from "quill/formats/link";
 import { EmbedBlot, Root } from  "parchment";
 
 import Result from "Support/result";
-import Document from "Support/document";
+
+import Document from "Document";
 
 
 const ATTRIBUTES = ["title", "alt", "height", "width"];

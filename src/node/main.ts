@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu } from "electron";
+import { app, BrowserWindow, Menu, globalShortcut } from "electron";
 import * as remoteMain from "@electron/remote/main";
 
 import path from "path";
@@ -16,14 +16,16 @@ remoteMain.initialize();
 
 await app.whenReady();
 
-
 const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 860,
+    height: 640,
+    useContentSize: true,
+    show: false,
     webPreferences: {
         nodeIntegration: true,
         contextIsolation: false
-    }
+    },
+
 });
 
 // hack to get around weird behavior with the close/onbeforeunload events
@@ -35,10 +37,12 @@ const windowObj: {onClose: OnCloseCallback} = {
 
 (app as any).window = windowObj;
 
+let forceClose = false;
+
 win.on("close", async (e) => {
     const callback = windowObj.onClose;
 
-    if (callback) {
+    if (!forceClose && callback) {
         e.preventDefault();
 
         callback(() => {
@@ -48,10 +52,21 @@ win.on("close", async (e) => {
     }
 });
 
+win.on("ready-to-show", () => win.show());
+
 win.loadFile(path.join(clientDir, "index.html"));
+win.setMinimumSize(365, 550);
 win.webContents.session.setSpellCheckerEnabled(false);
 // win.setFullScreen(true);
-win.webContents.openDevTools();
+// win.webContents.openDevTools();
+
+globalShortcut.register("Shift+CommandOrControl+I", () => {
+    win.webContents.openDevTools({
+        mode: "detach",
+        title: "Vox DevTools",
+        activate: true,
+    });
+});
 
 remoteMain.enable(win.webContents);
 
@@ -76,6 +91,7 @@ let needHardReset = false;
 setInterval(() => {
     if (needHardReset) {
         console.log("need hard reset, reloading electron");
+        forceClose = true;
         app.relaunch();
         app.quit();
     }

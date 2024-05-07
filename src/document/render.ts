@@ -2,8 +2,8 @@ import { minify } from "html-minifier";
 import { AttributeMap, Op } from "quill-delta";
 import { html_beautify } from "js-beautify";
 
-import Document, { ImageDb } from "./document";
-import { FullTheme, makeFullTheme, themeCss } from "./document-theme";
+import Document, { ImageDb } from "./index";
+import { FullTheme, makeFullTheme, themeCss } from "./theme";
 
 
 export type SectionFn = (sectionIndex: number, section: Section, options: Options) => string;
@@ -117,8 +117,8 @@ export default function convertDocument (doc: Document, format: Format, userOpti
             }
 
 			lines.forEach(line => {
-                if (currentSection.ops.length > 0) newSection();
                 currentSection.ops.push({insert: line, attributes });
+                newSection();
             });
 		} else {
             // inline segment

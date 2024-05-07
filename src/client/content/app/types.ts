@@ -5,8 +5,8 @@ import History from "quill/modules/history";
 
 import { PathLike } from "fs";
 
-import Document from "Support/document";
-import { Theme } from "Support/document-theme";
+import Document from "Document";
+import { Theme } from "Document/theme";
 
 
 export type AppMode = "splash" | "settings" | "editor" | "doc-settings";
@@ -30,6 +30,7 @@ export type AppData = {
     localSettings: AppLocalSettings,
     filePath: PathLike | null,
     document: MutableRefObject<Document | null>,
+    startedFromBlankDocument: boolean,
 };
 
 export type AppLocalSettings = {

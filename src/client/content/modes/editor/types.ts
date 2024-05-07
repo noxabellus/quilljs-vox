@@ -1,35 +1,38 @@
 import { Range } from "quill/core";
 
 
-export type EditorAlignment = null | "center" | "right" | "justify";
 
 export type EditorContext = {
-    focused: boolean;
-    range: Range | null;
-    width: number;
+    focused: boolean,
+    range: Range | null,
+    width: number,
 } & EditorFormat;
 
 export type EditorFormat = {
-    align: EditorAlignment;
+    align: EditorAlignment,
+    block: EditorBlock,
 } & EditorTextDetails;
 
+
 export type EditorTextDetails = {
-    bold: boolean;
-    italic: boolean;
-    underline: boolean;
-    strike: boolean;
+    bold: boolean,
+    italic: boolean,
+    underline: boolean,
+    strike: boolean,
 };
+
 
 export type EditorTextDetailsProperties = {
-    [K in keyof EditorTextDetails]: [string, string, string, string];
+    [K in keyof EditorTextDetails]: [string, string, string, string]
 };
 
-export type EditorAlignmentIndex = 0 | 1 | 2 | 3;
-export type EditorAlignmentNames = {
-    [K in EditorAlignmentIndex]: EditorAlignment;
-};
+export type EditorAlignment = null | "center" | "right" | "justify";
+export type EditorBlock = null | "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
 
-export const EDITOR_ALIGNMENT_NAMES: EditorAlignmentNames =
+export const EDITOR_BLOCK_NAMES: EditorBlock[] =
+    [null, "h1", "h2", "h3", "h4", "h5", "h6"];
+
+export const EDITOR_ALIGNMENT_NAMES: EditorAlignment[] =
     [null, "center", "right", "justify"];
 
 export const EDITOR_TEXT_DETAILS_PROPERTIES: EditorTextDetailsProperties = {
@@ -46,22 +49,11 @@ export const DEFAULT_EDITOR_CONTEXT: EditorContext = {
     underline: false,
     strike: false,
     align: null,
+    block: null,
     range: null,
     width: 1010,
 };
 
-export type EditorStateActionType
-    = "set-bold"
-    | "set-italic"
-    | "set-underline"
-    | "set-strike"
-    | "set-align"
-    | "set-focused"
-    | "set-width"
-    | "clear-format"
-    | "post-range"
-    | "post-width"
-    ;
 
 export type EditorStateAction
     = EditorStateSetBold
@@ -69,6 +61,7 @@ export type EditorStateAction
     | EditorStateSetUnderline
     | EditorStateSetStrike
     | EditorStateSetAlign
+    | EditorStateSetBlock
     | EditorStateSetFocused
     | EditorStateSetWidth
     | EditorStateClearFormat
@@ -77,50 +70,55 @@ export type EditorStateAction
     ;
 
 export type EditorStateSetBold = {
-    type: "set-bold";
-    value: boolean;
+    type: "set-bold",
+    value: boolean,
 };
 
 export type EditorStateSetItalic = {
-    type: "set-italic";
-    value: boolean;
+    type: "set-italic",
+    value: boolean,
 };
 
 export type EditorStateSetUnderline = {
-    type: "set-underline";
-    value: boolean;
+    type: "set-underline",
+    value: boolean,
 };
 
 export type EditorStateSetStrike = {
-    type: "set-strike";
-    value: boolean;
+    type: "set-strike",
+    value: boolean,
 };
 
 export type EditorStateSetAlign = {
-    type: "set-align";
-    value: EditorAlignment;
+    type: "set-align",
+    value: EditorAlignment,
+};
+
+export type EditorStateSetBlock = {
+    type: "set-block",
+    value: EditorBlock,
 };
 
 export type EditorStateSetFocused = {
-    type: "set-focused";
-    value: boolean;
+    type: "set-focused",
+    value: boolean,
 };
 
 export type EditorStateSetWidth = {
-    type: "set-width";
-    value: number;
+    type: "set-width",
+    value: number,
 };
 
 export type EditorStateClearFormat = {
-    type: "clear-format";
+    type: "clear-format",
 };
 
 export type EditorStatePostRange = {
-    type: "post-range";
-    value: Range | null;
+    type: "post-range",
+    value: Range | null,
 };
 
 export type EditorStatePostWidth = {
-    type: "post-width";
-    value: number;
+    type: "post-width",
+    value: number,
 };

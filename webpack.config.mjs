@@ -47,6 +47,8 @@ export default [
         resolve: {
             alias: {
                 Assets: path.resolve(__dirname, "src/assets/"),
+                Document: path.resolve(__dirname, "src/document/"),
+                "Document$": path.resolve(__dirname, "src/document/index.ts"),
                 Elements: path.resolve(__dirname, "src/elements/"),
                 Support: path.resolve(__dirname, "src/support/"),
                 Extern: path.resolve(__dirname, "src/extern/"),
