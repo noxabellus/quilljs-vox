@@ -82,7 +82,7 @@ export default function DocumentEditor ({ defaultValue, disabled }: QuillEditorP
             placeholder: defaultValue,
             modules: {
                 clipboard: {
-                    doc: editorContext.document,
+                    getDoc: () => editorContext.document,
                     notify: () => editorDispatch({ type: "refresh-images" })
                 }
             }

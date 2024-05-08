@@ -63,22 +63,24 @@ class Image extends EmbedBlot {
 }
 
 class ClipboardWrap extends Clipboard {
-    doc: Document;
+    getDoc: () => Document;
     notify: () => void;
 
-    constructor (quill: Quill, options: Partial<typeof Clipboard.DEFAULTS> & {doc: Document, notify: () => void}) {
+    constructor (quill: Quill, options: Partial<typeof Clipboard.DEFAULTS> & {getDoc: () => Document, notify: () => void}) {
         super(quill, {...options, matchers: [
             // ["img", (node, delta) => {
             //     return delta;
             // }]
         ]});
-        this.doc = options.doc;
+        this.getDoc = options.getDoc;
         this.notify = options.notify;
     }
 
     async onCapturePaste(e: ClipboardEvent) {
         e.preventDefault();
         e.stopPropagation();
+
+        const doc = this.getDoc();
 
         const clipboard = e.clipboardData?.getData("text/html");
         if (!clipboard) return;
@@ -96,7 +98,7 @@ class ClipboardWrap extends Clipboard {
 
                 if (isNaN(id)) {
                     alert("pasted image has no source or imgId");
-                } else if (!Document.hasImage(this.doc, id)) {
+                } else if (!Document.hasImage(doc, id)) {
                     alert(`pasted image must belong to another document, the imgId ${id} is not bound in this document`);
                 } else {
                     continue;
@@ -105,7 +107,7 @@ class ClipboardWrap extends Clipboard {
                 return;
             }
 
-            const result = await Document.registerImage(this.doc, src);
+            const result = await Document.registerImage(doc, src);
             if (Result.isSuccess(result)) {
                 img.src = "";
                 img.title = img.alt;
@@ -129,7 +131,7 @@ class ClipboardWrap extends Clipboard {
 
         this.quill.updateContents(delta, "user");
         this.quill.setSelection(selection.index + paste.transformPosition(0), 0, "silent");
-        setTimeout(() => this.notify());
+        this.notify();
     }
 }
 
