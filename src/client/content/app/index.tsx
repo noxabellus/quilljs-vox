@@ -51,7 +51,15 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
     let q;
     if (action.type == "post-quill") {
         out.quill = action.value;
-        if (out.quill) Document.linkEditor(out.document, out.quill);
+        if (out.quill) {
+            console.log("linking document", out.document);
+            Document.linkEditor(out.document, out.quill);
+
+            const quillWidth = out.quill.container.offsetWidth;
+            if (quillWidth > 100) { // hack to prevent a visual bug where the width is ~0
+                out.details.nodeData.width = quillWidth;
+            }
+        }
         return out;
     } else {
         if (!out.quill) throw "Cannot dispatch actions other than `post-quill` without a quill instance";
@@ -325,9 +333,16 @@ export default function App () {
                     const settings: EditorTypes.Settings = { "Auto Save": false };
 
                     if (filePath) {
-                        const json = JSON.parse(localStorage[`settings[${filePath}]`]);
-
                         let reset = false;
+                        let json;
+
+                        try {
+                            json = JSON.parse(localStorage[`settings[${filePath}]`]);
+                        } catch (error) {
+                            console.error("local storage is unparsable, resetting to default value", error);
+                            reset = true;
+                        }
+
                         if (typeof json === "object") {
                             const keys = Object.keys(settings) as (keyof EditorTypes.Settings)[];
 
@@ -366,7 +381,7 @@ export default function App () {
                             nodeData: {
                                 focused: false,
                                 range: null,
-                                width: 0,
+                                width: 640,
                             },
                             blockFormat: {
                                 align: null,

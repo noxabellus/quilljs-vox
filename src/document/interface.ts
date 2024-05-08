@@ -13,7 +13,7 @@ import { indent, makeBlocks, makeLines, parseBlock, serializeDeltaOp, serializeH
 
 
 export function create (title?: string): Document {
-    return <Document> {
+    return {
         title: title || null,
         theme: {},
         delta: [],
@@ -199,8 +199,6 @@ export function deserialize (text: string): Document {
     if (doc.theme === undefined) doc.theme = {};
     if (doc.delta === undefined) doc.delta = [];
     if (doc.history === undefined) doc.history = {undo: [], redo: []};
-
-    Object.setPrototypeOf(doc, Document.prototype);
 
     return doc as Document;
 }

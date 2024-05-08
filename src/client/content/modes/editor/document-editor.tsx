@@ -6,7 +6,6 @@ import "./quill-extensions";
 
 import { forceRef } from "Support/nullable";
 
-import Document from "Document";
 import documentStyles from "Document/styles";
 
 import { useEditorState } from "./state";
@@ -88,8 +87,6 @@ export default function DocumentEditor ({ defaultValue, disabled }: QuillEditorP
             }
         });
 
-        Document.linkEditor(editorContext.document, quill);
-
         ref.current = quill;
 
         setTimeout(() => {
@@ -98,10 +95,15 @@ export default function DocumentEditor ({ defaultValue, disabled }: QuillEditorP
                 value: quill,
             });
 
-            editorDispatch({
-                type: "post-width",
-                value: quill.container.offsetWidth,
-            });
+            // hack to mitigate a visual bug;
+            // when the document takes a while to load,
+            // the width is not available for some time
+            setTimeout(() => {
+                editorDispatch({
+                    type: "post-width",
+                    value: quill.container.offsetWidth,
+                });
+            }, 500);
         });
 
         quill.on("text-change", (delta, oldContent) => {
