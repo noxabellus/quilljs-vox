@@ -13,7 +13,7 @@ import backImg from "Assets/checkmark.svg?raw";
 export default function AppSettings() {
     const dispatch = useContext(AppState.Dispatch);
     return <BasicLayout $minWidth="640px">
-        <Block $minWidth="640px">
+        <Block>
             <h1>Settings</h1>
             <div>
                 todo

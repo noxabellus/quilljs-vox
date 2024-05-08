@@ -1,22 +1,18 @@
 import { Dispatch, ReactNode, createContext, useContext } from "react";
 
-import { AppContext, AppStateAction } from "./types";
+import { Context, Action } from "./types";
+
+import * as EditorState from "../modes/editor/state";
 
 
-const Context = createContext<AppContext>({
-    lockIO: false,
-    mode: "splash",
-    data: {} as any,
-    settings: null
-});
-
-const Dispatch = createContext<Dispatch<AppStateAction>>(() => {
+const Context = createContext<Context>(undefined as any);
+const Dispatch = createContext<Dispatch<Action>>(() => {
     throw "No provider found for AppDispatch!";
 });
 
 export type AppStateTypes = {
-    context: AppContext,
-    dispatch: Dispatch<AppStateAction>,
+    context: Context,
+    dispatch: Dispatch<Action>,
     children: ReactNode[] | ReactNode,
 }
 
@@ -32,13 +28,12 @@ export function useAppState () {
     return [useContext(Context), useContext(Dispatch)] as const;
 }
 
-export function dataIsDirty (appContext: AppContext) {
-    return appContext.data.lastUpdated > appContext.data.lastSaved;
+export function dataIsDirty (appContext: Context) {
+    return appContext.editors.some(editor => EditorState.dataIsDirty(editor.documentId, appContext));
 }
 
-export function dataNeedsSave (appContext: AppContext) {
-    if (appContext.data.startedFromBlankDocument === true && (appContext.data.document.current?.isBlank() ?? true)) return false;
-    return dataIsDirty(appContext);
+export function dataNeedsSave (appContext: Context) {
+    return appContext.editors.some(editor => EditorState.dataNeedsSave(editor.documentId, appContext));
 }
 
 AppState.Context = Context;

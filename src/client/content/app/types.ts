@@ -1,163 +1,75 @@
-import { MutableRefObject } from "react";
-
-import Delta from "quill-delta";
-import History from "quill/modules/history";
-
 import { PathLike } from "fs";
 
 import Document from "Document";
-import { Theme } from "Document/theme";
+import * as EditorTypes from "../modes/editor/types";
 
 
-export type AppMode = "splash" | "settings" | "editor" | "doc-settings";
+export type Mode = "splash" | "settings" | "editor";
 
-export type AppModeTitles = {
-    [K in AppMode]: string | null
+export type ModeTitles = {
+    [K in Mode]: string | null
 };
 
-export const APP_MODE_TITLES: AppModeTitles = {
+export const MODE_TITLES: ModeTitles = {
     splash: null,
     settings: "App Settings",
     editor: "Editor",
-    "doc-settings": "Document Settings",
 };
 
-export type AppSettings = null;
+export type Settings = null;
 
-export type AppData = {
-    lastUpdated: number,
-    lastSaved: number,
-    localSettings: AppLocalSettings,
-    filePath: PathLike | null,
-    document: MutableRefObject<Document | null>,
-    startedFromBlankDocument: boolean,
-};
 
-export type AppLocalSettings = {
-    ["Auto Save"]: boolean,
-};
-
-export type AppContext = {
+export type Context = {
     lockIO: boolean,
-    mode: AppMode,
-    data: AppData,
-    settings: AppSettings,
+    mode: Mode,
+    editors: EditorTypes.Context[],
+    settings: Settings,
 };
 
-export type AppStateAction
-    = AppStateSetLockIO
-    | AppStateSetMode
-    | AppStateSetDataX
-    | AppStateSetLocalSettingsX
-    | AppStateSetDocX
-    | AppStatePostDoc
+export type Action
+    = SetLockIO
+    | SetMode
+    | OpenDoc
+    | CloseDoc
+    | EditorAction
     ;
 
-export type AppStateSetDataX = {
-    type: "set-data-x";
-    value: AppStateDataAction;
+export type EditorAction = {
+    type: "editor-action",
+    value: {
+        documentId: number,
+        action: EditorTypes.Action,
+    },
 };
 
-export type AppStateSetLocalSettingsX = {
-    type: "set-local-settings-x";
-    value: AppStateLocalSettingsAction;
-};
 
-export type AppStateLocalSettingsAction
-    = AppStateSetAutoSave
-    ;
-
-export type AppStateSetAutoSave = {
-    type: "set-auto-save";
-    value: boolean;
-};
-
-export type AppStateDataAction
-    = AppStateSetLastUpdated
-    | AppStateSetLastSaved
-    | AppStateSetFilePath
-    ;
-
-export type AppStateSetDocX = {
-    type: "set-doc-x";
-    value: AppStateDocAction;
-};
-
-export type AppStateDocAction
-    = AppStateSetDocTitle
-    | AppStateSetDocTheme
-    | AppStateSetDocThemeProperty
-    | AppStateSetDocQuillData
-    | AppStateSetDocDelta
-    | AppStateSetDocHistory
-    ;
-
-export type AppStateSetLockIO = {
+export type SetLockIO = {
     type: "set-lock-io",
     value: boolean,
 };
 
-export type AppStateSetMode = {
+export type SetMode = {
     type: "set-mode",
-    value: AppMode | null,
+    value: Mode | null,
 };
 
-export type AppStateSetLastUpdated = {
-    type: "set-last-updated",
+
+export type OpenDoc = {
+    type: "open-doc",
+    value: OpenDocValue,
+};
+
+export type CloseDoc = {
+    type: "close-doc",
     value: number,
+}
+
+export type OpenDocValue = {
+    filePath: PathLike | null,
+    document: Document,
 };
 
-export type AppStateSetLastSaved = {
-    type: "set-last-saved",
-    value: number,
+export type SetEditorState = {
+    type: "set-editor-state",
+    value: EditorTypes.Context,
 };
-
-
-export type AppStateSetFilePath = {
-    type: "set-file-path",
-    value: PathLike,
-};
-
-export type AppStateSetDocTitle = {
-    type: "set-doc-title",
-    value: string,
-};
-
-export type AppStateSetDocTheme = {
-    type: "set-doc-theme",
-    value: Theme,
-};
-
-export type AppStateSetDocThemeProperty = {
-    type: "set-doc-theme-property",
-    value: { key: keyof Theme, data: Theme[keyof Theme] },
-};
-
-export type AppStateSetDocQuillData = {
-    type: "set-doc-quill-data",
-    value: { delta: Delta, history: History },
-};
-
-export type AppStateSetDocDelta = {
-    type: "set-doc-delta",
-    value: Delta,
-};
-
-export type AppStateSetDocHistory = {
-    type: "set-doc-history",
-    value: History,
-};
-
-export type AppStatePostDoc = {
-    type: "post-doc",
-    value: AppStatePostDocValue,
-};
-
-export type AppStatePostDocValue
-    = {
-        filePath: PathLike,
-        document: Document,
-    }
-    | Document
-    | null
-    ;

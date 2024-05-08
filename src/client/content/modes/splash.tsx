@@ -47,8 +47,11 @@ export default function Splash() {
 
     const newFile = () => {
         dispatch({
-            type: "post-doc",
-            value: new Document(),
+            type: "open-doc",
+            value: {
+                filePath: null,
+                document: Document.create(),
+            },
         });
     };
 
@@ -59,7 +62,7 @@ export default function Splash() {
 
         if (Result.isSuccess(result)) {
             dispatch({
-                type: "post-doc",
+                type: "open-doc",
                 value: {
                     filePath: result.body.filePath,
                     document: result.body.doc,

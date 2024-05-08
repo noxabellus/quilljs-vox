@@ -1,30 +1,46 @@
 import { Dispatch, ReactNode, createContext, useContext } from "react";
 
-import { EditorContext, DEFAULT_EDITOR_CONTEXT, EditorStateAction } from "./types";
+import * as AppTypes from "../../app/types";
+import { Context, Action } from "./types";
+
+import Document from "Document";
 
 
-const Context = createContext<EditorContext>(DEFAULT_EDITOR_CONTEXT);
-const Dispatch = createContext<Dispatch<EditorStateAction>>(() => {
+
+export type EditorDispatch = (action: Action) => void;
+
+const Context = createContext<number>(undefined as any);
+const Dispatch = createContext<EditorDispatch>(() => {
     throw "No provider found for EditorDispatch!";
 });
 
 export type EditorStateProps = {
-    context: EditorContext;
-    dispatch: Dispatch<EditorStateAction>;
+    documentId: number;
+    dispatch: EditorDispatch;
     children: ReactNode[] | ReactNode;
 }
 
-export default function EditorState ({context, dispatch, children}: EditorStateProps) {
-    return <Context.Provider value={context}>
+export default function EditorState ({documentId, dispatch, children}: EditorStateProps) {
+    return <Context.Provider value={documentId}>
         <Dispatch.Provider value={dispatch}>
             {children}
         </Dispatch.Provider>
     </Context.Provider>;
 }
 
-export function useEditorState () {
-    return [useContext(Context), useContext(Dispatch)] as const;
+export function useEditorState (appContext: AppTypes.Context) {
+    return [appContext.editors[useContext(Context)], useContext(Dispatch)] as const;
 }
 
 EditorState.Context = Context;
 EditorState.Dispatch = Dispatch;
+
+
+export function dataIsDirty (documentId: number, context: AppTypes.Context) {
+    return context.editors[documentId].lastUpdated > context.editors[documentId].lastSaved;
+}
+
+export function dataNeedsSave (documentId: number, context: AppTypes.Context) {
+    if (context.editors[documentId].startedFromBlankDocument === true && (Document.isBlank(context.editors[documentId].document) ?? true)) return false;
+    return dataIsDirty(documentId, context);
+}

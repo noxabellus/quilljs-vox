@@ -8,9 +8,9 @@ import Document from "Document";
 import { NonNull, unsafeForceVal } from "./nullable";
 
 
-export async function readText (path: PathLike): Promise<Result<string>> {
+export async function readText (path: PathLike): Promise<Result<{text: string}>> {
     try {
-        return Result.Success(await fs.readFile(path, "utf8"));
+        return Result.Success({text: await fs.readFile(path, "utf8")});
     } catch (error) {
         return Result.Error(error.toString());
     }
@@ -25,12 +25,12 @@ export async function writeText (path: PathLike, text: string): Promise<Result<P
     }
 }
 
-export async function readVox (path: PathLike): Promise<Result<Document>> {
+export async function readVox (path: PathLike): Promise<Result<{doc: Document}>> {
     const res = await readText(path);
 
     if (Result.isSuccess(res)) {
         try {
-            return Result.Success(Document.deserialize(res.body));
+            return Result.Success({doc: Document.deserialize(res.body.text)});
         } catch (error) {
             return Result.Error(error.toString());
         }
@@ -39,13 +39,15 @@ export async function readVox (path: PathLike): Promise<Result<Document>> {
     }
 }
 
-export async function openVox () {
+
+
+export async function openWith<T> (filters: Filter[], callback: (filePath: PathLike) => Promise<Result<T>>): Promise<Result<T & {filePath: PathLike}>> {
     let filePath;
     try {
         const fps = await remote.dialog.showOpenDialog({
             properties: ["openFile"],
             filters: [
-                { name: "Vox Files", extensions: ["vox"] },
+                ...filters,
                 { name: "All Files", extensions: ["*"] },
             ],
         });
@@ -59,18 +61,22 @@ export async function openVox () {
         return Result.Error(error);
     }
 
-    const res = await readVox(filePath);
+    const res = await callback(filePath);
     if (Result.isSuccess(res)) {
-        return Result.Success({ filePath, doc: res.body });
+        return Result.Success({ filePath, ...res.body });
     } else {
         return res;
     }
 }
 
+export async function openVox () {
+    return openWith([{ name: "Vox Files", extensions: ["vox"] }], readVox);
+}
+
 export async function writeVox (path: PathLike, data: Document): Promise<Result<PathLike>> {
     let text;
     try {
-        text = data.serialize();
+        text = Document.serialize(data);
     } catch (error) {
         return Result.Error(error);
     }

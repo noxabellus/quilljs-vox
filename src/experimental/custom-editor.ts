@@ -1,4 +1,5 @@
 import { Theme } from "Document/theme";
+import { deepCompare, deepCopy } from "Support/deep";
 import { readVox } from "Support/file";
 import Result from "Support/result";
 
@@ -171,48 +172,7 @@ export type Doc = {
 
 
 
-function deepCompare(a: any, b: any): boolean {
-    if (a === b) return true;
 
-    if (typeof a !== typeof b) return false;
-
-    if (Array.isArray(a)) {
-        if (!Array.isArray(b)) return false;
-
-        if (a.length !== b.length) return false;
-
-        return a.every((v, i) => deepCompare(v, b[i]));
-    }
-
-    if (typeof a === "object") {
-        const aKeys = Object.keys(a);
-        const bKeys = Object.keys(b);
-
-        if (aKeys.length !== bKeys.length) return false;
-
-        return aKeys.every(key => deepCompare(a[key], b[key]));
-    }
-
-    return false;
-}
-
-function deepCopy (value: any): any {
-    if (Array.isArray(value)) {
-        return value.map(deepCopy);
-    }
-
-    if (typeof value === "object") {
-        const out: any = {};
-
-        for (const key in value) {
-            out[key] = deepCopy(value[key]);
-        }
-
-        return out;
-    }
-
-    return value;
-}
 
 function representationError(message: string, ...args: any[]): never {
     console.warn(message, ...args);
@@ -578,7 +538,7 @@ const doc = await readVox("/home/nox/projects/vox/working_dir/woah.vox");
 if (!Result.isSuccess(doc))
     throw "fuck";
 
-const data = doc.body.delta as InsertOp[];
+const data = doc.body.doc.delta as InsertOp[];
 
 // const data: InsertOp[] = [
 //     {insert: "hello world", attributes: {}},

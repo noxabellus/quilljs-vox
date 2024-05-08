@@ -1,4 +1,4 @@
-import { MutableRefObject, forwardRef, useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import styled from "styled-components";
 
 import Quill from "quill";
@@ -6,19 +6,17 @@ import "./quill-extensions";
 
 import { forceRef } from "Support/nullable";
 
-import { makeFullTheme } from "Document/theme";
+import Document from "Document";
 import documentStyles from "Document/styles";
 
-import { useAppState } from "../../app/state";
 import { useEditorState } from "./state";
+import { useAppState } from "../../app/state";
 
 
 export type QuillEditorProps = {
     defaultValue?: string;
     disabled?: boolean;
 }
-
-type QuillRef = MutableRefObject<Quill | null>;
 
 const Editor = styled.div<{$edWidth: number}>`
     overflow: scroll;
@@ -58,112 +56,83 @@ const Editor = styled.div<{$edWidth: number}>`
     }
 `;
 
-const DocumentEditor = forwardRef(
-    ({ defaultValue, disabled }: QuillEditorProps, ref: QuillRef) => {
-        const containerRef = useRef<HTMLDivElement>(null);
-        const defaultValueRef = useRef(defaultValue);
-        const disabledRef = useRef(disabled);
-        const [appContext, appDispatch] = useAppState();
-        const [editorContext, editorDispatch] = useEditorState();
+export default function DocumentEditor ({ defaultValue, disabled }: QuillEditorProps) {
+    const ref = useRef<Quill | null>(null);
+    const [appContext, _appDispatch] = useAppState();
+    const [editorContext, editorDispatch] = useEditorState(appContext);
+    const containerRef = useRef<HTMLDivElement>(null);
 
-        useLayoutEffect(() => {
-            defaultValueRef.current = defaultValue;
-            disabledRef.current = disabled;
+    useLayoutEffect(() => {
+        if (disabled) {
+            ref.current?.disable();
+        } else {
+            ref.current?.enable();
+        }
+    }, [disabled]);
 
-            if (disabled) {
-                ref.current?.disable();
-            } else {
-                ref.current?.enable();
-            }
-        }, [disabled, defaultValue]);
+    useEffect(() => {
+        console.log("setting up quill");
+        const container = forceRef(containerRef);
 
-        useLayoutEffect(() => {
-            const q = ref.current;
-            if (!q) return;
+        const editorContainer = container.appendChild(
+            container.ownerDocument.createElement("div"),
+        );
 
-            const doc = appContext.data.document.current;
-            if (!doc) throw "No document found!";
-
-            doc.applyTheme(q.container);
-
-            setTimeout(() => editorDispatch({
-                type: "post-width",
-                value: q.container.offsetWidth,
-            }));
-        }, Object.values(makeFullTheme(appContext.data.document.current?.theme || {})));
-
-        useLayoutEffect(() => {
-            const q = ref.current;
-            if (!q) return;
-
-            const doc = appContext.data.document.current;
-            if (!doc) throw "No document found!";
-
-            doc.applyImages(q.container);
-        }, [appContext.data.document.current?.images.data.length]);
-
-        useEffect(() => {
-            const doc = appContext.data.document.current;
-            if (!doc) throw "No document found!";
-
-            const container = forceRef(containerRef);
-
-            const editorContainer = container.appendChild(
-                container.ownerDocument.createElement("div"),
-            );
-
-            const quill = new Quill(editorContainer, {
-                placeholder: defaultValueRef.current,
-                modules: {
-                    clipboard: { doc: appContext.data.document }
+        const quill = new Quill(editorContainer, {
+            placeholder: defaultValue,
+            modules: {
+                clipboard: {
+                    doc: editorContext.document,
+                    notify: () => editorDispatch({ type: "refresh-images" })
                 }
+            }
+        });
+
+        Document.linkEditor(editorContext.document, quill);
+
+        ref.current = quill;
+
+        setTimeout(() => {
+            editorDispatch({
+                type: "post-quill",
+                value: quill,
             });
 
-            doc.linkEditor(quill);
-
-            ref.current = quill;
-
-            setTimeout(() => editorDispatch({
+            editorDispatch({
                 type: "post-width",
                 value: quill.container.offsetWidth,
-            }));
-
-            quill.on("text-change", (delta, oldContent) => {
-                setTimeout(() => {
-                    appDispatch({
-                        type: "set-doc-x",
-                        value: {
-                            type: "set-doc-quill-data",
-                            value: {
-                                delta: oldContent.compose(delta),
-                                history: quill.history
-                            },
-                        },
-                    });
-                    editorDispatch({
-                        type: "post-range",
-                        value: quill.getSelection(),
-                    });
-                });
             });
+        });
 
-            quill.on("selection-change", (range) => {
+        quill.on("text-change", (delta, oldContent) => {
+            setTimeout(() => {
+                editorDispatch({
+                    type: "set-quill-data",
+                    value: {
+                        delta: oldContent.compose(delta),
+                        history: quill.history
+                    }
+                });
                 editorDispatch({
                     type: "post-range",
-                    value: range,
+                    value: quill.getSelection(),
                 });
             });
+        });
 
-            return () => {
-                ref.current = null;
-                container.innerHTML = "";
-            };
-        }, [ref, appContext.data.document]);
+        quill.on("selection-change", (range) => {
+            editorDispatch({
+                type: "post-range",
+                value: range,
+            });
+        });
 
-        return <Editor $edWidth={editorContext.width} ref={containerRef}/>;
-    }
-);
+        return () => {
+            console.log("tearing down quill");
+            ref.current = null;
+            container.innerHTML = "";
+        };
+    }, [defaultValue]);
 
-DocumentEditor.displayName = "QuillEditor";
-
-export default DocumentEditor;
+    return <Editor $edWidth={editorContext.details.nodeData.width} ref={containerRef}/>;
+}

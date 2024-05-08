@@ -1,20 +1,50 @@
-import { Range } from "quill/core";
+import { PathLike } from "fs";
+import Quill, { Delta, Range } from "quill/core";
+
+import Document from "Document";
+import { Theme } from "Document/theme";
+import History from "quill/modules/history";
 
 
+export type Context = {
+    documentId: number,
+    lastUpdated: number,
+    lastSaved: number,
+    settings: Settings,
+    filePath: PathLike | null,
+    document: Document,
+    startedFromBlankDocument: boolean,
+    details: Details,
+    overlays: EditorOverlays
+    quill: Quill | null,
+};
 
-export type EditorContext = {
+export type EditorOverlays = {
+    settings: boolean,
+};
+
+export type Settings = {
+    ["Auto Save"]: boolean,
+};
+
+export type Details = {
+    nodeData: NodeData,
+    blockFormat: BlockFormat,
+    textDecoration: TextDecoration,
+};
+
+export type NodeData = {
     focused: boolean,
     range: Range | null,
     width: number,
-} & EditorFormat;
+};
 
-export type EditorFormat = {
-    align: EditorAlignment,
-    block: EditorBlock,
-} & EditorTextDetails;
+export type BlockFormat = {
+    align: BlockAlign,
+    header: BlockHeaderLevel,
+};
 
-
-export type EditorTextDetails = {
+export type TextDecoration = {
     bold: boolean,
     italic: boolean,
     underline: boolean,
@@ -22,103 +52,195 @@ export type EditorTextDetails = {
 };
 
 
-export type EditorTextDetailsProperties = {
-    [K in keyof EditorTextDetails]: [string, string, string, string]
+export type TextDecorationProperties = {
+    [K in keyof TextDecoration]: [string, string, string, string]
 };
 
-export type EditorAlignment = null | "center" | "right" | "justify";
-export type EditorBlock = null | "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
+export type BlockAlign = null | "center" | "right" | "justify";
+export type BlockHeaderLevel = null | 1 | 2 | 3 | 4 | 5 | 6;
 
-export const EDITOR_BLOCK_NAMES: EditorBlock[] =
-    [null, "h1", "h2", "h3", "h4", "h5", "h6"];
+export const EDITOR_HEADER_LEVELS: BlockHeaderLevel[] =
+    [null, 1, 2, 3, 4, 5, 6];
 
-export const EDITOR_ALIGNMENT_NAMES: EditorAlignment[] =
+export const EDITOR_ALIGNMENT_NAMES: BlockAlign[] =
     [null, "center", "right", "justify"];
 
-export const EDITOR_TEXT_DETAILS_PROPERTIES: EditorTextDetailsProperties = {
+export const EDITOR_TEXT_DECORATION_PROPERTIES: TextDecorationProperties = {
     bold: ["fontWeight", "bold", "B", "Bold"],
     italic: ["fontStyle", "italic", "I", "Italic"],
     underline: ["textDecoration", "underline", "U", "Underline"],
     strike: ["textDecoration", "line-through", "S", "Strikethrough"],
 };
 
-export const DEFAULT_EDITOR_CONTEXT: EditorContext = {
-    focused: false,
-    bold: false,
-    italic: false,
-    underline: false,
-    strike: false,
-    align: null,
-    block: null,
-    range: null,
-    width: 1010,
-};
 
-
-export type EditorStateAction
-    = EditorStateSetBold
-    | EditorStateSetItalic
-    | EditorStateSetUnderline
-    | EditorStateSetStrike
-    | EditorStateSetAlign
-    | EditorStateSetBlock
-    | EditorStateSetFocused
-    | EditorStateSetWidth
-    | EditorStateClearFormat
-    | EditorStatePostRange
-    | EditorStatePostWidth
+export type Action
+    = SetLastUpdated
+    | SetLastSaved
+    | SetFilePath
+    | SetAutoSave
+    | SetOverlay
+    | SetBold
+    | SetItalic
+    | SetUnderline
+    | SetStrike
+    | SetAlign
+    | SetHeader
+    | SetFocused
+    | SetWidth
+    | ClearFormat
+    | PostQuill
+    | PostRange
+    | PostWidth
+    | SetTitle
+    | SetTheme
+    | SetThemeProperty
+    | SetQuillData
+    | SetDelta
+    | SetHistory
+    | SetFontData
+    | RenameFont
+    | DeleteFont
+    | RefreshImages
     ;
 
-export type EditorStateSetBold = {
+export type SetFilePath = {
+    type: "set-file-path",
+    value: PathLike,
+};
+
+export type SetLastUpdated = {
+    type: "set-last-updated",
+    value: number,
+};
+
+export type SetLastSaved = {
+    type: "set-last-saved",
+    value: number,
+};
+
+export type SetAutoSave = {
+    type: "set-auto-save";
+    value: boolean;
+};
+
+export type SetOverlay = {
+    type: "set-overlay",
+    value: {
+        key: keyof EditorOverlays,
+        enabled: boolean,
+    }
+};
+
+export type SetBold = {
     type: "set-bold",
     value: boolean,
 };
 
-export type EditorStateSetItalic = {
+export type SetItalic = {
     type: "set-italic",
     value: boolean,
 };
 
-export type EditorStateSetUnderline = {
+export type SetUnderline = {
     type: "set-underline",
     value: boolean,
 };
 
-export type EditorStateSetStrike = {
+export type SetStrike = {
     type: "set-strike",
     value: boolean,
 };
 
-export type EditorStateSetAlign = {
+export type SetAlign = {
     type: "set-align",
-    value: EditorAlignment,
+    value: BlockAlign,
 };
 
-export type EditorStateSetBlock = {
-    type: "set-block",
-    value: EditorBlock,
+export type SetHeader = {
+    type: "set-header",
+    value: BlockHeaderLevel,
 };
 
-export type EditorStateSetFocused = {
+export type SetFocused = {
     type: "set-focused",
     value: boolean,
 };
 
-export type EditorStateSetWidth = {
+export type SetWidth = {
     type: "set-width",
     value: number,
 };
 
-export type EditorStateClearFormat = {
+export type ClearFormat = {
     type: "clear-format",
 };
 
-export type EditorStatePostRange = {
+export type PostQuill = {
+    type: "post-quill",
+    value: Quill | null,
+};
+
+export type PostRange = {
     type: "post-range",
     value: Range | null,
 };
 
-export type EditorStatePostWidth = {
+export type PostWidth = {
     type: "post-width",
     value: number,
+};
+
+export type SetTitle = {
+    type: "set-title",
+    value: string,
+};
+
+export type SetTheme = {
+    type: "set-theme",
+    value: Theme,
+};
+
+export type SetThemeProperty = {
+    type: "set-theme-property",
+    value: { key: keyof Theme, data: Theme[keyof Theme] },
+};
+
+export type SetQuillData = {
+    type: "set-quill-data",
+    value: { delta: Delta, history: History },
+};
+
+export type SetDelta = {
+    type: "set-delta",
+    value: Delta,
+};
+
+export type SetHistory = {
+    type: "set-history",
+    value: History,
+};
+
+export type SetFontData = {
+    type: "set-font-data",
+    value: {
+        name: string,
+        data: string,
+    },
+};
+
+export type RenameFont = {
+    type: "rename-font",
+    value: {
+        oldName: string,
+        newName: string,
+    },
+};
+
+export type DeleteFont = {
+    type: "delete-font",
+    value: string,
+};
+
+export type RefreshImages = {
+    type: "refresh-images",
 };

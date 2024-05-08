@@ -1,24 +1,23 @@
-import { useContext } from "react";
-
 import Checkbox from "Elements/checkbox";
 import Label from "Elements/label";
 
-import AppState from "../../app/state";
-import { AppLocalSettings } from "../../app/types";
+import { Settings } from "./types";
+import SettingsList from "Elements/settings-list";
+import SettingsSection from "Elements/settings-section";
+import { useEditorState } from "./state";
+import { useAppState } from "../../app/state";
 
 
-function LocalSetting({type, value}: {type: keyof AppLocalSettings, value: AppLocalSettings[typeof type]}) {
-    const appDispatch = useContext(AppState.Dispatch);
+function LocalSetting({type, value}: {type: keyof Settings, value: Settings[typeof type]}) {
+    const [appContext, _appDispatch] = useAppState();
+    const [_editorContext, editorDispatch] = useEditorState(appContext);
 
     switch (type) {
         case "Auto Save": {
             return <div>
-                <Checkbox checked={value} onChange={value => appDispatch({
-                    type: "set-local-settings-x",
-                    value: {
-                        type: "set-auto-save",
-                        value,
-                    }
+                <Checkbox checked={value} onChange={value => editorDispatch({
+                    type: "set-auto-save",
+                    value,
                 })} />
             </div>;
         }
@@ -26,17 +25,18 @@ function LocalSetting({type, value}: {type: keyof AppLocalSettings, value: AppLo
 }
 
 export default function LocalSettingsEditor() {
-    const appContext = useContext(AppState.Context);
+    const [appContext, _appDispatch] = useAppState();
+    const [editorContext, _editorDispatch] = useEditorState(appContext);
 
-    const fields = Object.keys(appContext.data.localSettings).map((key: keyof AppLocalSettings) => {
-        const value = appContext.data.localSettings[key];
+    const fields = Object.keys(editorContext.settings).map((key: keyof Settings) => {
+        const value = editorContext.settings[key];
         return <li key={key}>
-            <Label>{key}<LocalSetting type={key} value={value}/></Label>
+            <Label><span>{key}</span><LocalSetting type={key} value={value}/></Label>
         </li>;
     });
 
-    return <>
+    return <SettingsSection>
         <h1>Settings</h1>
-        <ul>{fields}</ul>
-    </>;
+        <SettingsList>{fields}</SettingsList>
+    </SettingsSection>;
 }

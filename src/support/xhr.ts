@@ -1,7 +1,7 @@
 import Result from "./result";
 
 
-export async function toDataURL (url: string): Promise<Result<string>> {
+export async function toDataURL (url: string): Promise<Result<{data: string}>> {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
 
@@ -13,7 +13,7 @@ export async function toDataURL (url: string): Promise<Result<string>> {
                     return reject(Result.Error("Failed to convert to data URL"));
                 }
 
-                resolve(Result.Success(reader.result));
+                resolve(Result.Success({data: reader.result}));
             };
 
             reader.onabort = () => {

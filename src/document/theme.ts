@@ -4,22 +4,15 @@ import { unsafeForceVal } from "Support/nullable";
 
 import documentStyles from "./styles";
 
+export const DEFAULT_FONTS: string[] = [
+    "serif",
+    "sans-serif",
+    "monospace",
+];
 
 export type FullTheme = {
-    "base-font-family": string,
+    "base-font-family": Font,
     "base-font-size": Length,
-    "heading-1-font-family": string,
-    "heading-1-font-size": Length,
-    "heading-2-font-family": string,
-    "heading-2-font-size": Length,
-    "heading-3-font-family": string,
-    "heading-3-font-size": Length,
-    "heading-4-font-family": string,
-    "heading-4-font-size": Length,
-    "heading-5-font-family": string,
-    "heading-5-font-size": Length,
-    "heading-6-font-family": string,
-    "heading-6-font-size": Length,
     "base-font-color": Color,
     "border-color": Color,
     "background-color": Color,
@@ -31,6 +24,22 @@ export type FullTheme = {
     "border-radius": Dimensions,
 };
 
+export const THEME_TYPES: {[K in keyof FullTheme]: PropertyType} = {
+    "base-font-family": "font",
+    "base-font-size": "length",
+    "base-font-color": "color",
+    "border-color": "color",
+    "background-color": "color",
+    "page-color": "color",
+    "width": "length",
+    "margin": "dimensions",
+    "padding": "dimensions",
+    "border-size": "length",
+    "border-radius": "dimensions",
+};
+
+export type Font = { fontName: string };
+
 export type Theme = Partial<FullTheme>;
 
 export type ThemeProperty
@@ -40,9 +49,10 @@ export type ThemeProperty
     | Dimensions
     | number
     | string
+    | Font
     ;
 export type ThemeKey = keyof FullTheme;
-export type PropertyType = "string" | "number" | "length" | "color" | "dimensions";
+export type PropertyType = "font" | "string" | "number" | "length" | "color" | "dimensions";
 export type Dimensions = [Length, Length, Length, Length];
 export type FontWeight = "normal" | "bold" | "bolder" | "light" | "lighter" | number;
 export type Color = [number, number, number];
@@ -121,21 +131,9 @@ export function isRelativeLength (length: Length): boolean {
 }
 
 export const DEFAULT_DOCUMENT_THEME: FullTheme = {
-    "base-font-family": "Helvetica, Arial, sans-serif",
+    "base-font-family": {"fontName": "sans-serif"},
     "base-font-size": {"pt": 12},
     "base-font-color": [255, 255, 255],
-    "heading-1-font-family": "inherit",
-    "heading-1-font-size": {"em": 2.8},
-    "heading-2-font-family": "inherit",
-    "heading-2-font-size": {"em": 2.4},
-    "heading-3-font-family": "inherit",
-    "heading-3-font-size": {"em": 2.0},
-    "heading-4-font-family": "inherit",
-    "heading-4-font-size": {"em": 1.8},
-    "heading-5-font-family": "inherit",
-    "heading-5-font-size": {"em": 1.6},
-    "heading-6-font-family": "inherit",
-    "heading-6-font-size": {"em": 1.4},
     "page-color": [41, 41, 41],
     "background-color": [0, 0, 0],
     "width": {"in": 8.5},
@@ -146,9 +144,19 @@ export const DEFAULT_DOCUMENT_THEME: FullTheme = {
     "border-radius": [{"px": 8}, {"px": 8}, {"px": 8}, {"px": 8}],
 };
 
+const FONT_KEYS: (keyof FullTheme)[] = [
+    "base-font-family",
+];
 
 if (lengthUnit(DEFAULT_DOCUMENT_THEME["base-font-size"] as Length) == "em")
     throw "Primary font size of default theme cannot be a relative unit";
+
+for (const key of FONT_KEYS) {
+    const value = DEFAULT_DOCUMENT_THEME[key] as Font;
+    if (value.fontName == "inherit") continue;
+    if (!DEFAULT_FONTS.includes(value.fontName))
+        throw `Font family ${value} is not a default font`;
+}
 
 export const THEME_KEYS = Object.keys(DEFAULT_DOCUMENT_THEME);
 export const THEME_UNITS: [LengthUnit, LengthUnit, LengthUnit, LengthUnit, LengthUnit, LengthUnit, LengthUnit] = [
@@ -236,18 +244,28 @@ export function propertyType<K extends ThemeKey> (value: Theme[K]): PropertyType
     switch (type) {
         case "string": return "string";
         case "number": return "number";
-        case "object": return "length";
+        case "object": {
+            const keys = Object.keys(value as any);
+
+            if (keys.length != 1) return null;
+            const key = keys[0];
+
+            if (THEME_UNITS.includes(key as LengthUnit)) return "length";
+            if (key == "fontName") return "font";
+            return null;
+        };
         default: return null;
     }
 }
 
 export function propertyString<K extends ThemeKey> (theme: Theme, value: Theme[K]): string | null {
     switch (propertyType(value)) {
-        case "string": return value as string;
+        case "string": return value as any;
         case "number": return `${value}`;
         case "color": return (value as Color).join(", ");
         case "dimensions": return (value as Dimensions).map(x => lengthString(theme, x)).join(" ");
         case "length": return lengthString(theme, value as Length);
+        case "font": return fontString(theme, value as Font);
         default: return null;
     }
 }
@@ -260,5 +278,13 @@ export function lengthString (theme: Theme, value: Length): string {
     } else {
         const px = lengthToPx(theme, unit, val);
         return `${px}px`;
+    }
+}
+
+export function fontString (theme: Theme, value: Font): string {
+    if (value.fontName == "inherit") {
+        return fontString(DEFAULT_DOCUMENT_THEME, theme["base-font-family"] || {fontName: "inherit"});
+    } else {
+        return value.fontName;
     }
 }

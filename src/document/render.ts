@@ -2,7 +2,7 @@ import { minify } from "html-minifier";
 import { AttributeMap, Op } from "quill-delta";
 import { html_beautify } from "js-beautify";
 
-import Document, { ImageDb } from "./index";
+import { Document, ImageDb } from "./types";
 import { FullTheme, makeFullTheme, themeCss } from "./theme";
 
 

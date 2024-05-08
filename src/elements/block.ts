@@ -1,14 +1,10 @@
-import styled, { css } from "styled-components";
+import styled from "styled-components";
 
 import BaseStyles from "./base-styles";
 
 
-export type BlockTypes = {
-    $minWidth?: string;
-};
 
-
-export default styled.div<BlockTypes>`
+export default styled.div`
     ${BaseStyles.block}
     border-radius: 5px;
     padding: 5px;
@@ -21,14 +17,4 @@ export default styled.div<BlockTypes>`
         text-decoration-line: underline;
         margin: 5px;
     }
-
-    /* ${({$minWidth}) => css`
-        width: ${$minWidth || "640px"};
-        min-height: ${$minWidth || "640px"};
-        @media (max-width: ${$minWidth || "640px"}) {
-            & {
-                width: 100vw;
-            }
-        }
-    `} */
 `;

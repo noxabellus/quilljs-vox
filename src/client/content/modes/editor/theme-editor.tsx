@@ -1,23 +1,24 @@
-import React, { useContext } from "react";
-
 import { parseFloatSafe, parseIntSafe } from "Support/number";
 
-import { Color, Dimensions, Length, THEME_UNITS, Theme, lengthUnit, lengthConvert, propertyType, themeValue, DEFAULT_DOCUMENT_THEME } from "Document/theme";
+import { Color, Dimensions, Length, THEME_UNITS, Theme, lengthUnit, lengthConvert, propertyType, themeValue, DEFAULT_DOCUMENT_THEME, Font, DEFAULT_FONTS } from "Document/theme";
 
 import Dropdown from "Elements/dropdown";
 import Input from "Elements/input";
 import Label from "Elements/label";
 
-import AppState, { useAppState } from "../../app/state";
+import { useEditorState } from "./state";
+import SettingsList from "Elements/settings-list";
+import SettingsSection from "Elements/settings-section";
+import { useAppState } from "../../app/state";
 
 
 
 
 const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
-    const [appState, appDispatch] = useAppState();
+    const [appContext, _appDispatch] = useAppState();
+    const [editorContext, editorDispatch] = useEditorState(appContext);
 
-    const theme = appState.data.document.current?.theme;
-    if (!theme) throw "no document found";
+    const theme = editorContext.document.theme;
 
     const property = themeValue(theme, fieldName);
 
@@ -33,14 +34,11 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
                 const newUnit = THEME_UNITS[i];
                 const converted = numToFixed(lengthConvert(theme, value, unit, newUnit));
 
-                appDispatch({
-                    type: "set-doc-x",
+                editorDispatch({
+                    type: "set-theme-property",
                     value: {
-                        type: "set-doc-theme-property",
-                        value: {
-                            key: fieldName,
-                            data: { [newUnit]: converted } as Theme[typeof fieldName],
-                        },
+                        key: fieldName,
+                        data: { [newUnit]: converted } as Theme[typeof fieldName],
                     },
                 });
             };
@@ -55,14 +53,11 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
                     value={value}
                     onChange={e => {
                         const value = parseFloatSafe(e.target.value);
-                        appDispatch({
-                            type: "set-doc-x",
+                        editorDispatch({
+                            type: "set-theme-property",
                             value: {
-                                type: "set-doc-theme-property",
-                                value: {
-                                    key: fieldName,
-                                    data: { [unit]: value } as Theme[typeof fieldName],
-                                },
+                                key: fieldName,
+                                data: { [unit]: value } as Theme[typeof fieldName],
                             },
                         });
                     }}
@@ -92,20 +87,17 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
                         const newDims: Dimensions = [...dims];
                         newDims[dimIndex] = { [newUnit]: converted } as Length;
 
-                        appDispatch({
-                            type: "set-doc-x",
+                        editorDispatch({
+                            type: "set-theme-property",
                             value: {
-                                type: "set-doc-theme-property",
-                                value: {
-                                    key: fieldName,
-                                    data: newDims,
-                                },
+                                key: fieldName,
+                                data: newDims,
                             },
                         });
                     };
 
                     return <Label key={dimIndex}>
-                        {dimNames[dimIndex]}
+                        <span>{dimNames[dimIndex]}</span>
                         <div>
                             <Input
                                 step="0.01"
@@ -118,14 +110,11 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
                                     const value = parseFloatSafe(e.target.value);
                                     const newDims: Dimensions = [...dims];
                                     newDims[dimIndex] = { [unit]: value } as Length;
-                                    appDispatch({
-                                        type: "set-doc-x",
+                                    editorDispatch({
+                                        type: "set-theme-property",
                                         value: {
-                                            type: "set-doc-theme-property",
-                                            value: {
-                                                key: fieldName,
-                                                data: newDims,
-                                            },
+                                            key: fieldName,
+                                            data: newDims,
                                         },
                                     });
                                 }}
@@ -149,7 +138,7 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
             return <div>
                 {comps.map((comp, compIndex) => {
                     return <Label key={compIndex}>
-                        {compNames[compIndex]}
+                        <span>{compNames[compIndex]}</span>
                         <Input
                             step="1"
                             min="0"
@@ -161,14 +150,11 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
                                 const value = parseIntSafe(e.target.value);
                                 const newComps = [...comps] as Color;
                                 newComps[compIndex] = value;
-                                appDispatch({
-                                    type: "set-doc-x",
+                                editorDispatch({
+                                    type: "set-theme-property",
                                     value: {
-                                        type: "set-doc-theme-property",
-                                        value: {
-                                            key: fieldName,
-                                            data: newComps,
-                                        },
+                                        key: fieldName,
+                                        data: newComps,
                                     },
                                 });
                             }}
@@ -178,29 +164,68 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
             </div>;
         }
 
-        case "string": {
-            const value = property as string;
+        case "font": {
+            const value = (property as Font).fontName;
+
+            const actualFontNames = [...Object.keys(editorContext.document.fonts), ...DEFAULT_FONTS];
+            if (fieldName != "base-font-family") actualFontNames.push("inherit");
+
+            const fontNames = actualFontNames.slice();
+            if (!fontNames.includes(value)) fontNames.push(value);
+            fontNames.sort();
+
+            const selected = fontNames.indexOf(value);
+
+            const changeFont = (i: number) => {
+                const newFontName = fontNames[i];
+
+                editorDispatch({
+                    type: "set-theme-property",
+                    value: {
+                        key: fieldName,
+                        data: { fontName: newFontName },
+                    },
+                });
+            };
 
             return <div>
-                <Input
-                    name={fieldName}
-                    type="text"
-                    value={value}
-                    onChange={e => {
-                        appDispatch({
-                            type: "set-doc-x",
-                            value: {
-                                type: "set-doc-theme-property",
-                                value: {
-                                    key: fieldName,
-                                    data: e.target.value,
-                                },
-                            },
-                        });
-                    }}
-                />
+                <Dropdown
+                    selected={selected}
+                    onChange={changeFont}
+                >
+                    {fontNames.map((fontName: string, i: number) => {
+                        if (actualFontNames.includes(fontName)) {
+                            return <option key={i}>{fontName}</option>;
+                        } else {
+                            return <option key={i} title="Selected font no longer exists" style={{fontStyle: "italic", color: "red"}}>{fontName}</option>;
+                        }
+                    })}
+                </Dropdown>
             </div>;
         }
+
+        // case "string": {
+        //     const value = property as string;
+        //     return <div>
+        //         <Input
+        //             name={fieldName}
+        //             type="text"
+        //             value={value}
+        //             onChange={e => {
+        //                 editorDispatch({
+        //                     type: "set-doc-x",
+        //                     value: {
+        //                         type: "set-doc-theme-property",
+        //                         value: {
+        //                             key: fieldName,
+        //                             data: e.target.value,
+        //                         },
+        //                     },
+        //                 });
+        //             }}
+        //         />
+        //     </div>;
+        // }
 
         case "number": {
             const value = property as number;
@@ -215,14 +240,11 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
                     value={value}
                     onChange={e => {
                         const newValue = parseFloatSafe(e.target.value);
-                        appDispatch({
-                            type: "set-doc-x",
+                        editorDispatch({
+                            type: "set-theme-property",
                             value: {
-                                type: "set-doc-theme-property",
-                                value: {
-                                    key: fieldName,
-                                    data: newValue as any,
-                                },
+                                key: fieldName,
+                                data: newValue as any,
                             },
                         });
                     }}
@@ -234,9 +256,10 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
 
 
 export default function ThemeEditor () {
-    const appContext = useContext(AppState.Context);
+    const [appContext, _appDispatch] = useAppState();
+    const [editorContext, _editorDispatch] = useEditorState(appContext);
 
-    const theme = appContext.data.document.current?.theme;
+    const theme = editorContext.document.theme;
 
     if (!theme) throw "no document found";
 
@@ -244,11 +267,11 @@ export default function ThemeEditor () {
 
     const fields = fieldNames.map(fieldName =>
         <li key={fieldName}>
-            <Label>{fieldName.replace(/(?:-|^)(\w)/g, (_, w) => " " + w.toUpperCase())}<ThemeField fieldName={fieldName}/></Label>
+            <Label><span>{fieldName.replace(/(?:-|^)(\w)/g, (_, w) => " " + w.toUpperCase()).trim()}</span><ThemeField fieldName={fieldName}/></Label>
         </li>);
 
-    return <>
+    return <SettingsSection>
         <h1>Theme</h1>
-        <ul>{fields}</ul>
-    </>;
+        <SettingsList>{fields}</SettingsList>
+    </SettingsSection>;
 }

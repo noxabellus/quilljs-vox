@@ -1,38 +1,33 @@
-import { useContext } from "react";
 import styled from "styled-components";
 
 import Block from "Elements/block";
 import Button from "Elements/button";
 
-import AppState from "../../app/state";
+import { useAppState } from "../../app/state";
 
 import LocalSettingsEditor from "./local-settings-editor";
 import ThemeEditor from "./theme-editor";
-import EditorState from "./state";
+import { useEditorState } from "./state";
 
 import backImg from "Assets/checkmark.svg?raw";
+import FontEditor from "./font-editor";
+import SettingsSection from "Elements/settings-section";
 
 
-const Settings = styled(Block)<{["$ed-width"]: number}>`
+const SettingsContainer = styled(Block)<{["$ed-width"]: number}>`
     position: absolute;
     top: 50px;
     right: 5px;
     max-height: calc(100vh - 55px);
     overflow-y: scroll;
     scrollbar-width: none;
+    padding: 0;
 
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: stretch;
-
-    & li {
-        margin-top: 5px;
-    }
-
-    & > button {
-        margin-top: 10px;
-    }
+    max-width: 20em;
 
     @media (max-width: ${p => p["$ed-width"] + (5 * 2) - 1}px) {
         top: 45px;
@@ -42,16 +37,19 @@ const Settings = styled(Block)<{["$ed-width"]: number}>`
 
 
 export default function DocumentSettings () {
-    const editorState = useContext(EditorState.Context);
-    const appDispatch = useContext(AppState.Dispatch);
+    const [appState, appDispatch] = useAppState();
+    const [editorState, _editorDispatch] = useEditorState(appState);
 
-    return <Settings $ed-width={editorState.width}>
+    return <SettingsContainer $ed-width={editorState.details.nodeData.width}>
         <LocalSettingsEditor />
+        <FontEditor />
         <ThemeEditor />
-        <Button.Icon
-            title="Close Document Settings"
-            svg={backImg}
-            onClick={_ => appDispatch({ type: "set-mode", value: "editor" })}
-        />
-    </Settings>;
+        <SettingsSection>
+            <Button.Icon
+                title="Close Document Settings"
+                svg={backImg}
+                onClick={_ => appDispatch({ type: "set-mode", value: "editor" })}
+            />
+        </SettingsSection>
+    </SettingsContainer>;
 }
