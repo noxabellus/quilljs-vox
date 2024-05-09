@@ -1,6 +1,6 @@
 import styled from "styled-components";
 
 
-export default styled.div`
+export default styled.area`
     flex-grow: 1;
 `;

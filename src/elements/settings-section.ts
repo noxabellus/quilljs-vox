@@ -8,7 +8,7 @@ export default styled.div`
     align-items: stretch;
 
     &:not(:last-child) {
-        border-bottom: 2px solid rgb(var(--accent-color));
+        border-bottom: 1px solid rgb(var(--accent-color));
     }
 
     & > button {

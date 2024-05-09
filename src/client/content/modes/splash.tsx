@@ -39,6 +39,11 @@ const Toolbar = styled(ToolSet)`
     }
 `;
 
+const SplashLayout = styled(BasicLayout)`
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+`;
+
 
 export default function Splash() {
     const dispatch = useContext(AppState.Dispatch);
@@ -85,12 +90,12 @@ export default function Splash() {
         });
     };
 
-    return <BasicLayout $minWidth="640px" id="splash">
+    return <SplashLayout $minWidth="640px" id="splash">
         <Logo src={logoImg} />
         <Toolbar>
             <Button.Icon disabled={locked} title="New File" svg={newFileImg} onClick={newFile}/>
             <Button.Icon disabled={locked} title="Open File" svg={openFileImg} onClick={openFile}/>
             <Button.Icon disabled={locked} title="Vox Settings" svg={gearImg} onClick={openSettings}/>
         </Toolbar>
-    </BasicLayout>;
+    </SplashLayout>;
 }

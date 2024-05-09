@@ -9,11 +9,15 @@ import Splash from "../modes/splash";
 import Editor from "../modes/editor";
 import AppSettings from "../modes/app-settings";
 
-import AppState, { dataIsDirty, dataNeedsSave } from "./state";
+import AppState from "./state";
 import * as AppTypes from "./types";
 import * as EditorTypes from "../modes/editor/types";
 import Result from "Support/result";
 import saveInterrupt from "../modes/editor/save-interrupt";
+import EditorState from "../modes/editor/state";
+import { writeVox } from "Support/file";
+import TitleBar from "./titlebar";
+import { ThemeProvider } from "styled-components";
 
 
 function setWindowTitle (body: {dirty: boolean, title: string | null, filePath: PathLike | null} | string | null) {
@@ -30,7 +34,7 @@ function setWindowTitle (body: {dirty: boolean, title: string | null, filePath: 
             }
 
             if (dirty) {
-                base = `*${base}`;
+                base = `${base}*`;
             }
         } else {
             base = body;
@@ -70,25 +74,35 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
         case "set-last-saved":
             out.lastSaved = action.value;
             out.startedFromBlankDocument = false;
-            break;
-
-        case "set-last-updated":
-            out.lastUpdated = action.value;
-            break;
+            return out;
 
         case "set-file-path":
             out.lastUpdated = Date.now();
             out.filePath = action.value;
             out.startedFromBlankDocument = false;
-            break;
+            return out;
 
         case "set-auto-save":
             out.settings["Auto Save"] = action.value;
-            break;
+            return out;
 
         case "set-overlay":
             out.overlays[action.value.key] = action.value.enabled;
-            break;
+            return out;
+
+        case "set-focused":
+            if (action.value) q.focus();
+            else q.blur();
+            out.details.nodeData.focused = action.value;
+            return out;
+
+        case "refresh-images":
+            Document.applyImages(out.document, q.container);
+            return out;
+
+        case "post-width":
+            out.details.nodeData.width = action.value;
+            return out;
 
         case "set-title":
             out.document.title = action.value;
@@ -118,117 +132,66 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
 
         case "set-font-data": {
             const result = Document.registerFontData(out.document, action.value.name, action.value.data);
-
             if (!Result.isSuccess(result)) {
                 alert(`Failed to load font "${action.value.name}":\n\t${Result.problemMessage(result)}`);
-            } else {
-                Document.applyFonts(out.document, q.container);
             }
         } break;
 
         case "rename-font": {
             const result = Document.renameFont(out.document, action.value.oldName, action.value.newName);
-
             if (!Result.isSuccess(result)) {
                 alert(`Failed to rename font "${action.value.oldName}" to "${action.value.newName}":\n\t${Result.problemMessage(result)}`);
-            } else {
-                Document.applyFonts(out.document, q.container);
             }
         } break;
 
         case "delete-font": {
             const result = Document.deleteFont(out.document, action.value);
-
             if (!Result.isSuccess(result)) {
                 alert(`Failed to delete font "${action.value}":\n\t${Result.problemMessage(result)}`);
-            } else {
-                Document.applyFonts(out.document, q.container);
             }
         } break;
 
         case "set-bold":
-            if (!out.details.nodeData.range)
-                throw "Cannot set bold without a range";
-
+            if (!out.details.nodeData.range) throw "Cannot set bold without a range";
             q.format("bold", action.value);
-
             out.details.textDecoration.bold = action.value;
             break;
 
         case "set-italic":
-            if (!out.details.nodeData.range)
-                throw "Cannot set italic without a range";
-
+            if (!out.details.nodeData.range) throw "Cannot set italic without a range";
             q.format("italic", action.value);
-
             out.details.textDecoration.italic = action.value;
             break;
 
         case "set-underline":
-            if (!out.details.nodeData.range)
-                throw "Cannot set underline without a range";
-
+            if (!out.details.nodeData.range) throw "Cannot set underline without a range";
             q.format("underline", action.value);
-
             out.details.textDecoration.underline = action.value;
             break;
 
         case "set-strike":
-            if (!out.details.nodeData.range)
-                throw "Cannot set strike without a range";
-
+            if (!out.details.nodeData.range) throw "Cannot set strike without a range";
             q.format("strike", action.value);
-
             out.details.textDecoration.strike = action.value;
             break;
 
         case "set-align":
-            if (!out.details.nodeData.range)
-                throw "Cannot set align without a range";
-
+            if (!out.details.nodeData.range) throw "Cannot set align without a range";
             q.format("align", action.value);
-
             out.details.blockFormat.align = action.value;
-
             break;
 
         case "set-header":
-            if (!out.details.nodeData.range)
-                throw "Cannot set block format without a range";
-
+            if (!out.details.nodeData.range) throw "Cannot set block format without a range";
             q.format("header", action.value);
-
             out.details.blockFormat.header = action.value;
-
-            break;
-
-        case "set-focused":
-            if (action.value) q.focus();
-            else q.blur();
-
-            out.details.nodeData.focused = action.value;
-
-            break;
-
-        case "set-width":
-            q.root.style.width = `${action.value}px`;
-            out.details.nodeData.width = q.container.offsetWidth;
-
-            break;
-
-        case "refresh-images":
-            Document.applyImages(out.document, q.container);
             break;
 
         case "clear-format": {
-            if (!out.details.nodeData.range)
-                throw "Cannot clear format without a range";
-
+            if (!out.details.nodeData.range) throw "Cannot clear format without a range";
             if (out.details.nodeData.range.length == 0) {
                 const [line, _] = q.getLine(out.details.nodeData.range.index);
-
                 if (line === null) throw "No line found";
-
                 q.formatText(line.offset(), line.length(), {
                     bold: false,
                     italic: false,
@@ -237,7 +200,6 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
                     align: null,
                     header: null,
                 });
-
                 out.details.blockFormat = { align: null, header: null, };
                 out.details.textDecoration = { bold: false, italic: false, underline: false, strike: false };
             } else {
@@ -247,10 +209,8 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
                     underline: false,
                     strike: false,
                 });
-
                 out.details.textDecoration = { bold: false, italic: false, underline: false, strike: false };
             }
-
         } break;
 
         case "post-range": {
@@ -281,26 +241,31 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
             out.details.nodeData.range = action.value;
         } break;
 
-        case "post-width":
-            out.details.nodeData.width = action.value;
-            break;
-
         default: throw "invalid editor action type";
     }
+
+    out.lastUpdated = Date.now();
+    out.details.nodeData.width = q.container.offsetWidth;
 
     return out;
 }
 
+// hack to make electron event handlers work
+let latestContext: AppTypes.Context = null as any;
+
 export default function App () {
-    const [context, dispatch] = useReducer(reducer, {
+    const [context, dispatch] = useReducer(appReducer, {
         lockIO: false,
+        fullscreen: remote.native.getCurrentWindow().isFullScreen(),
         mode: "splash",
+        lastMode: "splash",
         editors: [],
         settings: null
     });
 
+    latestContext = context;
 
-    function reducer (state: AppTypes.Context, action: AppTypes.Action): AppTypes.Context {
+    function appReducer (state: AppTypes.Context, action: AppTypes.Action): AppTypes.Context {
         let out: AppTypes.Context;
 
         console.log("app action", action);
@@ -311,20 +276,16 @@ export default function App () {
             throw "Cannot dispatch while IO locked";
         } else {
             switch (action.type) {
-                case "set-mode": {
-                    if (action.value === null) {
-                        switch (state.editors.length > 0) {
-                            case null:
-                                out = { ...state, mode: "splash" };
-                                break;
-                            default:
-                                out = { ...state, mode: "editor" };
-                                break;
-                        }
-                    } else {
-                        out = { ...state, mode: action.value };
-                    }
-                } break;
+                case "set-fullscreen":
+                    remote.native.getCurrentWindow().setFullScreen(action.value);
+                // eslint-disable-next-line no-fallthrough
+                case "post-fullscreen":
+                    out = { ...state, fullscreen: action.value };
+                    break;
+
+                case "set-mode":
+                    out = { ...state, mode: action.value === null? state.lastMode : action.value, lastMode: state.mode };
+                    break;
 
                 case "open-doc": {
                     const filePath = action.value.filePath;
@@ -366,10 +327,13 @@ export default function App () {
                         }
                     }
 
-                    const context: EditorTypes.Context = {
-                        documentId: state.editors.length,
-                        lastUpdated: Date.now(),
-                        lastSaved: 0,
+                    const time = Date.now();
+                    const documentId = state.editors.length;
+
+                    const editor: EditorTypes.Context = {
+                        documentId,
+                        lastUpdated: time,
+                        lastSaved: filePath !== null? time : 0,
                         settings,
                         startedFromBlankDocument: Document.isBlank(document),
                         filePath,
@@ -399,10 +363,11 @@ export default function App () {
 
                     out = {
                         ...state,
-                        mode: "editor",
+                        mode: {editor: documentId},
+                        lastMode: state.mode,
                         editors: [
                             ...state.editors,
-                            context,
+                            editor,
                         ],
                     };
                 } break;
@@ -411,7 +376,8 @@ export default function App () {
                     const editors = state.editors.filter((_, index) => index !== action.value);
                     out = {
                         ...state,
-                        mode: editors.length > 0 ? "editor" : "splash",
+                        mode: state.lastMode,
+                        lastMode: "splash",
                         editors
                     };
                 } break;
@@ -421,7 +387,7 @@ export default function App () {
                     const newEditor = editorDispatch(editor, action.value.action);
                     out = {
                         ...state,
-                        editors: state.editors.map((_, index) => index === action.value.documentId ? newEditor : _)
+                        editors: state.editors.map((editor, index) => index === action.value.documentId ? newEditor : editor)
                     };
                 } break;
 
@@ -431,99 +397,140 @@ export default function App () {
             }
         }
 
-        switch (out.mode) {
-            case "editor": {
-            // FIXME
-            //     const dirty = dataIsDirty(out);
+        if (typeof out.mode === "object" && Object.keys(out.mode)[0] == "editor") {
+            const editor = out.editors[out.mode.editor];
+            const dirty = EditorState.dataIsDirty(editor.documentId, out);
 
-            //     if (!out.data) throw "Cannot set editor mode without data";
-            //     setWindowTitle({ dirty, title: out.data.document.current?.title || null, filePath: out.data.filePath });
+            if (editor.filePath) {
+                setTimeout(async () => {
+                    localStorage[`settings[${editor.filePath}]`] = JSON.stringify(editor.settings);
+                });
+            }
 
-            //     if (out.data.filePath) {
-            //         setTimeout(() => localStorage[`settings[${out.data.filePath}]`] = JSON.stringify(out.data.settings));
-            //     }
+            if (dirty && editor.settings["Auto Save"] && editor.filePath) {
+                const path = editor.filePath;
+                const doc = editor.document;
+                const time = editor.lastUpdated;
 
-            //     if (dirty && out.data.settings["Auto Save"] && out.data.filePath && out.data.document.current) {
-            //         const path = out.data.filePath;
-            //         const doc = out.data.document.current;
-            //         const time = out.data.lastUpdated;
+                setTimeout(async () => {
+                    const result = await writeVox(path, doc);
 
-            //         setTimeout(async () => {
-            //             const result = await writeVox(path, doc);
-
-            //             if (Result.isSuccess(result)) {
-            //                 dispatch({
-            //                     type: "set-data-x",
-            //                     value: {
-            //                         type: "set-last-saved",
-            //                         value: time,
-            //                     },
-            //                 });
-            //             } else {
-            //                 alert(`Failed to auto-save file:\n\t${Result.problemMessage(result)}\n(Disabling auto-save)`);
-            //                 dispatch({
-            //                     type: "set-local-settings-x",
-            //                     value: {
-            //                         type: "set-auto-save",
-            //                         value: false,
-            //                     },
-            //                 });
-            //             }
-            //         });
-            //     }
-            } break;
-
-            case "splash":
-                setWindowTitle(AppTypes.MODE_TITLES[out.mode]);
-                break;
-
-            default: break;
+                    if (Result.isSuccess(result)) {
+                        dispatch({
+                            type: "editor-action",
+                            value: {
+                                documentId: editor.documentId,
+                                action: {
+                                    type: "set-last-saved",
+                                    value: time,
+                                },
+                            },
+                        });
+                    } else {
+                        alert(`Failed to auto-save file:\n\t${Result.problemMessage(result)}\n(Disabling auto-save)`);
+                        dispatch({
+                            type: "editor-action",
+                            value: {
+                                documentId: editor.documentId,
+                                action: {
+                                    type: "set-auto-save",
+                                    value: false,
+                                },
+                            },
+                        });
+                    }
+                });
+            }
         }
+
+        latestContext = out;
 
         return out;
     }
 
     let modal;
-    switch (context.mode) {
-        case "splash":
-            modal = <Splash />;
-            break;
-        case "editor":
-            modal = <>
-                {context.editors.map((_editor, index) =>
-                    <Editor key={index} documentId={index} />)}
-            </>;
-            break;
-        case "settings":
-            modal = <AppSettings />;
-            break;
+    if (typeof context.mode === "string") {
+        setWindowTitle(AppTypes.MODE_TITLES[context.mode]);
+
+        switch (context.mode) {
+            case "splash":
+                modal = (<Splash />);
+                break;
+
+            case "settings":
+                modal = (<AppSettings />);
+                break;
+
+            default:
+                throw "unknown mode";
+        }
+    } else {
+        const keys = Object.keys(context.mode);
+        if (keys.length > 1) throw "unknown mode object";
+
+        const mode = keys[0];
+
+        switch (mode) {
+            case "editor": {
+                const editor = context.editors[context.mode.editor];
+                const dirty = EditorState.dataIsDirty(editor.documentId, context);
+
+                modal = <Editor key={editor.documentId} documentId={editor.documentId} />;
+
+                setWindowTitle({ dirty, title: editor.document.title || null, filePath: editor.filePath });
+            } break;
+
+            default:
+                throw "unknown mode";
+        }
     }
 
     useLayoutEffect(() => {
-        async function handler (exit: () => void) {
-            if (dataNeedsSave(context)) {
-                for (const editor of context.editors) {
-                    saveInterrupt(editor, dispatch, exit);
-                }
-            } else {
-                exit();
-            }
-        }
+        console.log("add close hook");
+        remote.window.onClose = async (exit: () => void) => {
+            let shouldExit = true;
+            if (AppState.dataNeedsSave(latestContext)) {
+                for (const editor of latestContext.editors) {
+                    if (EditorState.dataNeedsSave(editor.documentId, latestContext)) {
+                        await saveInterrupt(editor, dispatch, () => {}, () => { shouldExit = false; });
+                    }
 
-        remote.window.onClose = handler;
+                    if (!shouldExit) break;
+                }
+            }
+
+            if (shouldExit) exit();
+        };
+
+        console.log("add keybinds");
+        remote.globalShortcut.register("F11", () =>
+            dispatch({ type: "set-fullscreen", value: !latestContext.fullscreen }));
 
         return () => {
+            console.log("remove close hook");
             remote.window.onClose = null;
-        };
-    }, [dataIsDirty(context)]);
 
-    return <AppState context={context} dispatch={dispatch}>
-        {modal}
-    </AppState>;
+            console.log("remove keybinds");
+            remote.globalShortcut.unregisterAll();
+        };
+    }, []);
+
+
+    const theme = {
+        isFullscreen: context.fullscreen,
+    };
+
+    return <ThemeProvider theme={theme}>
+        <AppState context={context} dispatch={dispatch}>
+            <TitleBar />
+            {modal}
+        </AppState>
+    </ThemeProvider>;
 }
 
 
-// prevents a bug when the window is reloaded by electron
+// prevents bugs when the window is reloaded by electron
 window.onbeforeunload = () => {
     remote.window.onClose = null;
+    remote.globalShortcut.unregisterAll();
 };

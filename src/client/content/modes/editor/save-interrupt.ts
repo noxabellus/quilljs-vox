@@ -8,13 +8,14 @@ import * as AppTypes from "../../app/types";
 import * as EditorTypes from "./types";
 
 
-export default async function saveInterrupt(editorContext: EditorTypes.Context, appDispatch: Dispatch<AppTypes.Action>, exit: () => void) {
+export default async function saveInterrupt(editorContext: EditorTypes.Context, appDispatch: Dispatch<AppTypes.Action>, exit: () => void, dontExit: () => void) {
     appDispatch({ type: "set-lock-io", value: true });
 
     const question = await remote.dialog.showMessageBox({
         type: "question",
         title: "Unsaved Changes",
         message: "Would you like to save your changes before exiting?",
+        detail: `${editorContext.document.title} @[${editorContext.filePath || "Never saved"}] has unsaved changes.`,
         buttons: ["Don't exit", "Exit without saving", "Save and exit"],
         defaultId: 0,
         cancelId: 0,
@@ -41,12 +42,12 @@ export default async function saveInterrupt(editorContext: EditorTypes.Context, 
                 alert(`Failed to save file:\n\t${result.body}`);
             }
 
-            return saveInterrupt(editorContext, appDispatch, exit);
+            return saveInterrupt(editorContext, appDispatch, exit, dontExit);
         }
 
         default: {
             appDispatch({ type: "set-lock-io", value: false });
-            break;
+            return dontExit();
         }
     }
 }

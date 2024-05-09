@@ -31,26 +31,15 @@ import unstyleImg from "Assets/circle-cross.svg?raw";
 import sliderImg from "Assets/horizontal-sliders.svg?raw";
 import exportImg from "Assets/file-arrow-down.svg?raw";
 import gearImg from "Assets/gear.svg?raw";
-import closeImg from "Assets/xmark.svg?raw";
+import closeImg from "Assets/arrow-right-into-bracket.svg?raw";
 
 
 const EditorToolSet = styled(ToolSet)<{["$ed-width"]: number}>`
-    width: 100vw;
-    border-left: none;
-    border-top: none;
-    border-right: none;
-    border-radius: 0px;
     justify-content: flex-start;
-
-    @media (min-width: ${p => p["$ed-width"] + (5 * 2) + 1}px) {
-        & {
-            width: calc(${p => p["$ed-width"]}px + (5px * 2));
-            justify-content: center;
-            border: 1px solid rgb(var(--accent-color));
-            border-radius: 5px;
-            margin: 5px auto 0px;
-        }
-    }
+    width: min(100vw - 10px, ${p => p["$ed-width"]}px + (5px * 2));
+    border: 1px solid rgb(var(--accent-color));
+    border-radius: 5px;
+    margin: 5px auto 0px;
 `;
 
 export default function Toolbar () {
@@ -275,7 +264,7 @@ export default function Toolbar () {
         }
 
         if (dataNeedsSave(editorContext.documentId, appContext)) {
-            return saveInterrupt(editorContext, appDispatch, exit);
+            return saveInterrupt(editorContext, appDispatch, exit, () => {});
         } else {
             return exit();
         }

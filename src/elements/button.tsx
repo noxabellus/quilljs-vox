@@ -11,9 +11,10 @@ export type ButtonProps = DetailedHTMLProps<ButtonHTMLAttributes<HTMLButtonEleme
 
 
 export type Button = {
-    Icon: typeof ButtonIcon;
-    Serif: typeof ButtonSerif;
-} & typeof ButtonPlain;
+    Icon: typeof Icon;
+    Serif: typeof Serif;
+    InlineIcon: typeof InlineIcon;
+} & typeof Plain;
 
 export type IconProps
     = {svg: string}
@@ -30,29 +31,51 @@ const ButtonBase = styled.button`
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
+`;
+
+const InlineSvg = styled.button`
+    ${BaseStyles.activationFx.stroke}
+
+    cursor: pointer;
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
 `;
 
 
-const ButtonPlain = forwardRef(({children, disabled, ...props}: ButtonProps, ref: any) => {
+export const Plain = forwardRef(({children, disabled, ...props}: ButtonProps, ref: any) => {
     const appContext = useContext(AppState.Context);
     return <ButtonBase ref={ref} disabled={disabled || appContext.lockIO} {...props}>{children}</ButtonBase>;
 });
 
-ButtonPlain.displayName = "Button";
+Plain.displayName = "Button";
 
 
-function ButtonIcon ({svg, ...props}: IconProps) {
-    return <ButtonPlain {...props}><Svg src={svg}></Svg></ButtonPlain>;
-}
+export const Icon = ({svg, ...props}: IconProps) => {
+    return <Plain {...props}><Svg src={svg}/></Plain>;
+};
 
-ButtonIcon.displayName = "Button.Icon";
+Icon.displayName = "Button.Icon";
 
 
-const ButtonSerif = styled(ButtonPlain)`
+export const InlineIcon = ({svg, disabled, ...props}: IconProps) => {
+    const appContext = useContext(AppState.Context);
+    return <InlineSvg  disabled={disabled || appContext.lockIO} {...props}><Svg src={svg}/></InlineSvg>;
+};
+
+InlineIcon.displayName = "Button.InlineIcon";
+
+
+export const Serif = styled(Plain)`
     font-family: var(--serif-family);
 `;
 
-ButtonSerif.displayName = "Button.Serif";
+Serif.displayName = "Button.Serif";
 
 
-export default Object.assign(ButtonPlain, {Icon: ButtonIcon, Serif: ButtonSerif});
+const defs = Object.assign(Plain, {Icon, Serif, InlineIcon}) as Button;
+
+export default defs;

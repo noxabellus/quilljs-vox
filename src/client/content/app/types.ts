@@ -4,13 +4,9 @@ import Document from "Document";
 import * as EditorTypes from "../modes/editor/types";
 
 
-export type Mode = "splash" | "settings" | "editor";
+export type Mode = "splash" | "settings" | {"editor": number};
 
-export type ModeTitles = {
-    [K in Mode]: string | null
-};
-
-export const MODE_TITLES: ModeTitles = {
+export const MODE_TITLES = {
     splash: null,
     settings: "App Settings",
     editor: "Editor",
@@ -21,26 +17,22 @@ export type Settings = null;
 
 export type Context = {
     lockIO: boolean,
+    fullscreen: boolean,
     mode: Mode,
+    lastMode: Mode,
     editors: EditorTypes.Context[],
     settings: Settings,
 };
 
 export type Action
     = SetLockIO
+    | SetFullscreen
+    | PostFullscreen
     | SetMode
     | OpenDoc
     | CloseDoc
     | EditorAction
     ;
-
-export type EditorAction = {
-    type: "editor-action",
-    value: {
-        documentId: number,
-        action: EditorTypes.Action,
-    },
-};
 
 
 export type SetLockIO = {
@@ -48,11 +40,20 @@ export type SetLockIO = {
     value: boolean,
 };
 
+export type SetFullscreen = {
+    type: "set-fullscreen",
+    value: boolean,
+};
+
+export type PostFullscreen = {
+    type: "post-fullscreen",
+    value: boolean,
+};
+
 export type SetMode = {
     type: "set-mode",
     value: Mode | null,
 };
-
 
 export type OpenDoc = {
     type: "open-doc",
@@ -69,7 +70,10 @@ export type OpenDocValue = {
     document: Document,
 };
 
-export type SetEditorState = {
-    type: "set-editor-state",
-    value: EditorTypes.Context,
+export type EditorAction = {
+    type: "editor-action",
+    value: {
+        documentId: number,
+        action: EditorTypes.Action,
+    },
 };

@@ -32,10 +32,6 @@ export function useEditorState (appContext: AppTypes.Context) {
     return [appContext.editors[useContext(Context)], useContext(Dispatch)] as const;
 }
 
-EditorState.Context = Context;
-EditorState.Dispatch = Dispatch;
-
-
 export function dataIsDirty (documentId: number, context: AppTypes.Context) {
     return context.editors[documentId].lastUpdated > context.editors[documentId].lastSaved;
 }
@@ -44,3 +40,9 @@ export function dataNeedsSave (documentId: number, context: AppTypes.Context) {
     if (context.editors[documentId].startedFromBlankDocument === true && (Document.isBlank(context.editors[documentId].document) ?? true)) return false;
     return dataIsDirty(documentId, context);
 }
+
+EditorState.Context = Context;
+EditorState.Dispatch = Dispatch;
+EditorState.useEditorState = useEditorState;
+EditorState.dataIsDirty = dataIsDirty;
+EditorState.dataNeedsSave = dataNeedsSave;

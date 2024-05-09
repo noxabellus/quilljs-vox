@@ -4,6 +4,10 @@ import * as remoteMain from "@electron/remote/main";
 import path from "path";
 import { watch } from "fs/promises";
 
+// function sleep(ms: number) {
+//     return new Promise(resolve => setTimeout(resolve, ms));
+// }
+
 
 const clientDir = path.join(__dirname, "./client");
 
@@ -13,8 +17,15 @@ Menu.setApplicationMenu(null);
 
 remoteMain.initialize();
 
+// if(process.platform === "linux") {
+//     app.commandLine.appendSwitch("enable-transparent-visuals");
+//     app.disableHardwareAcceleration();
+// }
 
 await app.whenReady();
+
+// await sleep(500); // hack to get around transparency glitch on linux
+
 
 const win = new BrowserWindow({
     width: 860,
@@ -25,7 +36,8 @@ const win = new BrowserWindow({
         nodeIntegration: true,
         contextIsolation: false
     },
-
+    frame: false,
+    transparent: true,
 });
 
 // hack to get around weird behavior with the close/onbeforeunload events

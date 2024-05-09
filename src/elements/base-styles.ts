@@ -1,12 +1,25 @@
 import { css } from "styled-components";
 
 
+
+const primaryShadow = css`
+    box-shadow: 0 0 8px 4px rgba(var(--shadow-color), var(--shadow-opacity)),
+                0 0 8px 4px rgba(var(--shadow-color), var(--shadow-opacity)) inset;
+`;
+
+const primaryShadowInsetOnly = css`
+    box-shadow: 0 0 8px 4px rgba(var(--shadow-color), var(--shadow-opacity)) inset;
+`;
+
+const primaryShadowOutsetOnly = css`
+    box-shadow: 0 0 8px 4px rgba(var(--shadow-color), var(--shadow-opacity));
+`;
+
 const block = css`
     margin-bottom: 10px;
     background-color: rgb(var(--element-color));
-    border: 2px solid rgb(var(--accent-color));
-    box-shadow: 0 0 8px 4px rgba(var(--shadow-color), var(--shadow-opacity)),
-                0 0 8px 4px rgba(var(--shadow-color), var(--shadow-opacity)) inset;
+    border: 1px solid rgb(var(--accent-color));
+    ${primaryShadow}
 `;
 
 const primary = css`
@@ -23,8 +36,7 @@ const primary = css`
     padding: 5px;
     color: rgb(var(--primary-color));
     stroke: rgb(var(--primary-color));
-    box-shadow: 0 0 8px 4px rgba(var(--shadow-color), var(--shadow-opacity)),
-                0 0 8px 4px rgba(var(--shadow-color), var(--shadow-opacity)) inset;
+    ${primaryShadow}
 
     &:disabled {
         cursor: not-allowed;
@@ -39,6 +51,11 @@ const strokeActivationFx = css`
 
 const borderActivationFx = css`
     border-color: rgb(var(--accent-color));
+`;
+
+const shadowActivationFxInsetOnly = css`
+    box-shadow: 0 10px 8px 4px rgba(var(--shadow-color), var(--shadow-opacity)) inset,
+                0  0   8px 4px rgba(var(--light-color ), var(--light-opacity )) inset;
 `;
 
 const shadowActivationFx = css`
@@ -70,6 +87,14 @@ export default {
     block,
 
     primary,
+
+    shadows: {
+        primaryShadow,
+        primaryShadowInsetOnly,
+        primaryShadowOutsetOnly,
+        shadowActivationFx,
+        shadowActivationFxInsetOnly,
+    },
 
     activationFx: {
         full: fullActivationFx,

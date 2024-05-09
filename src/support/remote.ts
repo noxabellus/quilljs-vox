@@ -14,6 +14,7 @@ export type WindowCloseCallback = ((exit: () => void) => void) | null;
 export const terminal: Console = (remote.app as any).console;
 export const window: {onClose: WindowCloseCallback} = (remote.app as any).window;
 export const dialog = remote.dialog;
+export const globalShortcut = remote.globalShortcut;
 
 terminal.log("remote connected");
 
@@ -22,4 +23,6 @@ export default {
     terminal,
     dialog,
     window,
+    globalShortcut,
+    native: remote,
 };

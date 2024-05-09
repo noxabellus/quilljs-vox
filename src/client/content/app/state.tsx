@@ -38,3 +38,6 @@ export function dataNeedsSave (appContext: Context) {
 
 AppState.Context = Context;
 AppState.Dispatch = Dispatch;
+AppState.useAppState = useAppState;
+AppState.dataIsDirty = dataIsDirty;
+AppState.dataNeedsSave = dataNeedsSave;
