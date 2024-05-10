@@ -8,8 +8,6 @@ import Blockquote from "quill/formats/blockquote";
 import Header from "quill/formats/header";
 import List from "quill/formats/list";
 
-import { BackgroundStyle } from "quill/formats/background";
-import { ColorStyle } from "quill/formats/color";
 
 import Bold from "quill/formats/bold";
 import Italic from "quill/formats/italic";
@@ -34,6 +32,8 @@ import UINode from "quill/modules/uiNode";
 
 import FontStyle from "./font";
 import SizeStyle from "./size";
+import ColorStyle from "./color";
+import BackgroundStyle from "./background";
 import Image from "./image";
 import Keyboard from "./keyboard";
 import Clipboard from "./clipboard";

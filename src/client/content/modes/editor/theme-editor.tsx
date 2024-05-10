@@ -1,4 +1,4 @@
-import { parseFloatSafe, parseIntSafe, toFixed } from "Support/number";
+import { parseFloatSafe, toFixed } from "Support/number";
 
 import { Color, Dimensions, Length, THEME_UNITS, Theme, lengthUnit, lengthConvert, propertyType, themeValue, DEFAULT_DOCUMENT_THEME, Font, DEFAULT_FONTS } from "Document/theme";
 
@@ -11,6 +11,7 @@ import { useEditorState } from "./state";
 import SettingsList from "Elements/settings-list";
 import SettingsSection from "Elements/settings-section";
 import { useAppState } from "../../app/state";
+import InputColor from "Elements/input/color";
 
 
 
@@ -102,37 +103,21 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
         }
 
         case "color": {
-            const compNames = ["r", "g", "b"];
-            const comps = property as Color;
-
-            return <div>
-                {comps.map((comp, compIndex) => {
-                    return <Label key={compIndex}>
-                        <span>{compNames[compIndex]}</span>
-                        <Input
-                            step="1"
-                            min="0"
-                            max="255"
-                            name={`${fieldName}${compIndex? "-" + compNames[compIndex] : ""}`}
-                            type="number"
-                            value={comp}
-                            onChange={e => {
-                                const value = parseIntSafe(e.target.value);
-                                const newComps = [...comps] as Color;
-                                newComps[compIndex] = value;
-                                editorDispatch({
-                                    type: "set-theme-property",
-                                    value: {
-                                        key: fieldName,
-                                        data: newComps,
-                                    },
-                                });
-                            }}
-                        />
-                    </Label>;
-                })}
-            </div>;
+            return <InputColor
+                name={fieldName}
+                property={property as Color}
+                onChange={data => {
+                    editorDispatch({
+                        type: "set-theme-property",
+                        value: {
+                            key: fieldName,
+                            data,
+                        },
+                    });
+                }}
+            />;
         }
+
 
         case "font": {
             const value = (property as Font).fontName;

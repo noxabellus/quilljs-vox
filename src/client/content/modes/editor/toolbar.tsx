@@ -9,6 +9,7 @@ import Dropdown from "Elements/input/dropdown";
 import Button from "Elements/input/button";
 import Dropout from "Elements/input/dropout";
 import LengthInput from "Elements/input/length";
+import ColorInput from "Elements/input/color";
 import Svg from "Elements/svg";
 import ToolSet from "Elements/tool-set";
 import Spacer from "Elements/spacer";
@@ -35,7 +36,8 @@ import sliderImg from "Assets/horizontal-sliders.svg?raw";
 import exportImg from "Assets/file-arrow-down.svg?raw";
 import gearImg from "Assets/gear.svg?raw";
 import closeImg from "Assets/arrow-right-into-bracket.svg?raw";
-import { DEFAULT_DOCUMENT_THEME, DEFAULT_FONTS, lengthToPx, lookupPropertyString, simpleLengthString } from "Document/theme";
+import { DEFAULT_DOCUMENT_THEME, DEFAULT_FONTS, lengthToPx, lookupPropertyString, simpleColorString, simpleLengthString } from "Document/theme";
+import ColorDisplay from "Elements/color-display";
 
 
 
@@ -276,6 +278,7 @@ export default function Toolbar () {
         }
     };
 
+
     const baseFont = lookupPropertyString(editorContext.document.theme, "base-font-family");
     const actualFontFamilies = [...Object.keys(editorContext.document.fonts), ...DEFAULT_FONTS];
     const fontFamilies = actualFontFamilies.slice();
@@ -311,6 +314,7 @@ export default function Toolbar () {
             : <option key={i} style={{color: "red"}}>{font}</option>
     );
 
+
     const getDocumentFontSize = () =>
         editorContext.document.theme["base-font-size"] || DEFAULT_DOCUMENT_THEME["base-font-size"];
 
@@ -338,6 +342,55 @@ export default function Toolbar () {
         setOpen(false);
     };
 
+
+    const getDocumentFontColor = () =>
+        editorContext.document.theme["base-font-color"] || DEFAULT_DOCUMENT_THEME["base-font-color"];
+
+    const [tempFontColor, setTempFontColor] = useState(editorContext.details.fontAttributes.color || getDocumentFontColor());
+
+    const resetFontColor = () => {
+        setTempFontColor(editorContext.details.fontAttributes.color || getDocumentFontColor());
+    };
+
+    const confirmFontColor = (setOpen: React.Dispatch<React.SetStateAction<boolean>>) => () => {
+        const a = simpleColorString(tempFontColor);
+        const b = simpleColorString(getDocumentFontColor());
+        console.log(a, b);
+
+        if (a === b) {
+            editorDispatch({ type: "set-font-color", value: null });
+        } else {
+            editorDispatch({ type: "set-font-color", value: tempFontColor });
+        }
+
+        setOpen(false);
+    };
+
+
+    const getDocumentFontBackground = () =>
+        editorContext.document.theme["page-color"] || DEFAULT_DOCUMENT_THEME["page-color"];
+
+    const [tempFontBackground, setTempFontBackground] = useState(editorContext.details.fontAttributes.background || getDocumentFontBackground());
+
+    const resetFontBackground = () => {
+        setTempFontBackground(editorContext.details.fontAttributes.background || getDocumentFontBackground());
+    };
+
+    const confirmFontBackground = (setOpen: React.Dispatch<React.SetStateAction<boolean>>) => () => {
+        const a = simpleColorString(tempFontBackground);
+        const b = simpleColorString(getDocumentFontBackground());
+        console.log(a, b);
+
+        if (a === b) {
+            editorDispatch({ type: "set-font-background", value: null });
+        } else {
+            editorDispatch({ type: "set-font-background", value: tempFontBackground });
+        }
+
+        setOpen(false);
+    };
+
+
     const settingsSelected = editorContext.overlays.settings ? "selected" : "";
 
     return <EditorToolSet $ed-width={editorContext.details.nodeData.width}>
@@ -350,6 +403,50 @@ export default function Toolbar () {
         <TextDetailsButton kind="italic"/>
         <TextDetailsButton kind="underline"/>
         <TextDetailsButton kind="strike"/>
+        <Dropout
+            disabled={disabled}
+            folded={<ColorDisplay displayColor={tempFontColor} />}
+            style={{padding: "5px"}}
+            onBlur={resetFontColor}
+            unfolded={setOpen => <>
+                    <ColorDisplay
+                        displayColor={tempFontColor}
+                        style={{width: "100%", height: "2em", marginBottom: "5px"}}
+                    />
+                    <ColorInput
+                        property={tempFontColor}
+                        onChange={setTempFontColor}
+                    />
+                    <Button.Icon
+                        onClick={confirmFontColor(setOpen)}
+                        style={{marginTop: "5px"}}
+                        svg={confirmImg}
+                    />
+                </>
+            }
+        />
+        <Dropout
+            disabled={disabled}
+            folded={<ColorDisplay displayColor={tempFontBackground} />}
+            style={{padding: "5px"}}
+            onBlur={resetFontBackground}
+            unfolded={setOpen => <>
+                    <ColorDisplay
+                        displayColor={tempFontBackground}
+                        style={{width: "100%", height: "2em", marginBottom: "5px"}}
+                    />
+                    <ColorInput
+                        property={tempFontBackground}
+                        onChange={setTempFontBackground}
+                    />
+                    <Button.Icon
+                        onClick={confirmFontBackground(setOpen)}
+                        style={{marginTop: "5px"}}
+                        svg={confirmImg}
+                    />
+                </>
+            }
+        />
         <Dropdown
             disabled={disabled}
             selected={getFontFamilyIndex()}

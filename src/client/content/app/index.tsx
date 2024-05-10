@@ -18,7 +18,7 @@ import EditorState from "../modes/editor/state";
 import { writeVox } from "Support/file";
 import TitleBar from "./titlebar";
 import { ThemeProvider } from "styled-components";
-import { parseLengthString, simpleLengthString } from "Document/theme";
+import { parseColorString, parseLengthString, simpleColorString, simpleLengthString } from "Document/theme";
 import { Range } from "Extern/quill";
 
 
@@ -197,6 +197,18 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
             out.details.fontAttributes.font = action.value;
             break;
 
+        case "set-font-color":
+            q.setSelection(range, "silent");
+            q.format("color", action.value !== null? simpleColorString(action.value) : null);
+            out.details.fontAttributes.color = action.value;
+            break;
+
+        case "set-font-background":
+            q.setSelection(range, "silent");
+            q.format("background", action.value !== null? simpleColorString(action.value) : null);
+            out.details.fontAttributes.background = action.value;
+            break;
+
         case "set-align":
             q.setSelection(range, "silent");
             q.format("align", action.value);
@@ -223,8 +235,6 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
                     align: null,
                     header: null,
                 });
-                out.details.textDecoration = { bold: false, italic: false, underline: false, strike: false };
-                out.details.fontAttributes = { size: null, font: null, };
                 out.details.blockFormat = { align: null, header: null, };
             } else {
                 q.formatText(range.index, range.length, {
@@ -235,15 +245,17 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
                     font: null,
                     size: null,
                 });
-                out.details.fontAttributes = { size: null, font: null };
-                out.details.textDecoration = { bold: false, italic: false, underline: false, strike: false };
             }
+            out.details.fontAttributes = { size: null, font: null, color: null, background: null };
+            out.details.textDecoration = { bold: false, italic: false, underline: false, strike: false };
         } break;
 
         case "post-range": {
-            const blockFormats: string[] = [ "align", "header" ];
-            const textDecorations = [ "bold", "italic", "underline", "strike" ];
-            const fontAttributes = [ "size", "font" ];
+            const blockFormats = Object.keys(out.details.blockFormat);
+            const textDecorations = Object.keys(out.details.textDecoration);
+            const fontAttributes = Object.keys(out.details.fontAttributes);
+
+            console.log("post range, gathering info for keys", blockFormats, textDecorations, fontAttributes);
 
             if (action.value) {
                 out.details.nodeData.focused = true;
@@ -265,6 +277,8 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
                         let value: any = fmt[key];
                         if (Array.isArray(value)) value = value[0];
                         if (key === "size") value = parseLengthString(value);
+                        if (key === "color") value = parseColorString(value);
+                        if (key === "background") value = parseColorString(value);
                         out.details.fontAttributes[key as keyof EditorTypes.FontAttributes] = value;
                     } else {
                         out.details.fontAttributes[key as keyof EditorTypes.FontAttributes] = null;
@@ -286,6 +300,8 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
 
             out.details.nodeData.lastRange = out.details.nodeData.range ?? out.details.nodeData.lastRange;
             out.details.nodeData.range = action.value;
+
+            console.log("post range", out.details);
         } break;
 
         case "keyboard-shortcut": {
@@ -406,6 +422,8 @@ export default function App () {
                             fontAttributes: {
                                 size: null,
                                 font: null,
+                                color: null,
+                                background: null,
                             },
                             textDecoration: {
                                 bold: false,

@@ -2,7 +2,7 @@ import { PathLike } from "fs";
 import Quill, { Delta, Range } from "Extern/quill";
 
 import Document from "Document";
-import { Length, Theme } from "Document/theme";
+import { Color, Length, Theme } from "Document/theme";
 import History from "quill/modules/history";
 
 
@@ -56,6 +56,8 @@ export type TextDecoration = {
 export type FontAttributes = {
     size: Length | null,
     font: string | null,
+    color: Color | null,
+    background: Color | null,
 };
 
 
@@ -92,6 +94,8 @@ export type Action
     | SetStrike
     | SetFontSize
     | SetFontFamily
+    | SetFontColor
+    | SetFontBackground
     | SetAlign
     | SetHeader
     | SetFocused
@@ -169,6 +173,16 @@ export type SetFontSize = {
 export type SetFontFamily = {
     type: "set-font-family",
     value: string | null,
+};
+
+export type SetFontColor = {
+    type: "set-font-color",
+    value: Color | null,
+};
+
+export type SetFontBackground = {
+    type: "set-font-background",
+    value: Color | null,
 };
 
 export type SetAlign = {

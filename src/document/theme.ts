@@ -278,9 +278,23 @@ export function parseLengthString (value: string): Length {
     return {[unit]: val} as Length;
 }
 
+export function parseColorString (value: string): Color {
+    // const hexMatches = value.match("#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})");
+    // if (hexMatches) return hexMatches.slice(1, 4).map(x => parseInt(x, 16)) as Color;
+
+    const rgbMatches = value.match("rgb\\((\\d+), (\\d+), (\\d+)\\)");
+    if (!rgbMatches) throw `Invalid color string: ${value}`;
+
+    return rgbMatches.slice(1, 4).map(x => parseInt(x)) as Color;
+}
+
 export function simpleLengthString (value: Length): string {
     const [unit, val] = Object.entries(value)[0];
     return `${val}${unit}`;
+}
+
+export function simpleColorString (value: Color): string {
+    return `rgb(${value.join(", ")})`;
 }
 
 export function lengthString (theme: Theme, value: Length): string {
