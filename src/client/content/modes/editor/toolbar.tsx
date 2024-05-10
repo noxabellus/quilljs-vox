@@ -13,17 +13,21 @@ import ColorInput from "Elements/input/color";
 import Svg from "Elements/svg";
 import ToolSet from "Elements/tool-set";
 import Spacer from "Elements/spacer";
+import ColorDisplay from "Elements/color-display";
 
 import Document from "Document";
+import { DEFAULT_DOCUMENT_THEME, DEFAULT_FONTS, lengthToPx, lookupPropertyString, simpleColorString, simpleLengthString } from "Document/theme";
 
 import { useAppState } from "../../app/state";
-import saveInterrupt from "./save-interrupt";
 
+import saveInterrupt from "./save-interrupt";
 import { useEditorState, dataIsDirty, dataNeedsSave } from "./state";
 import { EDITOR_ALIGNMENT_NAMES, EDITOR_HEADER_LEVELS, EDITOR_TEXT_DECORATION_PROPERTIES, TextDecoration } from "./types";
 
+
 import savedImg from "Assets/file-checkmark.svg?raw";
 import confirmImg from "Assets/checkmark.svg?raw";
+import deleteImg from "Assets/xmark.svg?raw";
 import unsavedImg from "Assets/file-circle-cross.svg?raw";
 import saveAsImg from "Assets/file-arrow-up.svg?raw";
 // import alignColumnsImg from "Assets/align-columns.svg";
@@ -36,8 +40,6 @@ import sliderImg from "Assets/horizontal-sliders.svg?raw";
 import exportImg from "Assets/file-arrow-down.svg?raw";
 import gearImg from "Assets/gear.svg?raw";
 import closeImg from "Assets/arrow-right-into-bracket.svg?raw";
-import { DEFAULT_DOCUMENT_THEME, DEFAULT_FONTS, lengthToPx, lookupPropertyString, simpleColorString, simpleLengthString } from "Document/theme";
-import ColorDisplay from "Elements/color-display";
 
 
 
@@ -352,6 +354,11 @@ export default function Toolbar () {
         setTempFontColor(editorContext.details.fontAttributes.color || getDocumentFontColor());
     };
 
+    const deleteFontColor = (setOpen: React.Dispatch<React.SetStateAction<boolean>>) => () => {
+        editorDispatch({ type: "set-font-color", value: null });
+        setOpen(false);
+    };
+
     const confirmFontColor = (setOpen: React.Dispatch<React.SetStateAction<boolean>>) => () => {
         const a = simpleColorString(tempFontColor);
         const b = simpleColorString(getDocumentFontColor());
@@ -374,6 +381,11 @@ export default function Toolbar () {
 
     const resetFontBackground = () => {
         setTempFontBackground(editorContext.details.fontAttributes.background || getDocumentFontBackground());
+    };
+
+    const deleteFontBackground = (setOpen: React.Dispatch<React.SetStateAction<boolean>>) => () => {
+        editorDispatch({ type: "set-font-background", value: null });
+        setOpen(false);
     };
 
     const confirmFontBackground = (setOpen: React.Dispatch<React.SetStateAction<boolean>>) => () => {
@@ -404,50 +416,65 @@ export default function Toolbar () {
         <TextDetailsButton kind="underline"/>
         <TextDetailsButton kind="strike"/>
         <Dropout
+            title="Foreground Color"
             disabled={disabled}
-            folded={<ColorDisplay displayColor={tempFontColor} />}
+            folded={<ColorDisplay display={tempFontColor} style={{border: "1px solid rgb(var(--primary-color))"}} />}
             style={{padding: "5px"}}
             onBlur={resetFontColor}
             unfolded={setOpen => <>
                     <ColorDisplay
-                        displayColor={tempFontColor}
+                        display={tempFontColor}
                         style={{width: "100%", height: "2em", marginBottom: "5px"}}
                     />
                     <ColorInput
                         property={tempFontColor}
                         onChange={setTempFontColor}
                     />
-                    <Button.Icon
-                        onClick={confirmFontColor(setOpen)}
-                        style={{marginTop: "5px"}}
-                        svg={confirmImg}
-                    />
+                    <div style={{marginTop: "5px", display: "flex", flexGrow: 1}}>
+                        <Button.Icon
+                            onClick={deleteFontColor(setOpen)}
+                            svg={deleteImg}
+                        />
+                        <Button.Icon
+                            onClick={confirmFontColor(setOpen)}
+                            style={{marginLeft: "5px"}}
+                            svg={confirmImg}
+                        />
+                    </div>
                 </>
             }
         />
         <Dropout
+            title="Background Color"
             disabled={disabled}
-            folded={<ColorDisplay displayColor={tempFontBackground} />}
+            folded={<ColorDisplay display={tempFontBackground} style={{border: "1px solid rgb(var(--primary-color))"}} />}
             style={{padding: "5px"}}
             onBlur={resetFontBackground}
             unfolded={setOpen => <>
                     <ColorDisplay
-                        displayColor={tempFontBackground}
+                        display={tempFontBackground}
                         style={{width: "100%", height: "2em", marginBottom: "5px"}}
                     />
                     <ColorInput
                         property={tempFontBackground}
                         onChange={setTempFontBackground}
                     />
-                    <Button.Icon
-                        onClick={confirmFontBackground(setOpen)}
-                        style={{marginTop: "5px"}}
-                        svg={confirmImg}
-                    />
+                    <div style={{marginTop: "5px", display: "flex", flexGrow: 1}}>
+                        <Button.Icon
+                            onClick={deleteFontBackground(setOpen)}
+                            svg={deleteImg}
+                        />
+                        <Button.Icon
+                            onClick={confirmFontBackground(setOpen)}
+                            style={{marginLeft: "5px"}}
+                            svg={confirmImg}
+                        />
+                    </div>
                 </>
             }
         />
         <Dropdown
+            title="Font Family"
             disabled={disabled}
             selected={getFontFamilyIndex()}
             onChange={changeFontFamily}
@@ -455,6 +482,7 @@ export default function Toolbar () {
             {fontFamilyOptions}
         </Dropdown>
         <Dropout
+            title="Font Size"
             disabled={disabled}
             folded={<p>{getFontSize()}</p>}
             style={{padding: "5px"}}
@@ -474,6 +502,7 @@ export default function Toolbar () {
             }
         />
         <Dropdown
+            title="Block Mode"
             disabled={disabled}
             selected={getBlockIndex()}
             onChange={changeBlock}
@@ -487,6 +516,7 @@ export default function Toolbar () {
             <option title="Header Level 6 Block">H6</option>
         </Dropdown>
         <Dropdown
+            title="Alignment"
             disabled={disabled}
             selected={getAlignmentIndex()}
             onChange={changeAlignment}
@@ -496,7 +526,7 @@ export default function Toolbar () {
             <Svg title="Align Right" src={alignRightImg}/>
             <Svg title="Align Left-Justify" src={alignJustifyImg}/>
         </Dropdown>
-        <Button.Icon disabled={disabled} onClick={unstyle} svg={unstyleImg}/>
+        <Button.Icon title="Remove all styles" disabled={disabled} onClick={unstyle} svg={unstyleImg}/>
         <Spacer/>
         <Button.Icon onClick={appSettings} title="Application settings" svg={gearImg}/>
         <Button.Icon onClick={closeDocument} title="Close Document (return to splash screen)" svg={closeImg}/>

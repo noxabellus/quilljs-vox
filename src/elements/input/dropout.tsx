@@ -7,16 +7,17 @@ import PopOut from "./popout";
 
 
 export type DropoutProps = {
-    disabled?: boolean;
-    style?: CSSProperties;
-    folded: ReactElement | ReactElement[];
-    onBlur?: () => void;
-    unfolded: (setOpen: Dispatch<SetStateAction<boolean>>) => ReactElement | ReactElement[];
+    disabled?: boolean,
+    style?: CSSProperties,
+    folded: ReactElement | ReactElement[],
+    title?: string,
+    onBlur?: () => void,
+    unfolded: (setOpen: Dispatch<SetStateAction<boolean>>) => ReactElement | ReactElement[],
 };
 
 
 
-export default function Dropout({disabled, folded, unfolded, onBlur, style}: DropoutProps) {
+export default function Dropout({disabled, folded, title, unfolded, onBlur, style}: DropoutProps) {
     const [open, setOpen] = useState(false);
     const [position, setPosition] = useState({left: 0, top: 0});
 
@@ -65,6 +66,7 @@ export default function Dropout({disabled, folded, unfolded, onBlur, style}: Dro
 
     return <>
         <Button
+            title={title}
             disabled={disabled}
             ref={primaryRef}
             onClick={handleOpen}

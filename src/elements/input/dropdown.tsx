@@ -9,11 +9,12 @@ import PopOut from "./popout";
 
 
 export type DropdownProps = {
-    disabled?: boolean;
-    selected: number;
-    onChange?: (newIndex: number, oldIndex: number) => void;
-    style?: CSSProperties;
-    children: ReactElement[];
+    disabled?: boolean,
+    selected: number,
+    title?: string,
+    onChange?: (newIndex: number, oldIndex: number) => void,
+    style?: CSSProperties,
+    children: ReactElement[],
 };
 
 
@@ -27,7 +28,7 @@ const Choice = styled.div`
 `;
 
 
-export default function Dropdown({disabled, selected, children, onChange, style}: DropdownProps) {
+export default function Dropdown({disabled, selected, title, children, onChange, style}: DropdownProps) {
     const [open, setOpen] = useState(false);
     const [isSelected, setIsSelected] = useState(selected);
     const [position, setPosition] = useState({left: 0, top: 0});
@@ -85,6 +86,7 @@ export default function Dropdown({disabled, selected, children, onChange, style}
 
     return <>
         <Button
+            title={title}
             key={selected.toString()+(disabled??false).toString()}
             disabled={disabled}
             ref={primaryRef}
