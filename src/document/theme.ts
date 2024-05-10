@@ -272,9 +272,19 @@ export function propertyString<K extends ThemeKey> (theme: Theme, value: Theme[K
     }
 }
 
+export function parseLengthString (value: string): Length {
+    const unit = value.match(/[a-z]+/)?.[0] as LengthUnit;
+    const val = parseFloat(value);
+    return {[unit]: val} as Length;
+}
+
+export function simpleLengthString (value: Length): string {
+    const [unit, val] = Object.entries(value)[0];
+    return `${val}${unit}`;
+}
+
 export function lengthString (theme: Theme, value: Length): string {
-    // safety: propertyType already validated that this is not undefined
-    const [unit, val] = Object.entries(unsafeForceVal(value))[0];
+    const [unit, val] = Object.entries(value)[0];
     if (unit != "em") {
         return `${val}${unit}`;
     } else {

@@ -18,6 +18,8 @@ import EditorState from "../modes/editor/state";
 import { writeVox } from "Support/file";
 import TitleBar from "./titlebar";
 import { ThemeProvider } from "styled-components";
+import { parseLengthString, simpleLengthString } from "Document/theme";
+import { Range } from "Extern/quill";
 
 
 function setWindowTitle (body: {dirty: boolean, title: string | null, filePath: PathLike | null} | string | null) {
@@ -69,6 +71,8 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
         if (!out.quill) throw "Cannot dispatch actions other than `post-quill` without a quill instance";
         q = out.quill;
     }
+
+    const range = out.details.nodeData.range ?? out.details.nodeData.lastRange;
 
     switch (action.type) {
         case "set-last-saved":
@@ -158,57 +162,56 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
         } break;
 
         case "set-bold":
-            if (!out.details.nodeData.range) throw "Cannot set bold without a range";
+            q.setSelection(range, "silent");
             q.format("bold", action.value);
             out.details.textDecoration.bold = action.value;
             break;
 
         case "set-italic":
-            if (!out.details.nodeData.range) throw "Cannot set italic without a range";
+            q.setSelection(range, "silent");
             q.format("italic", action.value);
             out.details.textDecoration.italic = action.value;
             break;
 
         case "set-underline":
-            if (!out.details.nodeData.range) throw "Cannot set underline without a range";
+            q.setSelection(range, "silent");
             q.format("underline", action.value);
             out.details.textDecoration.underline = action.value;
             break;
 
         case "set-strike":
-            if (!out.details.nodeData.range) throw "Cannot set strike without a range";
+            q.setSelection(range, "silent");
             q.format("strike", action.value);
             out.details.textDecoration.strike = action.value;
             break;
 
         case "set-font-size":
-            if (!out.details.nodeData.range) throw "Cannot set font size without a range";
-            q.format("size", action.value);
+            q.setSelection(range, "silent");
+            q.format("size", action.value !== null? simpleLengthString(action.value) : null);
             out.details.fontAttributes.size = action.value;
             break;
 
         case "set-font-family":
-            if (!out.details.nodeData.range) throw "Cannot set font family without a range";
+            q.setSelection(range, "silent");
             q.format("font", action.value);
             out.details.fontAttributes.font = action.value;
             break;
 
         case "set-align":
-            if (!out.details.nodeData.range) throw "Cannot set align without a range";
+            q.setSelection(range, "silent");
             q.format("align", action.value);
             out.details.blockFormat.align = action.value;
             break;
 
         case "set-header":
-            if (!out.details.nodeData.range) throw "Cannot set block format without a range";
+            q.setSelection(range, "silent");
             q.format("header", action.value);
             out.details.blockFormat.header = action.value;
             break;
 
         case "clear-format": {
-            if (!out.details.nodeData.range) throw "Cannot clear format without a range";
-            if (out.details.nodeData.range.length == 0) {
-                const [line, _] = q.getLine(out.details.nodeData.range.index);
+            if (range.length == 0) {
+                const [line, _] = q.getLine(range.index);
                 if (line === null) throw "No line found";
                 q.formatText(line.offset(), line.length(), {
                     bold: false,
@@ -224,7 +227,7 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
                 out.details.fontAttributes = { size: null, font: null, };
                 out.details.blockFormat = { align: null, header: null, };
             } else {
-                q.formatText(out.details.nodeData.range.index, out.details.nodeData.range.length, {
+                q.formatText(range.index, range.length, {
                     bold: false,
                     italic: false,
                     underline: false,
@@ -261,6 +264,7 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
                     if (key in fmt) {
                         let value: any = fmt[key];
                         if (Array.isArray(value)) value = value[0];
+                        if (key === "size") value = parseLengthString(value);
                         out.details.fontAttributes[key as keyof EditorTypes.FontAttributes] = value;
                     } else {
                         out.details.fontAttributes[key as keyof EditorTypes.FontAttributes] = null;
@@ -280,6 +284,7 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
                 out.details.nodeData.focused = false;
             }
 
+            out.details.nodeData.lastRange = out.details.nodeData.range ?? out.details.nodeData.lastRange;
             out.details.nodeData.range = action.value;
         } break;
 
@@ -391,6 +396,7 @@ export default function App () {
                             nodeData: {
                                 focused: false,
                                 range: null,
+                                lastRange: new Range(0, 0),
                                 width: 640,
                             },
                             blockFormat: {

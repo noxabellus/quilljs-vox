@@ -1,13 +1,15 @@
-import { MouseEvent } from "react";
+import { MouseEvent, useState } from "react";
 import styled from "styled-components";
 
 import { saveHtml, saveVox, writeVox } from "Support/file";
 import Result from "Support/result";
 import remote from "Support/remote";
 
-import Dropdown from "Elements/dropdown";
+import Dropdown from "Elements/input/dropdown";
+import Button from "Elements/input/button";
+import Dropout from "Elements/input/dropout";
+import LengthInput from "Elements/input/length";
 import Svg from "Elements/svg";
-import Button from "Elements/button";
 import ToolSet from "Elements/tool-set";
 import Spacer from "Elements/spacer";
 
@@ -20,6 +22,7 @@ import { useEditorState, dataIsDirty, dataNeedsSave } from "./state";
 import { EDITOR_ALIGNMENT_NAMES, EDITOR_HEADER_LEVELS, EDITOR_TEXT_DECORATION_PROPERTIES, TextDecoration } from "./types";
 
 import savedImg from "Assets/file-checkmark.svg?raw";
+import confirmImg from "Assets/checkmark.svg?raw";
 import unsavedImg from "Assets/file-circle-cross.svg?raw";
 import saveAsImg from "Assets/file-arrow-up.svg?raw";
 // import alignColumnsImg from "Assets/align-columns.svg";
@@ -32,7 +35,9 @@ import sliderImg from "Assets/horizontal-sliders.svg?raw";
 import exportImg from "Assets/file-arrow-down.svg?raw";
 import gearImg from "Assets/gear.svg?raw";
 import closeImg from "Assets/arrow-right-into-bracket.svg?raw";
-import { DEFAULT_FONTS, lookupPropertyString } from "Document/theme";
+import { DEFAULT_DOCUMENT_THEME, DEFAULT_FONTS, lengthToPx, lookupPropertyString, simpleLengthString } from "Document/theme";
+
+
 
 
 const EditorToolSet = styled(ToolSet)<{["$ed-width"]: number}>`
@@ -46,7 +51,7 @@ const EditorToolSet = styled(ToolSet)<{["$ed-width"]: number}>`
 export default function Toolbar () {
     const [appContext, appDispatch] = useAppState();
     const [editorContext, editorDispatch] = useEditorState(appContext);
-    const disabled = !editorContext.details.nodeData.focused || appContext.lockIO;
+    const disabled = !editorContext.details.nodeData.focused;
 
     const formatter = (prop: keyof TextDecoration) => (e: MouseEvent) => {
         e.preventDefault();
@@ -221,7 +226,7 @@ export default function Toolbar () {
     };
 
     const SaveAsButton = () => {
-        return <Button.Icon disabled={appContext.lockIO} title={`Save as new .vox (${status})`} svg={saveAsImg} onClick={saveFileAs}/>;
+        return <Button.Icon title={`Save as new .vox (${status})`} svg={saveAsImg} onClick={saveFileAs}/>;
     };
 
 
@@ -306,27 +311,41 @@ export default function Toolbar () {
             : <option key={i} style={{color: "red"}}>{font}</option>
     );
 
+    const getDocumentFontSize = () =>
+        editorContext.document.theme["base-font-size"] || DEFAULT_DOCUMENT_THEME["base-font-size"];
+
+    const [tempFontSize, setTempFontSize] = useState(editorContext.details.fontAttributes.size || getDocumentFontSize());
+
+    const getFontSize = () => {
+        return simpleLengthString(tempFontSize);
+    };
+
+    const resetFontSize = () => {
+        setTempFontSize(editorContext.details.fontAttributes.size || getDocumentFontSize());
+    };
+
+    const confirmFontSize = (setOpen: React.Dispatch<React.SetStateAction<boolean>>) => () => {
+        const a = lengthToPx(editorContext.document.theme, tempFontSize);
+        const b = lengthToPx(editorContext.document.theme, getDocumentFontSize());
+        console.log(a, b);
+
+        if (a === b) {
+            editorDispatch({ type: "set-font-size", value: null });
+        } else {
+            editorDispatch({ type: "set-font-size", value: tempFontSize });
+        }
+
+        setOpen(false);
+    };
+
     const settingsSelected = editorContext.overlays.settings ? "selected" : "";
 
     return <EditorToolSet $ed-width={editorContext.details.nodeData.width}>
         <SaveButton/>
         {editorContext.filePath && <SaveAsButton/>}
-        <Button.Icon disabled={appContext.lockIO} onClick={docSettings} title="Document Settings" svg={sliderImg} className={settingsSelected}/>
-        <Button.Icon disabled={appContext.lockIO} onClick={exportHtml} title="Export Document" svg={exportImg}/>
+        <Button.Icon onClick={docSettings} title="Document Settings" svg={sliderImg} className={settingsSelected}/>
+        <Button.Icon onClick={exportHtml} title="Export Document" svg={exportImg}/>
         <Spacer/>
-        <Dropdown
-            disabled={disabled}
-            selected={getBlockIndex()}
-            onChange={changeBlock}
-        >
-            <option>Paragraph</option>
-            <option>Heading 1</option>
-            <option>Heading 2</option>
-            <option>Heading 3</option>
-            <option>Heading 4</option>
-            <option>Heading 5</option>
-            <option>Heading 6</option>
-        </Dropdown>
         <TextDetailsButton kind="bold"/>
         <TextDetailsButton kind="italic"/>
         <TextDetailsButton kind="underline"/>
@@ -337,6 +356,38 @@ export default function Toolbar () {
             onChange={changeFontFamily}
         >
             {fontFamilyOptions}
+        </Dropdown>
+        <Dropout
+            disabled={disabled}
+            folded={<p>{getFontSize()}</p>}
+            style={{padding: "5px"}}
+            onBlur={resetFontSize}
+            unfolded={setOpen => <>
+                    <LengthInput
+                        theme={editorContext.document.theme}
+                        property={tempFontSize}
+                        onChange={setTempFontSize}
+                    />
+                    <Button.Icon
+                        onClick={confirmFontSize(setOpen)}
+                        style={{marginTop: "5px"}}
+                        svg={confirmImg}
+                    />
+                </>
+            }
+        />
+        <Dropdown
+            disabled={disabled}
+            selected={getBlockIndex()}
+            onChange={changeBlock}
+        >
+            <option title="Standard Paragraph Block">P</option>
+            <option title="Header Level 1 Block">H1</option>
+            <option title="Header Level 2 Block">H2</option>
+            <option title="Header Level 3 Block">H3</option>
+            <option title="Header Level 4 Block">H4</option>
+            <option title="Header Level 5 Block">H5</option>
+            <option title="Header Level 6 Block">H6</option>
         </Dropdown>
         <Dropdown
             disabled={disabled}
@@ -350,7 +401,7 @@ export default function Toolbar () {
         </Dropdown>
         <Button.Icon disabled={disabled} onClick={unstyle} svg={unstyleImg}/>
         <Spacer/>
-        <Button.Icon disabled={appContext.lockIO} onClick={appSettings} title="Application settings" svg={gearImg}/>
-        <Button.Icon disabled={appContext.lockIO} onClick={closeDocument} title="Close Document (return to splash screen)" svg={closeImg}/>
+        <Button.Icon onClick={appSettings} title="Application settings" svg={gearImg}/>
+        <Button.Icon onClick={closeDocument} title="Close Document (return to splash screen)" svg={closeImg}/>
     </EditorToolSet>;
 }

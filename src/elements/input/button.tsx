@@ -1,10 +1,10 @@
 import { ButtonHTMLAttributes, DetailedHTMLProps, forwardRef, useContext } from "react";
 import styled from "styled-components";
 
-import AppState from "../client/content/app/state";
+import AppState from "../../client/content/app/state";
 
-import BaseStyles from "./base-styles";
-import Svg from "./svg";
+import BaseStyles from "../base-styles";
+import Svg from "../svg";
 
 
 export type ButtonProps = DetailedHTMLProps<ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>;

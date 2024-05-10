@@ -1,11 +1,9 @@
-import { ClassAttributor, Scope, StyleAttributor } from "parchment";
+import { Scope, StyleAttributor } from "parchment";
 
 const config = {
   scope: Scope.INLINE,
 //   whitelist: ["sans-serif", "serif", "monospace"],
 };
-
-const FontClass = new ClassAttributor("font", "ql-font", config);
 
 class FontStyleAttributor extends StyleAttributor {
   value(node: HTMLElement) {
@@ -13,6 +11,4 @@ class FontStyleAttributor extends StyleAttributor {
   }
 }
 
-const FontStyle = new FontStyleAttributor("font", "font-family", config);
-
-export { FontStyle, FontClass };
+export default new FontStyleAttributor("font", "font-family", config);

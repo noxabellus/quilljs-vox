@@ -1,7 +1,7 @@
 import { DetailedHTMLProps, InputHTMLAttributes, useContext } from "react";
 import styled from "styled-components";
 
-import AppState from "../client/content/app/state";
+import AppState from "Client/content/app/state";
 
 
 export type InputProps = DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>;
@@ -24,10 +24,14 @@ export const InputStyles = styled.input`
     }
 
     &[type="number"] {
+        padding-left: 5px;
+        padding-right: 5px;
         width: 3em;
     }
 
     &[type="text"] {
+        padding-left: 5px;
+        padding-right: 5px;
         width: 6em;
     }
 `;

@@ -1,9 +1,9 @@
-import Checkbox from "Elements/checkbox";
+import Checkbox from "Elements/input/checkbox";
+import SettingsList from "Elements/settings-list";
+import SettingsSection from "Elements/settings-section";
 import Label from "Elements/label";
 
 import { Settings } from "./types";
-import SettingsList from "Elements/settings-list";
-import SettingsSection from "Elements/settings-section";
 import { useEditorState } from "./state";
 import { useAppState } from "../../app/state";
 

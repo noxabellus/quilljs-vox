@@ -6,11 +6,11 @@ import { openVox } from "Support/file";
 
 import Document from "Document";
 
+import Button from "Elements/input/button";
 import BaseStyles from "Elements/base-styles";
-import Button from "Elements/button";
+import BasicLayout from "Elements/basic-layout";
 import Svg from "Elements/svg";
 import ToolSet from "Elements/tool-set";
-import BasicLayout from "Elements/basic-layout";
 
 import AppState from "../app/state";
 

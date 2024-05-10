@@ -1,9 +1,10 @@
-import { parseFloatSafe, parseIntSafe } from "Support/number";
+import { parseFloatSafe, parseIntSafe, toFixed } from "Support/number";
 
 import { Color, Dimensions, Length, THEME_UNITS, Theme, lengthUnit, lengthConvert, propertyType, themeValue, DEFAULT_DOCUMENT_THEME, Font, DEFAULT_FONTS } from "Document/theme";
 
-import Dropdown from "Elements/dropdown";
 import Input from "Elements/input";
+import Dropdown from "Elements/input/dropdown";
+import LengthInput from "Elements/input/length";
 import Label from "Elements/label";
 
 import { useEditorState } from "./state";
@@ -22,53 +23,22 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
 
     const property = themeValue(theme, fieldName);
 
-    const numToFixed = (num: number) => Math.round(num * 1e2) / 1e2;
-
     switch (propertyType(property as any)) {
         case "length": {
-            const prop = property as Length;
-            const unit = lengthUnit(prop);
-            const value = (prop as any)[unit] as number;
-
-            const changeUnit = (i: number) => {
-                const newUnit = THEME_UNITS[i];
-                const converted = numToFixed(lengthConvert(theme, value, unit, newUnit));
-
-                editorDispatch({
-                    type: "set-theme-property",
-                    value: {
-                        key: fieldName,
-                        data: { [newUnit]: converted } as Theme[typeof fieldName],
-                    },
-                });
-            };
-
-            return <div>
-                <Input
-                    step="0.01"
-                    min="-9999"
-                    max="9999"
-                    name={fieldName}
-                    type="number"
-                    value={value}
-                    onChange={e => {
-                        const value = parseFloatSafe(e.target.value);
-                        editorDispatch({
-                            type: "set-theme-property",
-                            value: {
-                                key: fieldName,
-                                data: { [unit]: value } as Theme[typeof fieldName],
-                            },
-                        });
-                    }}
-                />
-                <Dropdown
-                    selected={THEME_UNITS.indexOf(unit)}
-                    onChange={changeUnit}
-                >
-                    {THEME_UNITS.map((unit, i) => <option key={i}>{unit}</option>)}
-                </Dropdown>
-            </div>;
+            return <LengthInput
+                theme={theme}
+                property={property as Length}
+                name={fieldName}
+                onChange={data => {
+                    editorDispatch({
+                        type: "set-theme-property",
+                        value: {
+                            key: fieldName,
+                            data,
+                        },
+                    });
+                }}
+            />;
         }
 
         case "dimensions": {
@@ -82,7 +52,7 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
 
                     const changeUnit = (i: number) => {
                         const newUnit = THEME_UNITS[i];
-                        const converted = numToFixed(lengthConvert(theme, value, unit, newUnit));
+                        const converted = toFixed(lengthConvert(theme, value, unit, newUnit));
 
                         const newDims: Dimensions = [...dims];
                         newDims[dimIndex] = { [newUnit]: converted } as Length;

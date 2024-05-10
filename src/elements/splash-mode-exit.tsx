@@ -3,7 +3,7 @@ import styled, { useTheme } from "styled-components";
 
 import remote from "Support/remote";
 
-import Button from "Elements/button";
+import Button from "Elements/input/button";
 
 import closeImg from "Assets/xmark.svg?raw";
 

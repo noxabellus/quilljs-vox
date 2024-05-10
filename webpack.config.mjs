@@ -48,6 +48,7 @@ export default [
             alias: {
                 Assets: path.resolve(__dirname, "src/assets/"),
                 Document: path.resolve(__dirname, "src/document/"),
+                Client: path.resolve(__dirname, "src/client/"),
                 "Document$": path.resolve(__dirname, "src/document/index.ts"),
                 Elements: path.resolve(__dirname, "src/elements/"),
                 Support: path.resolve(__dirname, "src/support/"),

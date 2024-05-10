@@ -10,7 +10,6 @@ import List from "quill/formats/list";
 
 import { BackgroundStyle } from "quill/formats/background";
 import { ColorStyle } from "quill/formats/color";
-import { SizeStyle } from "quill/formats/size";
 
 import Bold from "quill/formats/bold";
 import Italic from "quill/formats/italic";
@@ -33,7 +32,8 @@ import Uploader from "quill/modules/uploader";
 import Input from "quill/modules/input";
 import UINode from "quill/modules/uiNode";
 
-import { FontStyle } from "./font";
+import FontStyle from "./font";
+import SizeStyle from "./size";
 import Image from "./image";
 import Keyboard from "./keyboard";
 import Clipboard from "./clipboard";

@@ -15,10 +15,6 @@ export default styled.fieldset`
         font-size: 1.2em;
     }
 
-    & input[type="text"] {
-        font-size: 1.2em;
-    }
-
     & > div {
         display: flex;
         flex-direction: row;

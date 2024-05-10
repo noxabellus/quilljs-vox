@@ -1,7 +1,7 @@
 import styled, { css } from "styled-components";
 
+import Button from "Elements/input/button";
 import Block from "Elements/block";
-import Button from "Elements/button";
 
 import { useAppState } from "../../app/state";
 

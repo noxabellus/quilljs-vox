@@ -2,7 +2,7 @@ import styled, { useTheme } from "styled-components";
 
 import remote from "Support/remote";
 
-import Button from "Elements/button";
+import Button from "Elements/input/button";
 import Spacer from "Elements/spacer";
 import Block from "Elements/block";
 

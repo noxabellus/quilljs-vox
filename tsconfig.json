@@ -20,6 +20,7 @@
             "Extern/*": ["src/extern/*"],
             "Support/*": ["src/support/*"],
             "Elements/*": ["src/elements/*"],
+            "Client/*": ["src/client/*"],
             "Document/*": ["src/document/*"],
             "Document": ["src/document/index.js"],
         }

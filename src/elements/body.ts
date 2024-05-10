@@ -1,5 +1,8 @@
 import styled, { css } from "styled-components";
 
+import Block from "./block";
+import ToolSet from "./tool-set";
+
 
 export default styled.div`
     display: flex;
@@ -16,7 +19,9 @@ export default styled.div`
     ${p => p.theme.splashMode
         ? css`
             -webkit-app-region: drag;
-            & * { -webkit-app-region: no-drag; }
+            & ${Block},
+            & ${ToolSet}
+            { -webkit-app-region: no-drag; }
             & ~ * { -webkit-app-region: no-drag; }
         `
         : null

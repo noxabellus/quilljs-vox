@@ -1,10 +1,11 @@
 import { CSSProperties, ReactElement, useEffect, useLayoutEffect, useRef, useState } from "react";
-import styled, { css } from "styled-components";
+import styled from "styled-components";
 
 import { forceRef } from "Support/nullable";
 
-import BaseStyles from "./base-styles";
+import BaseStyles from "../base-styles";
 import Button from "./button";
+import PopOut from "./popout";
 
 
 export type DropdownProps = {
@@ -16,40 +17,7 @@ export type DropdownProps = {
 };
 
 
-const PopOutStyles = styled.nav<{$position: {left: number, top: number}}>`
-    ${BaseStyles.primary}
-    ${BaseStyles.onActivate.shadow}
-    ${BaseStyles.onActivate.border}
 
-    display: inline-block;
-    list-style: none;
-    position: fixed;
-    z-index: 1000;
-    padding: 0;
-
-    ${({$position: {left, top}}) =>
-        css`
-            left: ${left}px;
-            top: ${top}px;
-        `
-    }
-`;
-
-const PopOut = (props: any) => {
-    const ref = useRef<HTMLElement>(null);
-
-    useLayoutEffect(() => {
-        const elem = forceRef(ref);
-        const elemRect = elem.getBoundingClientRect();
-        const screenRect = document.body.getBoundingClientRect();
-
-        elem.style.left = `${Math.min(props.$position.left, screenRect.right - elemRect.width - 5)}px`;
-        elem.style.top = `${Math.min(props.$position.top, screenRect.bottom - elemRect.height - 5)}px`;
-
-    }, [...Object.entries(props.$position)]);
-
-    return <PopOutStyles ref={ref} {...props} />;
-};
 
 const Choice = styled.div`
     ${BaseStyles.onActivate.stroke}
@@ -78,6 +46,7 @@ export default function Dropdown({disabled, selected, children, onChange, style}
         });
     };
 
+
     const handleOpen = (e: React.MouseEvent<HTMLButtonElement>) => {
         if (disabled) return;
         e.preventDefault();
@@ -86,6 +55,20 @@ export default function Dropdown({disabled, selected, children, onChange, style}
         setPosition({left: rect.left, top: rect.top});
         setOpen(true);
     };
+
+    useLayoutEffect(() => {
+        if (popOutRef.current === null) return;
+
+        const elem = popOutRef.current;
+        const baseRect = forceRef(primaryRef).getBoundingClientRect();
+        const newPosition = {left: baseRect.left, top: baseRect.top};
+        const elemRect = elem.getBoundingClientRect();
+        const screenRect = document.body.getBoundingClientRect();
+
+        elem.style.left = `${Math.min(newPosition.left, screenRect.right - elemRect.width - 5)}px`;
+        elem.style.top = `${Math.min(newPosition.top, screenRect.bottom - elemRect.height - 5)}px`;
+
+    }, [...Object.values(position), popOutRef.current?.getBoundingClientRect(), document.body.getBoundingClientRect()]);
 
     useEffect(() => {
         const handler = (e: MouseEvent) => {

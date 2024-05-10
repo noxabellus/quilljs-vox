@@ -1,11 +1,22 @@
+import { ChangeEvent, useState } from "react";
+
 import path from "node:path";
 
-import Button from "Elements/button";
+import { toDataURL } from "Support/xhr";
+import { openWith } from "Support/file";
+import Result from "Support/result";
+
+import { DEFAULT_FONTS } from "Document/theme";
+
+import Input from "Elements/input";
+import Button from "Elements/input/button";
+import Label from "Elements/label";
+import Spacer from "Elements/spacer";
+import SettingsSection from "Elements/settings-section";
+import SettingsList from "Elements/settings-list";
 
 import { useAppState } from "../../app/state";
 import { useEditorState } from "./state";
-import Label from "Elements/label";
-import { ChangeEvent, useState } from "react";
 
 import newImg from "Assets/wand.svg?raw";
 import renameImg from "Assets/square-brackets.svg?raw";
@@ -13,14 +24,7 @@ import setImg from "Assets/checkmark.svg?raw";
 import cancelImg from "Assets/circle-cross.svg?raw";
 import deleteImg from "Assets/xmark.svg?raw";
 import editFileImg from "Assets/file-pencil.svg?raw";
-import Input from "Elements/input";
-import { toDataURL } from "Support/xhr";
-import { openWith } from "Support/file";
-import Result from "Support/result";
-import { DEFAULT_FONTS } from "Document/theme";
-import Spacer from "Elements/spacer";
-import SettingsSection from "Elements/settings-section";
-import SettingsList from "Elements/settings-list";
+
 
 export default function FontEditor () {
     const [appContext, appDispatch] = useAppState();
@@ -109,7 +113,7 @@ export default function FontEditor () {
             <Label title="User font" style={{color}} >
                 { isRenaming
                     ? <div>
-                        <Input type="text" value={renamingValue} onChange={renameFontTemp}/>
+                        <Input type="text" style={{fontSize: "1.2em", minWidth: "12em"}} value={renamingValue} onChange={renameFontTemp}/>
                         <Spacer/>
                         <Button.Icon disabled={overlappingName} title={overlappingName? "A font with this name already exists" : "Set font name"} svg={setImg} onClick={renameFont}/>
                         <Button.Icon title="Cancel renaming" svg={cancelImg} onClick={cancelRename}/>
