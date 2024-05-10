@@ -1,5 +1,5 @@
 import { PathLike } from "fs";
-import Quill, { Delta, Range } from "quill/core";
+import Quill, { Delta, Range } from "Extern/quill";
 
 import Document from "Document";
 import { Theme } from "Document/theme";
@@ -31,6 +31,7 @@ export type Details = {
     nodeData: NodeData,
     blockFormat: BlockFormat,
     textDecoration: TextDecoration,
+    fontAttributes: FontAttributes,
 };
 
 export type NodeData = {
@@ -49,6 +50,11 @@ export type TextDecoration = {
     italic: boolean,
     underline: boolean,
     strike: boolean,
+};
+
+export type FontAttributes = {
+    size: number | null,
+    font: string | null,
 };
 
 
@@ -83,6 +89,8 @@ export type Action
     | SetItalic
     | SetUnderline
     | SetStrike
+    | SetFontSize
+    | SetFontFamily
     | SetAlign
     | SetHeader
     | SetFocused
@@ -101,6 +109,7 @@ export type Action
     | RenameFont
     | DeleteFont
     | RefreshImages
+    | KeyboardShortcut
     ;
 
 export type SetFilePath = {
@@ -149,6 +158,16 @@ export type SetUnderline = {
 export type SetStrike = {
     type: "set-strike",
     value: boolean,
+};
+
+export type SetFontSize = {
+    type: "set-font-size",
+    value: number | null,
+};
+
+export type SetFontFamily = {
+    type: "set-font-family",
+    value: string | null,
 };
 
 export type SetAlign = {
@@ -244,3 +263,21 @@ export type DeleteFont = {
 export type RefreshImages = {
     type: "refresh-images",
 };
+
+export type KeyboardShortcut = {
+    type: "keyboard-shortcut",
+    value: {
+        key: string,
+        modifiers: ShortcutModifiers,
+    },
+};
+
+export type ShortcutModifiers = {
+    ctrl: boolean,
+    alt: boolean,
+    shift: boolean,
+};
+
+export const BLACK_LISTED_SHORTCUT_KEYS = [
+    "Control", "Alt", "Shift", "Meta", "CapsLock", "Backspace", "Delete"
+];

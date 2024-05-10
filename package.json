@@ -30,7 +30,7 @@
         "js-beautify": "^1.15.1",
         "mini-css-extract-plugin": "^2.9.0",
         "parchment": "^3.0.0",
-        "quill": "^2.0.0",
+        "quill": "^2.0.1",
         "raw-loader": "^4.0.2",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",

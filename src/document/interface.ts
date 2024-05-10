@@ -1,4 +1,4 @@
-import Quill from "quill/core";
+import Quill from "Extern/quill";
 import Delta from "quill-delta";
 import History from "quill/modules/history";
 

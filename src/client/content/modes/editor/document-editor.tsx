@@ -1,8 +1,7 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 import styled from "styled-components";
 
-import Quill from "quill";
-import "./quill-extensions";
+import Quill from "Extern/quill";
 
 import { forceRef } from "Support/nullable";
 
@@ -10,6 +9,7 @@ import documentStyles from "Document/styles";
 
 import { useEditorState } from "./state";
 import { useAppState } from "../../app/state";
+import { BLACK_LISTED_SHORTCUT_KEYS } from "./types";
 
 
 export type QuillEditorProps = {
@@ -106,8 +106,32 @@ export default function DocumentEditor ({ defaultValue, disabled }: QuillEditorP
             }, 500);
         });
 
-        quill.on("text-change", (delta, oldContent) => {
-            setTimeout(() => {
+        quill.root.addEventListener("keydown", (e: KeyboardEvent) => {
+            if (BLACK_LISTED_SHORTCUT_KEYS.includes(e.key)) return;
+
+            const modifiers = {
+                ctrl: e.ctrlKey,
+                alt: e.altKey,
+                shift: e.shiftKey
+            };
+
+            if (!Object.values(modifiers).some(a => a)) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            editorDispatch({
+                type: "keyboard-shortcut",
+                value: {
+                    key: e.key,
+                    modifiers,
+                }
+            });
+        });
+
+        quill.on("editor-change", (eventName, ...args: any[]) => {
+            if (eventName == "text-change") {
+                const [delta, oldContent] = args;
                 editorDispatch({
                     type: "set-quill-data",
                     value: {
@@ -115,18 +139,13 @@ export default function DocumentEditor ({ defaultValue, disabled }: QuillEditorP
                         history: quill.history
                     }
                 });
+            } else {
+                const [range] = args;
                 editorDispatch({
                     type: "post-range",
-                    value: quill.getSelection(),
+                    value: range,
                 });
-            });
-        });
-
-        quill.on("selection-change", (range) => {
-            editorDispatch({
-                type: "post-range",
-                value: range,
-            });
+            }
         });
 
         return () => {

@@ -1,4 +1,4 @@
-import { CSSProperties, ReactElement, useEffect, useRef, useState } from "react";
+import { CSSProperties, ReactElement, useEffect, useLayoutEffect, useRef, useState } from "react";
 import styled, { css } from "styled-components";
 
 import { forceRef } from "Support/nullable";
@@ -16,7 +16,7 @@ export type DropdownProps = {
 };
 
 
-const PopOut = styled.nav<{$position: {left: string, top: string}}>`
+const PopOutStyles = styled.nav<{$position: {left: number, top: number}}>`
     ${BaseStyles.primary}
     ${BaseStyles.onActivate.shadow}
     ${BaseStyles.onActivate.border}
@@ -29,11 +29,27 @@ const PopOut = styled.nav<{$position: {left: string, top: string}}>`
 
     ${({$position: {left, top}}) =>
         css`
-            left: ${left};
-            top: ${top};
+            left: ${left}px;
+            top: ${top}px;
         `
     }
 `;
+
+const PopOut = (props: any) => {
+    const ref = useRef<HTMLElement>(null);
+
+    useLayoutEffect(() => {
+        const elem = forceRef(ref);
+        const elemRect = elem.getBoundingClientRect();
+        const screenRect = document.body.getBoundingClientRect();
+
+        elem.style.left = `${Math.min(props.$position.left, screenRect.right - elemRect.width - 5)}px`;
+        elem.style.top = `${Math.min(props.$position.top, screenRect.bottom - elemRect.height - 5)}px`;
+
+    }, [...Object.entries(props.$position)]);
+
+    return <PopOutStyles ref={ref} {...props} />;
+};
 
 const Choice = styled.div`
     ${BaseStyles.onActivate.stroke}
@@ -46,7 +62,7 @@ const Choice = styled.div`
 export default function Dropdown({disabled, selected, children, onChange, style}: DropdownProps) {
     const [open, setOpen] = useState(false);
     const [isSelected, setIsSelected] = useState(selected);
-    const [position, setPosition] = useState({left: "0px", top: "0px"});
+    const [position, setPosition] = useState({left: 0, top: 0});
 
     const primaryRef = useRef<HTMLButtonElement>(null);
     const popOutRef = useRef<HTMLDivElement>(null);
@@ -67,7 +83,7 @@ export default function Dropdown({disabled, selected, children, onChange, style}
         e.preventDefault();
         e.stopPropagation();
         const rect = forceRef(primaryRef).getBoundingClientRect();
-        setPosition({left: `${rect.left}px`, top: `${rect.top}px`});
+        setPosition({left: rect.left, top: rect.top});
         setOpen(true);
     };
 

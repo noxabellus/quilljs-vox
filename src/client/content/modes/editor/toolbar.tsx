@@ -32,6 +32,7 @@ import sliderImg from "Assets/horizontal-sliders.svg?raw";
 import exportImg from "Assets/file-arrow-down.svg?raw";
 import gearImg from "Assets/gear.svg?raw";
 import closeImg from "Assets/arrow-right-into-bracket.svg?raw";
+import { DEFAULT_FONTS, lookupPropertyString } from "Document/theme";
 
 
 const EditorToolSet = styled(ToolSet)<{["$ed-width"]: number}>`
@@ -270,6 +271,41 @@ export default function Toolbar () {
         }
     };
 
+    const baseFont = lookupPropertyString(editorContext.document.theme, "base-font-family");
+    const actualFontFamilies = [...Object.keys(editorContext.document.fonts), ...DEFAULT_FONTS];
+    const fontFamilies = actualFontFamilies.slice();
+    if (!fontFamilies.includes(baseFont)) {
+        fontFamilies.push(baseFont);
+    }
+    if (editorContext.details.fontAttributes.font !== null && !fontFamilies.includes(editorContext.details.fontAttributes.font)) {
+        fontFamilies.push(editorContext.details.fontAttributes.font);
+    }
+    fontFamilies.sort();
+
+    const getFontFamilyIndex = () => {
+        const fontFamily = editorContext.details.fontAttributes.font;
+        if (fontFamily === null) {
+            return fontFamilies.findIndex(k => k === baseFont);
+        } else {
+            return fontFamilies.findIndex(k => k === fontFamily);
+        }
+    };
+
+    const changeFontFamily = (newIndex: number) => {
+        const fontFamily = fontFamilies[newIndex];
+        if (!actualFontFamilies.includes(fontFamily as string) || fontFamily === baseFont) {
+            editorDispatch({ type: "set-font-family", value: null });
+        } else {
+            editorDispatch({ type: "set-font-family", value: fontFamily });
+        }
+    };
+
+    const fontFamilyOptions = fontFamilies.map((font, i) =>
+        actualFontFamilies.includes(font)
+            ? <option key={i} style={{fontFamily: font}}>{font}</option>
+            : <option key={i} style={{color: "red"}}>{font}</option>
+    );
+
     const settingsSelected = editorContext.overlays.settings ? "selected" : "";
 
     return <EditorToolSet $ed-width={editorContext.details.nodeData.width}>
@@ -295,6 +331,13 @@ export default function Toolbar () {
         <TextDetailsButton kind="italic"/>
         <TextDetailsButton kind="underline"/>
         <TextDetailsButton kind="strike"/>
+        <Dropdown
+            disabled={disabled}
+            selected={getFontFamilyIndex()}
+            onChange={changeFontFamily}
+        >
+            {fontFamilyOptions}
+        </Dropdown>
         <Dropdown
             disabled={disabled}
             selected={getAlignmentIndex()}

@@ -1,17 +1,16 @@
-import styled from "styled-components";
+import styled, { useTheme } from "styled-components";
 
 import remote from "Support/remote";
 
 import Button from "Elements/button";
+import Spacer from "Elements/spacer";
+import Block from "Elements/block";
+
+import { useAppState } from "./state";
 
 import closeImg from "Assets/xmark.svg?raw";
 import fullscreenImg from "Assets/expand.svg?raw";
 import exitFullscreenImg from "Assets/contract.svg?raw";
-import Spacer from "Elements/spacer";
-import { useAppState } from "./state";
-import Block from "Elements/block";
-
-
 
 
 const Bar = styled(Block)`
@@ -55,21 +54,24 @@ const ReturnButton = styled(Button.Icon)`
 `;
 
 
-
 export default function TitleBar () {
     const [appContext, appDispatch] = useAppState();
+    const theme = useTheme();
 
     const toggleFullscreen = () => {
         appDispatch({ type: "set-fullscreen", value: !appContext.fullscreen });
     };
 
-    return appContext.fullscreen
-        ? <ReturnButton title="Exit fullscreen [F11]" svg={exitFullscreenImg} onClick={() => toggleFullscreen()} />
-        : <Bar>
+    if (appContext.fullscreen) {
+        return <ReturnButton title="Exit fullscreen [F11]" svg={exitFullscreenImg} onClick={() => toggleFullscreen()} />;
+    } else if (theme.useToolbar) {
+        return <Bar>
             <h1>{window.document.title}</h1>
             <Spacer />
             <Button.InlineIcon title="Enter fullscreen [F11]" svg={fullscreenImg} onClick={() => toggleFullscreen()} />
             <Button.InlineIcon title="Close Vox [Alt+F4]" svg={closeImg} onClick={() => remote.app.quit()} />
-        </Bar>
-    ;
+        </Bar>;
+    } else {
+        return null;
+    }
 }

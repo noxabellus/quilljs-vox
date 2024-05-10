@@ -1,4 +1,4 @@
-import { AttributeMap, Op } from "quill/core";
+import { AttributeMap, Op } from "Extern/quill";
 import { StackItem } from "quill/modules/history";
 import { Block, Document, FontDb, ImageDb, ImageEntry, ProtoStackItem, StackHistory } from "./types";
 import { Defined, forceVal } from "Support/nullable";

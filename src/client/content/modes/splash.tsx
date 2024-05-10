@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 
 import Result from "Support/result";
 import { openVox } from "Support/file";
@@ -18,7 +18,7 @@ import logoImg from "Assets/vox.svg?raw";
 import newFileImg from "Assets/file-pencil.svg?raw";
 import openFileImg from "Assets/folder.svg?raw";
 import gearImg from "Assets/gear.svg?raw";
-
+import SplashModeExit from "Elements/splash-mode-exit";
 
 const Logo = styled(Svg)`
     ${BaseStyles.block}
@@ -40,8 +40,12 @@ const Toolbar = styled(ToolSet)`
 `;
 
 const SplashLayout = styled(BasicLayout)`
-    border-bottom-left-radius: 20px;
-    border-bottom-right-radius: 20px;
+    ${p => !p.theme.isFullscreen
+        ? css`
+            border-radius: 20px;
+        `
+        : ""
+    }
 `;
 
 
@@ -90,12 +94,15 @@ export default function Splash() {
         });
     };
 
-    return <SplashLayout $minWidth="640px" id="splash">
-        <Logo src={logoImg} />
-        <Toolbar>
-            <Button.Icon disabled={locked} title="New File" svg={newFileImg} onClick={newFile}/>
-            <Button.Icon disabled={locked} title="Open File" svg={openFileImg} onClick={openFile}/>
-            <Button.Icon disabled={locked} title="Vox Settings" svg={gearImg} onClick={openSettings}/>
-        </Toolbar>
-    </SplashLayout>;
+    return <>
+        <SplashLayout $minWidth="640px" id="splash">
+            <Logo src={logoImg} />
+            <Toolbar>
+                <Button.Icon disabled={locked} title="New File" svg={newFileImg} onClick={newFile}/>
+                <Button.Icon disabled={locked} title="Open File" svg={openFileImg} onClick={openFile}/>
+                <Button.Icon disabled={locked} title="Vox Settings" svg={gearImg} onClick={openSettings}/>
+            </Toolbar>
+        </SplashLayout>
+        <SplashModeExit />
+    </>;
 }

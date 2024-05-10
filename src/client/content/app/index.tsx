@@ -134,6 +134,8 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
             const result = Document.registerFontData(out.document, action.value.name, action.value.data);
             if (!Result.isSuccess(result)) {
                 alert(`Failed to load font "${action.value.name}":\n\t${Result.problemMessage(result)}`);
+            } else {
+                Document.applyFonts(out.document, q.container);
             }
         } break;
 
@@ -141,6 +143,8 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
             const result = Document.renameFont(out.document, action.value.oldName, action.value.newName);
             if (!Result.isSuccess(result)) {
                 alert(`Failed to rename font "${action.value.oldName}" to "${action.value.newName}":\n\t${Result.problemMessage(result)}`);
+            } else {
+                Document.applyFonts(out.document, q.container);
             }
         } break;
 
@@ -148,6 +152,8 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
             const result = Document.deleteFont(out.document, action.value);
             if (!Result.isSuccess(result)) {
                 alert(`Failed to delete font "${action.value}":\n\t${Result.problemMessage(result)}`);
+            } else {
+                Document.applyFonts(out.document, q.container);
             }
         } break;
 
@@ -175,6 +181,18 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
             out.details.textDecoration.strike = action.value;
             break;
 
+        case "set-font-size":
+            if (!out.details.nodeData.range) throw "Cannot set font size without a range";
+            q.format("size", action.value);
+            out.details.fontAttributes.size = action.value;
+            break;
+
+        case "set-font-family":
+            if (!out.details.nodeData.range) throw "Cannot set font family without a range";
+            q.format("font", action.value);
+            out.details.fontAttributes.font = action.value;
+            break;
+
         case "set-align":
             if (!out.details.nodeData.range) throw "Cannot set align without a range";
             q.format("align", action.value);
@@ -197,18 +215,24 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
                     italic: false,
                     underline: false,
                     strike: false,
+                    font: null,
+                    size: null,
                     align: null,
                     header: null,
                 });
-                out.details.blockFormat = { align: null, header: null, };
                 out.details.textDecoration = { bold: false, italic: false, underline: false, strike: false };
+                out.details.fontAttributes = { size: null, font: null, };
+                out.details.blockFormat = { align: null, header: null, };
             } else {
                 q.formatText(out.details.nodeData.range.index, out.details.nodeData.range.length, {
                     bold: false,
                     italic: false,
                     underline: false,
                     strike: false,
+                    font: null,
+                    size: null,
                 });
+                out.details.fontAttributes = { size: null, font: null };
                 out.details.textDecoration = { bold: false, italic: false, underline: false, strike: false };
             }
         } break;
@@ -216,29 +240,51 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
         case "post-range": {
             const blockFormats: string[] = [ "align", "header" ];
             const textDecorations = [ "bold", "italic", "underline", "strike" ];
+            const fontAttributes = [ "size", "font" ];
 
             if (action.value) {
                 out.details.nodeData.focused = true;
 
                 const fmt = q.getFormat(action.value);
 
-                for (const key of blockFormats) {
+                for (const key of textDecorations) {
                     if (key in fmt) {
-                        out.details.blockFormat[key as keyof EditorTypes.BlockFormat] = fmt[key] as any;
+                        let value: any = fmt[key];
+                        if (Array.isArray(value)) value = value[0];
+                        out.details.textDecoration[key as keyof EditorTypes.TextDecoration] = value;
                     } else {
-                        out.details.blockFormat[key as keyof EditorTypes.BlockFormat] = null;
+                        out.details.textDecoration[key as keyof EditorTypes.TextDecoration] = false;
                     }
                 }
 
-                for (const key of textDecorations) {
-                    if (key in fmt) out.details.textDecoration[key as keyof EditorTypes.TextDecoration] = fmt[key] as any;
-                    else out.details.textDecoration[key as keyof EditorTypes.TextDecoration] = false;
+                for (const key of fontAttributes) {
+                    if (key in fmt) {
+                        let value: any = fmt[key];
+                        if (Array.isArray(value)) value = value[0];
+                        out.details.fontAttributes[key as keyof EditorTypes.FontAttributes] = value;
+                    } else {
+                        out.details.fontAttributes[key as keyof EditorTypes.FontAttributes] = null;
+                    }
+                }
+
+                for (const key of blockFormats) {
+                    if (key in fmt) {
+                        let value: any = fmt[key];
+                        if (Array.isArray(value)) value = value[0];
+                        out.details.blockFormat[key as keyof EditorTypes.BlockFormat] = value;
+                    } else {
+                        out.details.blockFormat[key as keyof EditorTypes.BlockFormat] = null;
+                    }
                 }
             } else {
                 out.details.nodeData.focused = false;
             }
 
             out.details.nodeData.range = action.value;
+        } break;
+
+        case "keyboard-shortcut": {
+            console.log("keyboard shortcut pressed", action.value);
         } break;
 
         default: throw "invalid editor action type";
@@ -351,6 +397,10 @@ export default function App () {
                                 align: null,
                                 header: null,
                             },
+                            fontAttributes: {
+                                size: null,
+                                font: null,
+                            },
                             textDecoration: {
                                 bold: false,
                                 italic: false,
@@ -376,7 +426,7 @@ export default function App () {
                     const editors = state.editors.filter((_, index) => index !== action.value);
                     out = {
                         ...state,
-                        mode: state.lastMode,
+                        mode: editors.length > 0 ? {editor: editors.length - 1} : "splash",
                         lastMode: "splash",
                         editors
                     };
@@ -503,8 +553,10 @@ export default function App () {
         };
 
         console.log("add keybinds");
-        remote.globalShortcut.register("F11", () =>
-            dispatch({ type: "set-fullscreen", value: !latestContext.fullscreen }));
+        remote.globalShortcut.register("F11", () => {
+            if (latestContext.lockIO) return;
+            dispatch({ type: "set-fullscreen", value: !latestContext.fullscreen });
+        });
 
         return () => {
             console.log("remove close hook");
@@ -516,8 +568,11 @@ export default function App () {
     }, []);
 
 
+    const splashMode = !context.fullscreen && (context.mode === "splash" || (context.mode === "settings" && context.lastMode === "splash"));
     const theme = {
         isFullscreen: context.fullscreen,
+        splashMode,
+        useToolbar: !splashMode
     };
 
     return <ThemeProvider theme={theme}>

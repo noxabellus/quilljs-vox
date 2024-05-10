@@ -12,15 +12,33 @@ export default styled.div`
     background-color: rgb(var(--background-color));
     overflow: scroll;
     scrollbar-width: none;
+    border: 1px solid rgba(var(--accent-color), 0.5);
+    ${p => p.theme.splashMode
+        ? css`
+            -webkit-app-region: drag;
+            & * { -webkit-app-region: no-drag; }
+            & ~ * { -webkit-app-region: no-drag; }
+        `
+        : null
+    }
     ${p => p.theme.isFullscreen
         ? css`
             border: none;
             border-radius: 0;
         `
-        : css`
-            border: 1px solid rgba(var(--accent-color), 0.5);
-            border-bottom-left-radius: 5px;
-            border-bottom-right-radius: 5px;
+        : p.theme.splashMode
+            ? css`
+                border-radius: 20px;
+            `
+            : css`
+                border-radius: 5px;
+            `
+    }
+    ${p => p.theme.useToolbar
+        ? css`
+            border-top-left-radius: 0px;
+            border-top-right-radius: 0px;
         `
+        : null
     }
 `;

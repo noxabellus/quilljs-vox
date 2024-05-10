@@ -1,77 +1,17 @@
-import Quill from "quill";
+import Quill from "quill/core/quill";
 import Clipboard from "quill/modules/clipboard";
-import { sanitize } from "quill/formats/link";
-import { EmbedBlot, Root } from  "parchment";
 
 import Result from "Support/result";
 
 import Document from "Document";
 
 
-const ATTRIBUTES = ["title", "alt", "height", "width"];
-
-class Image extends EmbedBlot {
-    static blotName = "image";
-    static tagName = "IMG";
-
-    constructor (scroll: Root, domNode: Node) {
-        super(scroll, domNode);
-    }
-
-    static create(value: any) {
-        const node = document.createElement("img");
-
-        node.dataset.imgId = value;
-
-        return node;
-    }
-
-    static formats(domNode: Element) {
-        return ATTRIBUTES.reduce((formats: Record<string, string | null>, attribute) => {
-            if (domNode.hasAttribute(attribute)) {
-                formats[attribute] = domNode.getAttribute(attribute);
-            }
-
-            return formats;
-        }, {});
-    }
-
-    static match(url: string) {
-        return /\.(jpe?g|gif|png)$/.test(url) || /^data:image\/.+;base64/.test(url);
-    }
-
-    static sanitize(url: string) {
-        return sanitize(url, ["http", "https", "data"]) ? url : "";
-    }
-
-    static value(domNode: HTMLImageElement) {
-        return domNode.dataset.imgId;
-    }
-
-    format(name: string, value: string) {
-        const node = this.domNode as Element;
-        if (ATTRIBUTES.indexOf(name) > -1) {
-            if (value) {
-                node.setAttribute(name, value);
-            } else {
-                node.removeAttribute(name);
-            }
-        } else {
-            super.format(name, value);
-        }
-    }
-}
-
-class ClipboardWrap extends Clipboard {
+export default class ClipboardWrap extends Clipboard {
     getDoc: () => Document;
     notify: () => void;
 
     constructor (quill: Quill, options: Partial<typeof Clipboard.DEFAULTS> & {getDoc: () => Document, notify: () => void}) {
-        super(quill, {...options, matchers: [
-            // ["img", (node, delta) => {
-            //     return delta;
-            // }]
-        ]});
+        super(quill, {...Clipboard.DEFAULTS, ...options});
         this.getDoc = options.getDoc;
         this.notify = options.notify;
     }
@@ -134,6 +74,3 @@ class ClipboardWrap extends Clipboard {
         this.notify();
     }
 }
-
-Quill.register("modules/clipboard", ClipboardWrap as any);
-Quill.register("formats/image", Image);

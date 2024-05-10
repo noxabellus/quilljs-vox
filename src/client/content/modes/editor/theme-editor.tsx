@@ -195,9 +195,9 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
                 >
                     {fontNames.map((fontName: string, i: number) => {
                         if (actualFontNames.includes(fontName)) {
-                            return <option key={i}>{fontName}</option>;
+                            return <option key={i} title="Click to select a different font" style={{fontFamily: fontName}}>{fontName}</option>;
                         } else {
-                            return <option key={i} title="Selected font no longer exists" style={{fontStyle: "italic", color: "red"}}>{fontName}</option>;
+                            return <option key={i} title="Selected font no longer exists, click to select a new one" style={{fontStyle: "italic", color: "red"}}>{fontName}</option>;
                         }
                     })}
                 </Dropdown>

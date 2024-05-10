@@ -73,11 +73,15 @@ win.webContents.session.setSpellCheckerEnabled(false);
 // win.webContents.openDevTools();
 
 globalShortcut.register("Shift+CommandOrControl+I", () => {
-    win.webContents.openDevTools({
-        mode: "detach",
-        title: "Vox DevTools",
-        activate: true,
-    });
+    if (win.webContents.isDevToolsOpened()) {
+        win.webContents.closeDevTools();
+    } else {
+        win.webContents.openDevTools({
+            mode: "detach",
+            title: "Vox DevTools",
+            activate: true,
+        });
+    }
 });
 
 remoteMain.enable(win.webContents);

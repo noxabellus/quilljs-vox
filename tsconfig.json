@@ -17,6 +17,7 @@
         ],
         "baseUrl": "./",
         "paths": {
+            "Extern/*": ["src/extern/*"],
             "Support/*": ["src/support/*"],
             "Elements/*": ["src/elements/*"],
             "Document/*": ["src/document/*"],

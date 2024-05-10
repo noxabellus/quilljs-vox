@@ -1,7 +1,7 @@
 import { Defined } from "Support/nullable";
 import { StackItem } from "quill/modules/history";
 import { Theme } from "./theme";
-import { Op } from "quill/core";
+import { Op } from "Extern/quill";
 
 export type ProtoStackItem = {
     delta: Op[],
