@@ -1,4 +1,4 @@
-import { parseFloatSafe, toFixed } from "Support/number";
+import { parseFloatSafe, toFixed } from "Support/math";
 
 import { Color, Dimensions, Length, THEME_UNITS, Theme, lengthUnit, lengthConvert, propertyType, themeValue, DEFAULT_DOCUMENT_THEME, Font, DEFAULT_FONTS } from "Document/theme";
 

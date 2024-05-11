@@ -1,7 +1,7 @@
 import { Color } from "Document/theme";
 import Label from "Elements/label";
 import Input from "./index";
-import { parseIntSafe } from "Support/number";
+import { parseIntSafe } from "Support/math";
 
 
 export default function InputColor({name, property, onChange}: {property: Color, name?: string, onChange: (value: Color) => void}) {

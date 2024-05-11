@@ -13,7 +13,7 @@ import ColorInput from "Elements/input/color";
 import Svg from "Elements/svg";
 import ToolSet from "Elements/tool-set";
 import Spacer from "Elements/spacer";
-import ColorDisplay from "Elements/color-display";
+import RgbDisplay from "Elements/color-display";
 
 import Document from "Document";
 import { DEFAULT_DOCUMENT_THEME, DEFAULT_FONTS, lengthToPx, lookupPropertyString, simpleColorString, simpleLengthString } from "Document/theme";
@@ -418,11 +418,11 @@ export default function Toolbar () {
         <Dropout
             title="Foreground Color"
             disabled={disabled}
-            folded={<ColorDisplay display={tempFontColor} style={{border: "1px solid rgb(var(--primary-color))"}} />}
+            folded={<RgbDisplay display={tempFontColor} style={{border: "1px solid rgb(var(--primary-color))"}} />}
             style={{padding: "5px"}}
             onBlur={resetFontColor}
             unfolded={setOpen => <>
-                    <ColorDisplay
+                    <RgbDisplay
                         display={tempFontColor}
                         style={{width: "100%", height: "2em", marginBottom: "5px"}}
                     />
@@ -447,11 +447,11 @@ export default function Toolbar () {
         <Dropout
             title="Background Color"
             disabled={disabled}
-            folded={<ColorDisplay display={tempFontBackground} style={{border: "1px solid rgb(var(--primary-color))"}} />}
+            folded={<RgbDisplay display={tempFontBackground} style={{border: "1px solid rgb(var(--primary-color))"}} />}
             style={{padding: "5px"}}
             onBlur={resetFontBackground}
             unfolded={setOpen => <>
-                    <ColorDisplay
+                    <RgbDisplay
                         display={tempFontBackground}
                         style={{width: "100%", height: "2em", marginBottom: "5px"}}
                     />
