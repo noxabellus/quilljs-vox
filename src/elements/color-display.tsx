@@ -10,14 +10,13 @@ export type ColorProps
     ;
 
 
-const Styled = styled.div<ColorProps>`
+const Styled = styled.div`
     display: inline-block;
-    width: 1em;
-    height: 1em;
-    background-color: rgb(${p => p.display.join(", ")});
+    min-width: 1em;
+    min-height: 1em;
     user-select: none;
 `;
 
-export default function ColorDisplay (props: ColorProps) {
-    return <Styled {...props} />;
+export default function ColorDisplay ({display, style, ...props}: ColorProps) {
+    return <Styled style={{...style, backgroundColor: `rgb(${display.join(", ")})`}} {...props} />;
 }

@@ -23,6 +23,7 @@
             "Client/*": ["src/client/*"],
             "Document/*": ["src/document/*"],
             "Document": ["src/document/index.js"],
+            "Experimental/*": ["src/experimental/*"],
         }
     }
 }

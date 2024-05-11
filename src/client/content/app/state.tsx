@@ -5,7 +5,14 @@ import { Context, Action } from "./types";
 import * as EditorState from "../modes/editor/state";
 
 
-const Context = createContext<Context>(undefined as any);
+const Context = createContext<Context>({
+    lockIO: false,
+    editors: [],
+    mode: "splash",
+    lastMode: "splash",
+    fullscreen: false,
+    settings: null,
+});
 const Dispatch = createContext<Dispatch<Action>>(() => {
     throw "No provider found for AppDispatch!";
 });

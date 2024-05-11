@@ -53,6 +53,7 @@ export default [
                 Elements: path.resolve(__dirname, "src/elements/"),
                 Support: path.resolve(__dirname, "src/support/"),
                 Extern: path.resolve(__dirname, "src/extern/"),
+                Experimental: path.resolve(__dirname, "src/experimental/"),
             },
             extensions: [".tsx", ".ts", ".jsx", ".js"],
         },
