@@ -1,4 +1,5 @@
 import { Color } from "Document/theme";
+import baseStyles from "Elements/base-styles";
 import ColorDisplay from "Elements/color-display";
 import Input from "Elements/input";
 import { DetailedHTMLProps, useLayoutEffect, useRef, useState } from "react";
@@ -19,14 +20,8 @@ function hslToRgb (h: number, s: number, l: number): Color {
   return out;
 }
 
-const imageDatas: ImageData[] = [];
 
 function drawColorSpace (ctx: CanvasRenderingContext2D, sat: number, width: number, height: number) {
-    if (imageDatas[sat]) {
-        ctx.putImageData(imageDatas[sat], 0, 0);
-        return;
-    }
-
     const imageData = ctx.createImageData(width, height);
     const data = imageData.data;
 
@@ -40,8 +35,6 @@ function drawColorSpace (ctx: CanvasRenderingContext2D, sat: number, width: numb
             data[index + 3] = 255;
         }
     }
-
-    imageDatas[sat] = imageData;
 
     ctx.putImageData(imageData, 0, 0);
 }
@@ -85,18 +78,21 @@ function rgbToPosition (rgb: Color, width: number, height: number): [number, num
 const SliderStyles = styled.input`
     background: rgb(var(--element-color));
     border: 1px solid rgb(var(--primary-color));
-    border-radius: 5px;
+    border-radius: 2px;
+    height: 1.2em;
+    width: 1.2em;
     appearance: none;
 
     &::-webkit-slider-thumb {
         appearance: none;
-        width: 1em;
-        height: 1em;
-        background: rgb(var(--element-color));
-        border: 1px solid rgb(var(--primary-color));
+        width: 1.2em;
+        height: 1.2em;
+        border: 1px solid rgb(var(--accent-color));
         border-radius: 5px;
-        margin: 2px;
+        background: rgb(var(--element-color));
+
         cursor: pointer;
+        ${baseStyles.activationFx.full}
     }
 
     // =[
@@ -108,11 +104,11 @@ const SliderStyles = styled.input`
 `;
 
 function VerticalSlider({style, ...props}: DetailedHTMLProps<React.InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>) {
-    return <SliderStyles type="range" {...props} style={{...style, alignSelf: "stretch", writingMode: "vertical-lr"}} />;
+    return <SliderStyles type="range" {...props} style={{...style, marginLeft: ".35em", width: ".5em", flexGrow: 1, flexShrink: 1, writingMode: "vertical-lr"}} />;
 }
 
 function HorizontalSlider({style, ...props}: DetailedHTMLProps<React.InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>) {
-    return <SliderStyles type="range" {...props} style={{...style, alignSelf: "stretch"}} />;
+    return <SliderStyles type="range" {...props} style={{...style, height: ".5em", flexGrow: 1, flexShrink: 1}} />;
 }
 
 export default function ColorPicker ({width, height}: {width: number, height: number}) {
@@ -143,7 +139,7 @@ export default function ColorPicker ({width, height}: {width: number, height: nu
     }
 
     function changeSat (e: React.ChangeEvent<HTMLInputElement>) {
-        const newSat = parseFloat(e.target.value);
+        const newSat = 1.0 - parseFloat(e.target.value);
         const hsl = rgbToHSL(rgb);
         setSat(newSat);
         setRgb(hslToRgb(hsl[0], newSat, hsl[2]));
@@ -184,39 +180,47 @@ export default function ColorPicker ({width, height}: {width: number, height: nu
 
     useLayoutEffect(draw, [mouse, rgb, tempRgb, sat]);
 
-    return <div style={{background: "rgb(var(--element-color))", color: "rgb(var(--primary-color))", flexGrow: 1}}>
-        <div style={{display: "flex", flexDirection: "row", alignItems: "center", margin: "5px"}}>
+    return <div style={{background: "rgb(var(--element-color))", color: "rgb(var(--primary-color))", fontFamily: "sans-serif", flexGrow: 1}}>
+        <div style={{display: "flex", flexDirection: "column", alignItems: "center", margin: "5px"}}>
             <canvas
-                style={{outline: "1px solid rgb(var(--accent-color))", cursor: "crosshair", marginRight: "5px"}}
+                style={{outline: "1px solid rgb(var(--primary-color))", cursor: "crosshair"}}
                 ref={canvasRef}
                 onClick={mouseClick}
                 onMouseMove={mouseMove}
                 onMouseOut={mouseOut}
             />
-            <VerticalSlider
-                title="Overall Saturation"
-                min="0"
-                max="1"
-                step="0.01"
-                value={sat}
-                onChange={changeSat}
-                style={{height: `${height}px`}}
-            />
-            <div style={{display: "flex", flexDirection: "column", alignItems:"center", justifyContent: "center", marginLeft: "5px"}}>
-                <ColorDisplay display={rgb} style={{flexGrow: 1, alignSelf: "stretch", justifySelf: "stretch", textAlign: "center", color:`rgb(${rgb.map(n => 255 - n).join(", ")})`}}>
-                    {`rgb(${rgb.join(", ")})`}
-                </ColorDisplay>
-                <div style={{display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center"}}>
-                    <Input title="Red" type="number" min="0" max="255" step="1" value={rgb[0]} onChange={e => { changeRgb([parseInt(e.target.value), rgb[1], rgb[2]]); }} />
-                    <HorizontalSlider title="Red" min="0" max="255" step="1" value={rgb[0]} onChange={e => { changeRgb([parseInt(e.target.value), rgb[1], rgb[2]]); }} />
+            <div style={{display: "flex", flexDirection: "row", alignItems: "stretch", justifyContent: "stretch", marginTop: "5px", width: `${width + 2}px`}}>
+                <div style={{display: "flex", flexDirection: "column", alignItems:"stretch", justifyContent: "center", marginRight: "5px"}}>
+                    <span style={{userSelect: "none", border: "1px solid white", marginBottom: "5px", borderRadius: "5px", display: "flex", alignSelf: "stretch", justifySelf: "stretch", alignItems: "center", justifyContent: "center", color:"white", background: `hsl(310, ${100 * sat}%, 50%)`, minWidth: "1.2em", height: "1.2em"}}>S</span>
+                    <VerticalSlider
+                        title="Overall Saturation"
+                        min="0"
+                        max="1"
+                        step="0.01"
+                        value={1.0 - sat}
+                        onChange={changeSat}
+                        style={{height: `calc(${height}px - 1.2em - 5px)`}}
+                    />
                 </div>
-                <div style={{display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center"}}>
-                    <Input title="Green" type="number" min="0" max="255" step="1" value={rgb[1]} onChange={e => { changeRgb([rgb[0], parseInt(e.target.value), rgb[2]]); }} />
-                    <HorizontalSlider title="Green" min="0" max="255" step="1" value={rgb[1]} onChange={e => { changeRgb([rgb[0], parseInt(e.target.value), rgb[2]]); }} />
-                </div>
-                <div style={{display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center"}}>
-                    <Input type="number" min="0" max="255" step="1" value={rgb[2]} onChange={e => { changeRgb([rgb[0], rgb[1], parseInt(e.target.value)]); }} />
-                    <HorizontalSlider title="Blue" min="0" max="255" step="1" value={rgb[2]} onChange={e => { changeRgb([rgb[0], rgb[1], parseInt(e.target.value)]); }} />
+                <div style={{display: "flex", flexDirection: "column", alignItems:"stretch", justifyContent: "stretch", flexGrow: 1}}>
+                    <ColorDisplay display={rgb} style={{borderRadius: "5px", border: "1px solid white", flexGrow: 1, height: "2em", alignSelf: "stretch", justifySelf: "stretch", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center"}}>
+                        <span style={{borderRadius: ".5em", background:"rgba(0,0,0,0.2)", color:"white"}}>{`rgb(${rgb.join(", ")})`}</span>
+                    </ColorDisplay>
+                    <div style={{display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: "5px"}}>
+                        <span style={{userSelect: "none", border: "1px solid white", borderRadius: "5px", display: "flex", alignItems: "center", justifyContent: "center", color:"white", background: `rgb(${rgb[0]},0,0)`, width: "1.2em", height: "1.2em"}}>R</span>
+                        <Input title="Red" type="number" min="0" max="255" step="1" value={rgb[0]} style={{marginLeft: "5px"}} onChange={e => { changeRgb([parseInt(e.target.value), rgb[1], rgb[2]]); }} />
+                        <HorizontalSlider title="Red" min="0" max="255" step="1" value={rgb[0]} style={{marginLeft: "5px"}} onChange={e => { changeRgb([parseInt(e.target.value), rgb[1], rgb[2]]); }} />
+                    </div>
+                    <div style={{display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: "5px"}}>
+                        <span style={{userSelect: "none", border: "1px solid white", borderRadius: "5px", display: "flex", alignItems: "center", justifyContent: "center", color:"white", background: `rgb(0,${rgb[1]},0)`, width: "1.2em", height: "1.2em"}}>G</span>
+                        <Input title="Green" type="number" min="0" max="255" step="1" value={rgb[1]} style={{marginLeft: "5px"}} onChange={e => { changeRgb([rgb[0], parseInt(e.target.value), rgb[2]]); }} />
+                        <HorizontalSlider title="Green" min="0" max="255" step="1" value={rgb[1]} style={{marginLeft: "5px"}} onChange={e => { changeRgb([rgb[0], parseInt(e.target.value), rgb[2]]); }} />
+                    </div>
+                    <div style={{display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: "5px"}}>
+                        <span style={{userSelect: "none", border: "1px solid white", borderRadius: "5px", display: "flex", alignItems: "center", justifyContent: "center", color:"white", background: `rgb(0,0,${rgb[2]})`, width: "1.2em", height: "1.2em"}}>B</span>
+                        <Input title="Blue" type="number" min="0" max="255" step="1" value={rgb[2]} style={{marginLeft: "5px"}} onChange={e => { changeRgb([rgb[0], rgb[1], parseInt(e.target.value)]); }} />
+                        <HorizontalSlider title="Blue" min="0" max="255" step="1" value={rgb[2]} style={{marginLeft: "5px"}} onChange={e => { changeRgb([rgb[0], rgb[1], parseInt(e.target.value)]); }} />
+                    </div>
                 </div>
             </div>
         </div>
