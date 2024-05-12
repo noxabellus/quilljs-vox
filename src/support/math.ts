@@ -18,32 +18,58 @@ export function toFixed (num: number) {
 
 
 export function hslToRgb ([h, s, l]: Vec3): Vec3 {
-    s = (s && (s / 100)) || 0;
-    l = (l && (l / 100)) || 0;
+    s /= 100;
+    l /= 100;
+
     const a = s * Math.min(l, 1 - l);
     const f = (n: number, k: number = (n + h / 30) % 12) => l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
     return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)] as Vec3;
 }
 
-export function rgbToHSL ([r, g, b]: Vec3): Vec3 {
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    const l = (max + min) / 510;
-    const d = max - min;
-    const s = d === 0 ? 0 : d / (255 - Math.abs(max + min - 255));
-    const h = (max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4) * 60;
-    return [isNaN(h)? 0 : Math.round(h), Math.round(s * 100), Math.round(l * 100)] as Vec3;
+export function rgbToHsl ([r, g, b]: Vec3): Vec3 {
+    r /= 255;
+    g /= 255;
+    b /= 255;
+
+    // Find greatest and smallest channel values
+    const cMin = Math.min(r, g, b),
+          cMax = Math.max(r, g, b),
+          delta = cMax - cMin;
+
+    let h = 0,
+        s = 0,
+        l = 0;
+
+    if (delta == 0) h = 0;
+    else if (cMax == r) h = ((g - b) / delta) % 6;
+    else if (cMax == g) h = (b - r) / delta + 2;
+    else h = (r - g) / delta + 4;
+
+    h = toFixed(h * 60);
+
+    if (h < 0) h += 360;
+
+    l = (cMax + cMin) / 2;
+
+    s = delta == 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+
+    s = toFixed(s * 100);
+    l = toFixed(l * 100);
+
+    return [h, s, l];
 }
 
 export function hsvToRgb ([h, s, v]: Vec3): Vec3 {
-    h = (h && (h / 360)) || 0;
-    s = (s && (s / 100)) || 0;
-    v = (v && (v / 100)) || 0;
+    h /= 360;
+    s /= 100;
+    v /= 100;
+
     const i = Math.floor(h * 6);
     const f = h * 6 - i;
     const p = v * (1 - s);
     const q = v * (1 - f * s);
     const t = v * (1 - (1 - f) * s);
+
     let r, g, b;
     switch (i % 6) {
         case 0: r = v, g = t, b = p; break;
@@ -51,8 +77,10 @@ export function hsvToRgb ([h, s, v]: Vec3): Vec3 {
         case 2: r = p, g = v, b = t; break;
         case 3: r = p, g = q, b = v; break;
         case 4: r = t, g = p, b = v; break;
-        default: r = v, g = p, b = q; break;
+        case 5: r = v, g = p, b = q; break;
+        default: throw "bad hsv";
     }
+
     return [
         Math.round(r * 255),
         Math.round(g * 255),
@@ -61,18 +89,47 @@ export function hsvToRgb ([h, s, v]: Vec3): Vec3 {
 }
 
 export function rgbToHsv ([r, g, b]: Vec3): Vec3 {
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    const d = max - min;
-    const s = max === 0 ? 0 : d / max;
-    const v = max / 255;
-    const h = max === min ? 0 : max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
-    return [isNaN(h)? 0 : Math.round(h * 60), Math.round(s * 100), Math.round(v * 100)] as Vec3;
+    r /= 255;
+    g /= 255;
+    b /= 255;
+
+    const v = Math.max(r, g, b);
+    const diff = v - Math.min(r, g, b);
+    const diffC = (c: number) => (v - c) / 6 / diff + 1 / 2;
+
+    let h, s;
+    if (diff == 0) {
+        h = s = 0;
+    } else {
+        s = diff / v;
+
+        if (r === v) {
+            h = diffC(b) - diffC(g);
+        } else if (g === v) {
+            h = (1 / 3) + diffC(r) - diffC(b);
+        } else if (b === v) {
+            h = (2 / 3) + diffC(g) - diffC(r);
+        } else {
+            throw "bad rgb";
+        }
+
+        if (h < 0) {
+            h += 1;
+        } else if (h > 1) {
+            h -= 1;
+        }
+    }
+
+    return [
+        toFixed(h * 360),
+        toFixed(s * 100),
+        toFixed(v * 100),
+    ];
 }
 
 
 export function rgbToPosition (rgb: Vec3, width: number, height: number): Vec2 {
-    return hslToPosition(rgbToHSL(rgb), width, height);
+    return hslToPosition(rgbToHsl(rgb), width, height);
 }
 
 export function positionToRgb ([x, y]: Vec2, sat: number, width: number, height: number): Vec3 {
@@ -80,23 +137,23 @@ export function positionToRgb ([x, y]: Vec2, sat: number, width: number, height:
 }
 
 export function hslToPosition ([h, _s, l]: Vec3, width: number, height: number): Vec2 {
-    h = (h && (h / 360)) || 0;
-    l = (l && (l / 100)) || 0;
+    h /= 360;
+    l /= 100;
     return [Math.round(h * width), Math.round((1 - l) * height)];
 }
 
 export function positionToHsl ([x, y]: Vec2, sat: number, width: number, height: number): Vec3 {
-    return [Math.round((x && (x / width * 360)) || 0), Math.round(sat), Math.round((y && ((1.0 - (y / height)) * 100)) || 100)];
+    return [toFixed(x / width * 360), toFixed(sat), toFixed((1.0 - y / height) * 100)];
 }
 
 export function hsvToPosition ([h, _s, v]: Vec3, width: number, height: number): Vec2 {
-    h = (h && (h / 360)) || 0;
-    v = (v && (v / 100)) || 0;
+    h /= 360;
+    v /= 100;
     return [Math.round(h * width), Math.round((1 - v) * height)];
 }
 
 export function positionToHsv ([x, y]: Vec2, sat: number, width: number, height: number): Vec3 {
-    return [Math.round((x && (x / width * 360)) || 0), Math.round(sat), Math.round((y && ((1.0 - (y / height)) * 100)) || 100)];
+    return [toFixed(x / width * 360), toFixed(sat), toFixed((1.0 - y / height) * 100)];
 }
 
 
@@ -126,11 +183,11 @@ export function hsvToHex (hsv: Vec3): string {
     return rgbToHex(hsvToRgb(hsv));
 }
 
-export function hexToHSL (hex: string): Vec3 {
-    return rgbToHSL(hexToRgb(hex));
+export function hexToHsl (hex: string): Vec3 {
+    return rgbToHsl(hexToRgb(hex));
 }
 
-export function hexToHSV (hex: string): Vec3 {
+export function hexToHsv (hex: string): Vec3 {
     return rgbToHsv(hexToRgb(hex));
 }
 
@@ -165,7 +222,7 @@ export default {
     parseIntSafe,
     toFixed,
     hslToRgb,
-    rgbToHSL,
+    rgbToHsl,
     hsvToRgb,
     rgbToHsv,
     rgbToPosition,
@@ -178,8 +235,8 @@ export default {
     hexToRgb,
     hslToHex,
     hsvToHex,
-    hexToHSL,
-    hexToHSV,
+    hexToHsl,
+    hexToHsv,
     rgbaToHex,
     hexToRgba,
 };

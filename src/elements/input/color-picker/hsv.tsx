@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Vec2, Vec3, hexToHSV, hsvToHex, hsvToPosition, hsvToRgb, positionToHsv } from "Support/math";
+import { Vec2, Vec3, hexToHsv, hsvToHex, hsvToPosition, hsvToRgb, positionToHsv, toFixed } from "Support/math";
 
 import { Canvas } from "Elements/canvas";
 import { Column } from "Elements/layout";
@@ -37,8 +37,8 @@ function drawHsvSelection(ctx: CanvasRenderingContext2D, hsv: Vec3, x: number, y
 }
 
 
-export default function ColorPickerHsv ({value, onChange, width, height}: ColorPickerProps) {
-    const [hsv, setHsv] = useState<Vec3>(hexToHSV(value));
+export default function ColorPickerHsv ({value, onChange, width, height, children}: ColorPickerProps) {
+    const [hsv, setHsv] = useState<Vec3>(hexToHsv(value));
     const [tempHsv, setTempHsv] = useState<Vec3 | null>(null);
     const [mouse, setMouse] = useState<Vec2 | null>(null);
 
@@ -72,7 +72,7 @@ export default function ColorPickerHsv ({value, onChange, width, height}: ColorP
     };
 
     useEffect(() => {
-        setHsv(hexToHSV(value));
+        setHsv(hexToHsv(value));
     }, [value]);
 
     useEffect(() => {
@@ -91,9 +91,10 @@ export default function ColorPickerHsv ({value, onChange, width, height}: ColorP
         />
         <Column>
             <LocalValue>{`hsv(${hsv[0]}, ${hsv[1]}%, ${hsv[2]}%)`}</LocalValue>
-            <ColorComponent color={`rgb(${hsvToRgb([hsv[0], 100, 100])})`} title="Hue" min={0} max={360} step={1} value={hsv[0]} onChange={v => setHsv([parseInt(v), hsv[1], hsv[2]])} />
-            <ColorComponent color={`rgb(${hsvToRgb([300, hsv[1], 100])})`} title="Saturation" min={0} max={100} step={1} value={hsv[1]} onChange={v => setHsv([hsv[0], parseInt(v), hsv[2]])} />
-            <ColorComponent color={`rgb(${hsvToRgb([0, 0, hsv[2]])})`} title="Value" min={0} max={100} step={1} value={hsv[2]} onChange={v => setHsv([hsv[0], hsv[1], parseInt(v)])} />
+            <ColorComponent color={`rgb(${hsvToRgb([hsv[0], 100, 100])})`} title="Hue" min="0.00" max="360.00" step="0.01" value={hsv[0]} onChange={v => setHsv([toFixed(parseFloat(v)), hsv[1], hsv[2]])} />
+            <ColorComponent color={`rgb(${hsvToRgb([300, hsv[1], 100])})`} title="Saturation" min="0.00" max="100.00" step="0.01" value={hsv[1]} onChange={v => setHsv([hsv[0], toFixed(parseFloat(v)), hsv[2]])} />
+            <ColorComponent color={`rgb(${hsvToRgb([0, 0, hsv[2]])})`} title="Value" min="0.00" max="100.00" step="0.01" value={hsv[2]} onChange={v => setHsv([hsv[0], hsv[1], toFixed(parseFloat(v))])} />
+            {children}
         </Column>
     </>;
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Vec2, Vec3, hexToHSL, hslToHex, hslToPosition, hslToRgb, positionToHsl } from "Support/math";
+import { Vec2, Vec3, hexToHsl, hslToHex, hslToPosition, hslToRgb, positionToHsl, toFixed } from "Support/math";
 
 import { Canvas } from "Elements/canvas";
 import { Column } from "Elements/layout";
@@ -37,8 +37,8 @@ function drawSelectionHsl(ctx: CanvasRenderingContext2D, hsl: Vec3, x: number, y
 }
 
 
-export default function ColorPickerHsl ({value, onChange, width, height}: ColorPickerProps) {
-    const [hsl, setHsl] = useState<Vec3>(hexToHSL(value));
+export default function ColorPickerHsl ({value, onChange, width, height, children}: ColorPickerProps) {
+    const [hsl, setHsl] = useState<Vec3>(hexToHsl(value));
     const [tempHsl, setTempHsl] = useState<Vec3 | null>(null);
     const [mouse, setMouse] = useState<Vec2 | null>(null);
 
@@ -72,7 +72,7 @@ export default function ColorPickerHsl ({value, onChange, width, height}: ColorP
     };
 
     useEffect(() => {
-        setHsl(hexToHSL(value));
+        setHsl(hexToHsl(value));
     }, [value]);
 
     useEffect(() => {
@@ -91,9 +91,10 @@ export default function ColorPickerHsl ({value, onChange, width, height}: ColorP
         />
         <Column>
             <LocalValue>{`hsl(${hsl[0]}, ${hsl[1]}%, ${hsl[2]}%)`}</LocalValue>
-            <ColorComponent color={`hsl(${hsl[0]}, 100%, 50%)`} title="Hue" min={0} max={360} step={1} value={hsl[0]} onChange={v => setHsl([parseInt(v), hsl[1], hsl[2]])} />
-            <ColorComponent color={`hsl(300, ${hsl[1]}%, 50%)`} title="Saturation" min={0} max={100} step={1} value={hsl[1]} onChange={v => setHsl([hsl[0], parseInt(v), hsl[2]])} />
-            <ColorComponent color={`hsl(0, 0%, ${hsl[2]}%)`} title="Luminance" min={0} max={100} step={1} value={hsl[2]} onChange={v => setHsl([hsl[0], hsl[1], parseInt(v)])} />
+            <ColorComponent color={`hsl(${hsl[0]}, 100%, 50%)`} title="Hue" min="0.00" max="360.00" step="0.01" value={hsl[0]} onChange={v => setHsl([toFixed(parseFloat(v)), hsl[1], hsl[2]])} />
+            <ColorComponent color={`hsl(300, ${hsl[1]}%, 50%)`} title="Saturation" min="0.00" max="100.00" step="0.01" value={hsl[1]} onChange={v => setHsl([hsl[0], toFixed(parseFloat(v)), hsl[2]])} />
+            <ColorComponent color={`hsl(0, 0%, ${hsl[2]}%)`} title="Luminance" min="0.00" max="100.00" step="0.01" value={hsl[2]} onChange={v => setHsl([hsl[0], hsl[1], toFixed(parseFloat(v))])} />
+            {children}
         </Column>
     </>;
 }

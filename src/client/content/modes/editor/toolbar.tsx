@@ -13,7 +13,7 @@ import ColorInput from "Elements/input/color";
 import Svg from "Elements/svg";
 import ToolSet from "Elements/tool-set";
 import Spacer from "Elements/spacer";
-import RgbDisplay from "Elements/color-display";
+import {RgbDisplay} from "Elements/color-display";
 
 import Document from "Document";
 import { DEFAULT_DOCUMENT_THEME, DEFAULT_FONTS, lengthToPx, lookupPropertyString, simpleColorString, simpleLengthString } from "Document/theme";

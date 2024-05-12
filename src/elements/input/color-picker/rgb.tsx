@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Vec2, Vec3, hexToRgb, hslToRgb, positionToRgb, rgbToHSL, rgbToHex, rgbToPosition } from "Support/math";
+import { Vec2, Vec3, hexToRgb, hslToRgb, positionToRgb, rgbToHsl, rgbToHex, rgbToPosition } from "Support/math";
 
 import { Canvas } from "Elements/canvas";
 import { Column, Row } from "Elements/layout";
@@ -38,9 +38,9 @@ function drawSelectionRgb(ctx: CanvasRenderingContext2D, rgb: Vec3, x: number, y
 }
 
 
-export default function ColorPickerRgb ({value, onChange, width, height}: ColorPickerProps) {
+export default function ColorPickerRgb ({value, onChange, width, height, children}: ColorPickerProps) {
     const [rgb, setRgb] = useState<Vec3>(hexToRgb(value));
-    const [sat, setSat] = useState(rgbToHSL(rgb)[1]);
+    const [sat, setSat] = useState(rgbToHsl(rgb)[1]);
     const [tempRgb, setTempRgb] = useState<Vec3 | null>(null);
     const [mouse, setMouse] = useState<Vec2 | null>(null);
 
@@ -59,13 +59,13 @@ export default function ColorPickerRgb ({value, onChange, width, height}: ColorP
         const newSat = 100 - parseInt(e.target.value);
         setSat(newSat);
 
-        const newHsl = rgbToHSL(rgb);
+        const newHsl = rgbToHsl(rgb);
         newHsl[1] = newSat;
         setRgb(hslToRgb(newHsl));
     };
 
     const changeRgb = (newRgb: Vec3) => {
-        setSat(rgbToHSL(newRgb)[1]);
+        setSat(rgbToHsl(newRgb)[1]);
         setRgb(newRgb);
     };
 
@@ -108,9 +108,10 @@ export default function ColorPickerRgb ({value, onChange, width, height}: ColorP
         <Row>
             <Column style={{flexGrow: 1}}>
                 <LocalValue>{`rgb(${rgb.join(", ")})`}</LocalValue>
-                <ColorComponent color={`rgb(${rgb[0]},0,0)`} title="Red" min={0} max={255} step={1} value={rgb[0]} onChange={v => changeRgb([parseInt(v), rgb[1], rgb[2]])} />
-                <ColorComponent color={`rgb(0,${rgb[1]},0)`} title="Green" min={0} max={255} step={1} value={rgb[1]} onChange={v => changeRgb([rgb[0], parseInt(v), rgb[2]])} />
-                <ColorComponent color={`rgb(0,0,${rgb[2]})`} title="Blue" min={0} max={255} step={1} value={rgb[2]} onChange={v => changeRgb([rgb[0], rgb[1], parseInt(v)])} />
+                <ColorComponent color={`rgb(${rgb[0]},0,0)`} title="Red" min="0" max="255" step="1" value={rgb[0]} onChange={v => changeRgb([parseInt(v), rgb[1], rgb[2]])} />
+                <ColorComponent color={`rgb(0,${rgb[1]},0)`} title="Green" min="0" max="255" step="1" value={rgb[1]} onChange={v => changeRgb([rgb[0], parseInt(v), rgb[2]])} />
+                <ColorComponent color={`rgb(0,0,${rgb[2]})`} title="Blue" min="0" max="255" step="1" value={rgb[2]} onChange={v => changeRgb([rgb[0], rgb[1], parseInt(v)])} />
+                {children}
             </Column>
             <Column style={{marginLeft: "5px"}}>
                 <ComponentLabel color={`hsl(310, ${sat}%, 50%)`} style={{marginBottom: "5px"}}>S</ComponentLabel>

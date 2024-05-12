@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import styled from "styled-components";
 
 import Input from "Elements/input";
@@ -10,19 +11,22 @@ export type ColorPickerProps = {
     value: string,
     onChange: (hex: string) => void,
     width: number,
-    height: number
+    height: number,
+    children: ReactNode | ReactNode[],
 };
 
 
 export const LocalValue = styled.span`
     text-align: center;
     font-family: monospace;
+    font-size: 8pt;
     user-select: text;
     border-radius: 5px;
     padding: 2px;
     border: 1px solid rgb(var(--primary-color));
     background:rgba(0, 0, 0, 0.2);
     color: white;
+    white-space: nowrap;
 `;
 
 
@@ -55,7 +59,7 @@ export const ComponentSection = styled(ComponentBlock)`
 `;
 
 
-export function ColorComponent ({color, title, min, max, step, value, onChange}: {color: string, title: string, min: number, max: number, step: number, value: number, onChange: (v: string) => void}) {
+export function ColorComponent ({color, title, min, max, step, value, onChange}: {color: string, title: string, min: string, max: string, step: string, value: number, onChange: (v: string) => void}) {
     return <ComponentSection>
         <ComponentLabel title={title} color={color}>{title[0]}</ComponentLabel>
         <Input title={title} type="number" min={min} max={max} step={step} value={value} onChange={e => onChange(e.target.value)} />

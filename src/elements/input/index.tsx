@@ -26,7 +26,9 @@ export const InputStyles = styled.input`
     &[type="number"] {
         padding-left: 5px;
         padding-right: 5px;
-        width: 3em;
+        font-size: 8pt;
+        font-family: monospace;
+        width: 38pt;
     }
 
     &[type="text"] {
