@@ -1,17 +1,17 @@
 import styled from "styled-components";
 
-import { Color } from "Document/theme";
 import { HTMLAttributes } from "react";
-import { hexToRgba, hsvToRgb, Vec4 } from "Support/math";
+import { Vec3, Vec4 } from "Support/math";
+import { HexRgba, hexToRgba, hsvToRgb } from "Support/color";
 
 
 export type ColorProps
-    = { display: Color, }
+    = { color: Vec3, }
     & HTMLAttributes<HTMLDivElement>
     ;
 
 export type HexProps
-    = { display: string, }
+    = { color: HexRgba, }
     & HTMLAttributes<HTMLDivElement>
     ;
 
@@ -22,41 +22,39 @@ const Styled = styled.div`
     min-width: 1em;
     min-height: 1em;
     user-select: none;
+    outline: 1px solid rgb(var(--primary-color));
+    *:hover > & {
+        outline-color: rgb(var(--accent-color));
+    }
+    outline-offset: 1px;
+    border-radius: 2px;
 `;
 
-// const checkerboard = [
-//     "linear-gradient(45deg, #808080 25%, white 25%)",
-//     "linear-gradient(-45deg, #808080 25%, white 25%)",
-//     "linear-gradient(45deg, white 75%, #808080 75%)",
-//     "linear-gradient(-45deg, white 75%, #808080 75%)"
-// ];
-
-export function RgbDisplay ({display, style, ...props}: ColorProps) {
-    return <Styled style={{...style, backgroundColor: `rgb(${display.join(", ")})`}} {...props} />;
+export function RgbDisplay ({color, style, ...props}: ColorProps) {
+    return <Styled style={{...style, backgroundColor: `rgb(${color.join(", ")})`}} {...props} />;
 }
 
-export function HslDisplay ({display, style, ...props}: ColorProps) {
-    return <Styled style={{...style, backgroundColor: `hsl(${display[0]}, ${display[1]}%, ${display[2]}%)`}} {...props} />;
+export function HslDisplay ({color, style, ...props}: ColorProps) {
+    return <Styled style={{...style, backgroundColor: `hsl(${color[0]}, ${color[1]}%, ${color[2]}%)`}} {...props} />;
 }
 
-export function HsvDisplay ({display, style, ...props}: ColorProps) {
-    return <Styled style={{...style, backgroundColor: `rgb(${hsvToRgb(display).join(", ")})`}} {...props} />;
+export function HsvDisplay ({color, style, ...props}: ColorProps) {
+    return <Styled style={{...style, backgroundColor: `rgb(${hsvToRgb(color).join(", ")})`}} {...props} />;
 }
 
-export function HexDisplay ({display, style, ...props}: HexProps) {
-    const base = hexToRgba(display);
-
-    return <Styled style={{...style, background: makeHalfTransparencyDemo(base)}} {...props} />;
+export function HexDisplay ({color, style, ...props}: HexProps) {
+    return <Styled style={{...style, background: makeHalfTransparencyDemo(color)}} {...props} />;
 }
 
-export function makeHalfTransparencyDemo (color: Vec4): string {
+export function makeHalfTransparencyDemo (color: HexRgba | Vec4): string {
+    if (typeof color === "string") color = hexToRgba(color);
     const rgba = `rgba(${color.join(", ")})`;
     const rgb = `rgb(${color.slice(0, 3).join(", ")})`;
     return `linear-gradient(to right, ${rgb} 50%, ${rgba} 50%), repeating-conic-gradient(#808080 0% 25%, white 0% 50%) 50% / .5em .5em`;
 }
 
-
-export function makeFullTransparencyDemo (color: Vec4): string {
+export function makeFullTransparencyDemo (color: HexRgba | Vec4): string {
+    if (typeof color === "string") color = hexToRgba(color);
     const rgba = `rgba(${color.join(", ")})`;
     return `linear-gradient(${rgba}, ${rgba}), repeating-conic-gradient(#808080 0% 25%, white 0% 50%) 50% / .5em .5em`;
 }

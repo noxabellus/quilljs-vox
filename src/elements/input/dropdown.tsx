@@ -43,7 +43,7 @@ export default function Dropdown({disabled, selected, title, children, onChange,
         setOpen(false);
         setTimeout(() => {
             setIsSelected(i);
-            if (onChange) onChange(i, last);
+            onChange?.(i, last);
         });
     };
 

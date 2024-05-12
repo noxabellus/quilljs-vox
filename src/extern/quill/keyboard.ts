@@ -695,7 +695,6 @@ function makeEmbedArrowHandler(
 // 		key: format[0],
 // 		shortKey: true,
 // 		handler(_range, context) {
-// 			console.log(`${format}!`);
 // 			this.quill.format(format, !context.format[format], Quill.sources.USER);
 // 		},
 // 	};

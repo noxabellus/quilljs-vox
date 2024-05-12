@@ -2,6 +2,7 @@ import { PathLike } from "fs";
 
 import Document from "Document";
 import * as EditorTypes from "../modes/editor/types";
+import { Settings } from "./settings";
 
 
 export type Mode = "splash" | "settings" | {"editor": number};
@@ -11,8 +12,6 @@ export const MODE_TITLES = {
     settings: "App Settings",
     editor: "Editor",
 };
-
-export type Settings = null;
 
 
 export type Context = {

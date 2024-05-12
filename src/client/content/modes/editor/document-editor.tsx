@@ -9,7 +9,7 @@ import documentStyles from "Document/styles";
 
 import { useEditorState } from "./state";
 import { useAppState } from "../../app/state";
-import { BLACK_LISTED_SHORTCUT_KEYS } from "./types";
+// import { BLACK_LISTED_SHORTCUT_KEYS } from "Client/content/app/settings";
 
 
 export type QuillEditorProps = {
@@ -70,7 +70,6 @@ export default function DocumentEditor ({ defaultValue, disabled }: QuillEditorP
     }, [disabled]);
 
     useEffect(() => {
-        console.log("setting up quill");
         const container = forceRef(containerRef);
 
         const editorContainer = container.appendChild(
@@ -106,29 +105,6 @@ export default function DocumentEditor ({ defaultValue, disabled }: QuillEditorP
             }, 500);
         });
 
-        quill.root.addEventListener("keydown", (e: KeyboardEvent) => {
-            if (BLACK_LISTED_SHORTCUT_KEYS.includes(e.key)) return;
-
-            const modifiers = {
-                ctrl: e.ctrlKey,
-                alt: e.altKey,
-                shift: e.shiftKey
-            };
-
-            if (!Object.values(modifiers).some(a => a)) return;
-
-            e.preventDefault();
-            e.stopPropagation();
-
-            editorDispatch({
-                type: "keyboard-shortcut",
-                value: {
-                    key: e.key,
-                    modifiers,
-                }
-            });
-        });
-
         quill.on("editor-change", (eventName, ...args: any[]) => {
             if (eventName == "text-change") {
                 const [delta, oldContent] = args;
@@ -149,7 +125,6 @@ export default function DocumentEditor ({ defaultValue, disabled }: QuillEditorP
         });
 
         return () => {
-            console.log("tearing down quill");
             ref.current = null;
             container.innerHTML = "";
         };

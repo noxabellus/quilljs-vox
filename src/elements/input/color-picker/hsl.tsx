@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { Vec2, Vec3, hexToHsl, hslToHex, hslToPosition, hslToRgb, positionToHsl, toFixed } from "Support/math";
+import { Vec2, Vec3, toFixed } from "Support/math";
+import { hexToHsl, hslToHex, hslToPosition, hslToRgb, positionToHsl } from "Support/color";
 
 import { Canvas } from "Elements/canvas";
 import { Column } from "Elements/layout";
@@ -26,7 +27,7 @@ function drawColorSpaceHsl (ctx: CanvasRenderingContext2D, sat: number, width: n
     ctx.putImageData(imageData, 0, 0);
 }
 
-function drawSelectionHsl(ctx: CanvasRenderingContext2D, hsl: Vec3, x: number, y: number) {
+function drawSelectionHsl(ctx: CanvasRenderingContext2D, hsl: Vec3, [x, y]: Vec2) {
     ctx.fillStyle = `hsl(${hsl[0]}, ${hsl[1]}%, ${hsl[2]}%)`;
     ctx.lineWidth = 2.1;
     ctx.strokeStyle = `hsl(${360 - hsl[0]}, ${100 - hsl[1]}%, ${100 - hsl[2]}%)`;
@@ -44,12 +45,12 @@ export default function ColorPickerHsl ({value, onChange, width, height, childre
 
     const draw = (ctx: CanvasRenderingContext2D) => {
         drawColorSpaceHsl(ctx, hsl[1], width, height);
-        drawSelectionHsl(ctx, hsl, ...hslToPosition(hsl, width, height));
+        drawSelectionHsl(ctx, hsl, hslToPosition(hsl, width, height));
 
         if (mouse && tempHsl) {
-            drawSelectionHsl(ctx, tempHsl, mouse[0], mouse[1]);
-            ctx.fillStyle = ctx.strokeStyle;
-            ctx.fillText(`hsl(${tempHsl.join(", ")})`, mouse[0] + 10, mouse[1] + 10);
+            drawSelectionHsl(ctx, tempHsl, mouse);
+            ctx.fillStyle = "#fff";
+            ctx.fillText(`hsl(${tempHsl.join(", ")})`, mouse[0] + 15, mouse[1] + 10);
         }
     };
 

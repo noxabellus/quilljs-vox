@@ -3,6 +3,7 @@ import resetCss from "Extern/reset.css?raw";
 import { unsafeForceVal } from "Support/nullable";
 
 import documentStyles from "./styles";
+import { HexRgba, asHexRgba, isHexRgba } from "Support/color";
 
 export const DEFAULT_FONTS: string[] = [
     "serif",
@@ -13,10 +14,10 @@ export const DEFAULT_FONTS: string[] = [
 export type FullTheme = {
     "base-font-family": Font,
     "base-font-size": Length,
-    "base-font-color": Color,
-    "border-color": Color,
-    "background-color": Color,
-    "page-color": Color,
+    "base-font-color": HexRgba,
+    "border-color": HexRgba,
+    "background-color": HexRgba,
+    "page-color": HexRgba,
     "width": Length,
     "margin": Dimensions,
     "padding": Dimensions,
@@ -44,7 +45,7 @@ export type Theme = Partial<FullTheme>;
 
 export type ThemeProperty
     = Length
-    | Color
+    | HexRgba
     | FontWeight
     | Dimensions
     | number
@@ -55,7 +56,6 @@ export type ThemeKey = keyof FullTheme;
 export type PropertyType = "font" | "string" | "number" | "length" | "color" | "dimensions";
 export type Dimensions = [Length, Length, Length, Length];
 export type FontWeight = "normal" | "bold" | "bolder" | "light" | "lighter" | number;
-export type Color = [number, number, number];
 export type LengthUnit = "px" | "pt" | "em" | "cm" | "mm" | "in" | "pc";
 export type Length
     = {"px":number}
@@ -133,14 +133,14 @@ export function isRelativeLength (length: Length): boolean {
 export const DEFAULT_DOCUMENT_THEME: FullTheme = {
     "base-font-family": {"fontName": "sans-serif"},
     "base-font-size": {"pt": 12},
-    "base-font-color": [255, 255, 255],
-    "page-color": [41, 41, 41],
-    "background-color": [0, 0, 0],
+    "base-font-color": asHexRgba("#FFFFFFFF"),
+    "page-color": asHexRgba("#292929FF"),
+    "background-color": asHexRgba("#000000FF"),
     "width": {"in": 8.5},
     "margin": [{"px": 16}, {"px": 16}, {"px": 16}, {"px": 16}],
     "padding": [{"px": 14}, {"px": 16}, {"px": 14}, {"px": 16}],
     "border-size": {"px": 1},
-    "border-color": [255, 255, 255],
+    "border-color": asHexRgba("#FFFFFFFF"),
     "border-radius": [{"px": 8}, {"px": 8}, {"px": 8}, {"px": 8}],
 };
 
@@ -206,7 +206,7 @@ export function themeCss (theme: FullTheme, documentSelector: string): string {
             flex-direction: column;
             align-items: center;
             justify-content: stretch;
-            background: rgb(var(--document-background-color));
+            background: var(--document-background-color);
             height: fit-content;
         }
 
@@ -230,7 +230,6 @@ export function lengthUnit (value: Length): LengthUnit {
 export function propertyType<K extends ThemeKey> (value: Theme[K]): PropertyType | null {
     if (Array.isArray(value)) {
         switch (value.length) {
-            case 3: return "color";
             case 4: return "dimensions";
             default: return null;
         }
@@ -238,7 +237,10 @@ export function propertyType<K extends ThemeKey> (value: Theme[K]): PropertyType
 
     const type = typeof value;
     switch (type) {
-        case "string": return "string";
+        case "string": {
+            if (isHexRgba(value as string)) return "color";
+            else return "string";
+        }
         case "number": return "number";
         case "object": {
             const keys = Object.keys(value as any);
@@ -262,9 +264,9 @@ export function lookupPropertyString<K extends ThemeKey> (theme: Theme, key: K):
 
 export function propertyString<K extends ThemeKey> (theme: Theme, value: Theme[K]): string | null {
     switch (propertyType(value)) {
-        case "string": return value as any;
+        case "string": return value as string;
         case "number": return `${value}`;
-        case "color": return (value as Color).join(", ");
+        case "color": return value as string;
         case "dimensions": return (value as Dimensions).map(x => lengthString(theme, x)).join(" ");
         case "length": return lengthString(theme, value as Length);
         case "font": return fontString(theme, value as Font);
@@ -278,14 +280,8 @@ export function parseLengthString (value: string): Length {
     return {[unit]: val} as Length;
 }
 
-export function parseColorString (value: string): Color {
-    // const hexMatches = value.match("#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})");
-    // if (hexMatches) return hexMatches.slice(1, 4).map(x => parseInt(x, 16)) as Color;
-
-    const rgbMatches = value.match("rgb\\((\\d+), (\\d+), (\\d+)\\)");
-    if (!rgbMatches) throw `Invalid color string: ${value}`;
-
-    return rgbMatches.slice(1, 4).map(x => parseInt(x)) as Color;
+export function parseColorString (value: string): HexRgba {
+    return asHexRgba(value);
 }
 
 export function simpleLengthString (value: Length): string {
@@ -293,8 +289,8 @@ export function simpleLengthString (value: Length): string {
     return `${val}${unit}`;
 }
 
-export function simpleColorString (value: Color): string {
-    return `rgb(${value.join(", ")})`;
+export function simpleColorString (value: HexRgba): string {
+    return value;
 }
 
 export function lengthString (theme: Theme, value: Length): string {

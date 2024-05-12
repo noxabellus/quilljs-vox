@@ -19,6 +19,7 @@ export default styled.nav`
     box-shadow: 0 0 8px 4px rgba(var(--shadow-color), var(--shadow-opacity)),
                 0 0 8px 4px rgba(var(--shadow-color), var(--shadow-opacity)) inset;
     cursor: default;
+    margin-top: 5px;
 
     & > :not(:first-child) {
         margin-left: 5px;

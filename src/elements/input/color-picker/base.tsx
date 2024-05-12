@@ -5,11 +5,12 @@ import Input from "Elements/input";
 import { HorizontalSlider } from "Elements/input/slider";
 
 import { Column } from "Elements/layout";
+import { HexRgb } from "Support/color";
 
 
 export type ColorPickerProps = {
-    value: string,
-    onChange: (hex: string) => void,
+    value: HexRgb,
+    onChange: (hex: HexRgb) => void,
     width: number,
     height: number,
     children: ReactNode | ReactNode[],

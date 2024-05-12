@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { Vec2, Vec3, hexToHsv, hsvToHex, hsvToPosition, hsvToRgb, positionToHsv, toFixed } from "Support/math";
+import { Vec2, Vec3, toFixed } from "Support/math";
+import { hexToHsv, hsvToHex, hsvToPosition, hsvToRgb, positionToHsv } from "Support/color";
 
 import { Canvas } from "Elements/canvas";
 import { Column } from "Elements/layout";
@@ -26,7 +27,7 @@ function drawColorSpaceHsv (ctx: CanvasRenderingContext2D, sat: number, width: n
     ctx.putImageData(imageData, 0, 0);
 }
 
-function drawHsvSelection(ctx: CanvasRenderingContext2D, hsv: Vec3, x: number, y: number) {
+function drawHsvSelection(ctx: CanvasRenderingContext2D, hsv: Vec3, [x, y]: Vec2) {
     ctx.fillStyle = `rgb(${hsvToRgb(hsv).join(", ")})`;
     ctx.lineWidth = 2.1;
     ctx.strokeStyle = `rgb(${hsvToRgb([360 - hsv[0], 100 - hsv[1], 100 - hsv[2]])})`;
@@ -44,12 +45,12 @@ export default function ColorPickerHsv ({value, onChange, width, height, childre
 
     const draw = (ctx: CanvasRenderingContext2D) => {
         drawColorSpaceHsv(ctx, hsv[1], width, height);
-        drawHsvSelection(ctx, hsv, ...hsvToPosition(hsv, width, height));
+        drawHsvSelection(ctx, hsv, hsvToPosition(hsv, width, height));
 
         if (mouse && tempHsv) {
-            drawHsvSelection(ctx, tempHsv, mouse[0], mouse[1]);
-            ctx.fillStyle = ctx.strokeStyle;
-            ctx.fillText(`hsv(${tempHsv.join(", ")})`, mouse[0] + 10, mouse[1] + 10);
+            drawHsvSelection(ctx, tempHsv, mouse);
+            ctx.fillStyle = "#fff";
+            ctx.fillText(`hsv(${tempHsv.join(", ")})`, mouse[0] + 15, mouse[1] + 10);
         }
     };
 

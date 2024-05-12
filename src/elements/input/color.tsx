@@ -1,32 +1,66 @@
-import { Color } from "Document/theme";
-import Label from "Elements/label";
-import Input from "./index";
-import { parseIntSafe } from "Support/math";
+import { RefObject, useEffect, useState } from "react";
+
+import { HexRgba } from "Support/color";
+
+import popOutBuilder from "Elements/popout-builder";
+import { HexDisplay } from "Elements/color-display";
+
+import Button from "./button";
+import ColorPicker from "./color-picker";
 
 
-export default function InputColor({name, property, onChange}: {property: Color, name?: string, onChange: (value: Color) => void}) {
-    const compNames = ["r", "g", "b"];
-    const comps = property as Color;
+export type InputProps = {
+    title?: string,
+    value: HexRgba,
+    defaultValue?: HexRgba,
+    disabled?: boolean,
+    onChange?: (value: HexRgba) => void,
+    onCancel?: (value: HexRgba) => void,
+    onConfirm?: (value: HexRgba) => void,
+};
 
-    return <div>
-        {comps.map((comp, compIndex) => {
-            return <Label key={compIndex}>
-                <span>{compNames[compIndex]}</span>
-                <Input
-                    step="1"
-                    min="0"
-                    max="255"
-                    name={`${name||"color"}-${compIndex}`}
-                    type="number"
-                    value={comp}
-                    onChange={e => {
-                        const value = parseIntSafe(e.target.value);
-                        const newComps = [...comps] as Color;
-                        newComps[compIndex] = value;
-                        onChange(newComps);
-                    }}
-                />
-            </Label>;
-        })}
-    </div>;
+export default function InputColor({title, value, defaultValue, disabled, onChange, onCancel, onConfirm}: InputProps) {
+    const [controlRef, popOutRef, open, setOpen] = popOutBuilder();
+    const [color, setColor] = useState(value);
+    const [tempColor, setTempColor] = useState<HexRgba | null>(null);
+
+    const colorToShow = tempColor ?? color;
+
+    useEffect(() => {
+        if (colorToShow !== value) onChange?.(colorToShow);
+    }, [tempColor]);
+
+    useEffect(() => {
+        onConfirm?.(colorToShow);
+    }, [color]);
+
+    useEffect(() => {
+        if (tempColor === null) setColor(value);
+    }, [value]);
+
+    return <>
+        <Button disabled={disabled} ref={controlRef} title={title || "Click to open color editor"} onClick={() => setOpen(!open)}>
+            <HexDisplay color={colorToShow}/>
+        </Button>
+        {open &&
+            <ColorPicker
+                ref={popOutRef as RefObject<HTMLDivElement>}
+                width={200}
+                height={100}
+                value={color}
+                defaultValue={defaultValue}
+                onChange={newHex => setTempColor(newHex)}
+                onCancel={() => {
+                    setOpen(false);
+                    setTempColor(null);
+                    onCancel?.(value);
+                }}
+                onConfirm={newHex => {
+                    setTempColor(null);
+                    setColor(newHex);
+                    setOpen(false);
+                }}
+            />
+        }
+    </>;
 }

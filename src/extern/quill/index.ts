@@ -25,7 +25,6 @@ import Inline from "quill/blots/inline";
 import Scroll from "quill/blots/scroll";
 import TextBlot from "quill/blots/text";
 
-import History from "quill/modules/history";
 import Uploader from "quill/modules/uploader";
 import Input from "quill/modules/input";
 import UINode from "quill/modules/uiNode";
@@ -37,6 +36,7 @@ import BackgroundStyle from "./background";
 import Image from "./image";
 import Keyboard from "./keyboard";
 import Clipboard from "./clipboard";
+import History from "./history";
 import Delta, { AttributeMap, Op } from "quill-delta";
 
 Quill.register({

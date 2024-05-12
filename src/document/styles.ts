@@ -1,13 +1,13 @@
 export default (selector: string) => `
     ${selector} {
         width: var(--document-width);
-        border: var(--document-border-size) solid rgb(var(--document-border-color));
+        border: var(--document-border-size) solid var(--document-border-color);
         border-radius: var(--document-border-radius);
         font-family: var(--document-base-font-family);
         font-size: var(--document-base-font-size);
         font-weight: var(--document-base-font-weight);
-        color: rgb(var(--document-base-font-color));
-        background-color: rgb(var(--document-page-color));
+        color: var(--document-base-font-color);
+        background-color: var(--document-page-color);
         padding: var(--document-padding);
         margin: var(--document-margin);
         line-height: 1.42;

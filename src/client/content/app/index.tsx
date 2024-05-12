@@ -20,6 +20,15 @@ import TitleBar from "./titlebar";
 import { ThemeProvider } from "styled-components";
 import { parseColorString, parseLengthString, simpleColorString, simpleLengthString } from "Document/theme";
 import { Range } from "Extern/quill";
+import { makeKey, makeKeyCombo } from "./settings";
+
+
+
+const webContents = remote.native.getCurrentWindow().webContents;
+
+// hack to make some event handlers work
+let appContext: AppTypes.Context = null as any;
+let appDispatch: React.Dispatch<AppTypes.Action> = null as any;
 
 
 function setWindowTitle (body: {dirty: boolean, title: string | null, filePath: PathLike | null} | string | null) {
@@ -49,16 +58,13 @@ function setWindowTitle (body: {dirty: boolean, title: string | null, filePath: 
 }
 
 
-function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Action): EditorTypes.Context {
-    console.log("Editor reducer", action);
-
+function editorReducer (context: EditorTypes.Context, action: EditorTypes.Action): EditorTypes.Context {
     const out: EditorTypes.Context = {...context};
 
     let q;
     if (action.type == "post-quill") {
         out.quill = action.value;
         if (out.quill) {
-            console.log("linking document", out.document);
             Document.linkEditor(out.document, out.quill);
 
             const quillWidth = out.quill.container.offsetWidth;
@@ -68,8 +74,12 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
         }
         return out;
     } else {
-        if (!out.quill) throw "Cannot dispatch actions other than `post-quill` without a quill instance";
-        q = out.quill;
+        if (out.quill) {
+            q = out.quill;
+        } else {
+            console.warn("Cannot dispatch actions other than `post-quill` without a quill instance", action);
+            return out;
+        }
     }
 
     const range = out.details.nodeData.range ?? out.details.nodeData.lastRange;
@@ -255,8 +265,6 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
             const textDecorations = Object.keys(out.details.textDecoration);
             const fontAttributes = Object.keys(out.details.fontAttributes);
 
-            console.log("post range, gathering info for keys", blockFormats, textDecorations, fontAttributes);
-
             if (action.value) {
                 out.details.nodeData.focused = true;
 
@@ -300,13 +308,15 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
 
             out.details.nodeData.lastRange = out.details.nodeData.range ?? out.details.nodeData.lastRange;
             out.details.nodeData.range = action.value;
-
-            console.log("post range", out.details);
         } break;
 
-        case "keyboard-shortcut": {
-            console.log("keyboard shortcut pressed", action.value);
-        } break;
+        case "undo":
+            q.history.undo();
+            break;
+
+        case "redo":
+            q.history.redo();
+            break;
 
         default: throw "invalid editor action type";
     }
@@ -317,8 +327,224 @@ function editorDispatch (context: EditorTypes.Context, action: EditorTypes.Actio
     return out;
 }
 
-// hack to make electron event handlers work
-let latestContext: AppTypes.Context = null as any;
+
+function appReducer (state: AppTypes.Context, action: AppTypes.Action): AppTypes.Context {
+    let out: AppTypes.Context;
+
+    if (action.type === "set-lock-io") {
+        out = { ...state, lockIO: action.value };
+    } else if (state.lockIO) {
+        throw "Cannot dispatch while IO locked";
+    } else {
+        switch (action.type) {
+            case "set-fullscreen":
+                remote.native.getCurrentWindow().setFullScreen(action.value);
+            // eslint-disable-next-line no-fallthrough
+            case "post-fullscreen":
+                out = { ...state, fullscreen: action.value };
+                break;
+
+            case "set-mode":
+                out = { ...state, mode: action.value === null? state.lastMode : action.value, lastMode: state.mode };
+                break;
+
+            case "open-doc": {
+                const filePath = action.value.filePath;
+                const document = action.value.document;
+
+                const settings: EditorTypes.Settings = { "Auto Save": false };
+
+                if (filePath) {
+                    let reset = false;
+                    let json;
+
+                    try {
+                        json = JSON.parse(localStorage[`settings[${filePath}]`]);
+                    } catch (error) {
+                        console.error("local storage is unparsable, resetting to default value", error);
+                        reset = true;
+                    }
+
+                    if (typeof json === "object") {
+                        const keys = Object.keys(settings) as (keyof EditorTypes.Settings)[];
+
+                        for (const key of keys) {
+                            if (key in json) {
+                                if (typeof json[key] === typeof settings[key]) {
+                                    settings[key] = json[key];
+                                } else {
+                                    console.error(`local storage is corrupt at ${key}, resetting to default value`, json[key], settings[key]);
+                                    reset = true;
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        reset = true;
+                    }
+
+                    if (reset) {
+                        localStorage[`settings[${filePath}]`] = JSON.stringify(settings);
+                    }
+                }
+
+                const time = Date.now();
+                const documentId = state.editors.length;
+
+                const editor: EditorTypes.Context = {
+                    documentId,
+                    lastUpdated: time,
+                    lastSaved: filePath !== null? time : 0,
+                    settings,
+                    startedFromBlankDocument: Document.isBlank(document),
+                    filePath,
+                    document,
+                    overlays: {
+                        settings: false,
+                    },
+                    details: {
+                        nodeData: {
+                            focused: false,
+                            range: null,
+                            lastRange: new Range(0, 0),
+                            width: 640,
+                        },
+                        blockFormat: {
+                            align: null,
+                            header: null,
+                        },
+                        fontAttributes: {
+                            size: null,
+                            font: null,
+                            color: null,
+                            background: null,
+                        },
+                        textDecoration: {
+                            bold: false,
+                            italic: false,
+                            underline: false,
+                            strike: false,
+                        },
+                    },
+                    quill: null,
+                };
+
+                out = {
+                    ...state,
+                    mode: {editor: documentId},
+                    lastMode: state.mode,
+                    editors: [
+                        ...state.editors,
+                        editor,
+                    ],
+                };
+            } break;
+
+            case "close-doc": {
+                const editors = state.editors.filter((_, index) => index !== action.value);
+                out = {
+                    ...state,
+                    mode: editors.length > 0 ? {editor: editors.length - 1} : "splash",
+                    lastMode: "splash",
+                    editors
+                };
+            } break;
+
+            case "editor-action": {
+                const editor = state.editors[action.value.documentId];
+                const newEditor = editorReducer(editor, action.value.action);
+                out = {
+                    ...state,
+                    editors: state.editors.map((editor, index) => index === action.value.documentId ? newEditor : editor)
+                };
+            } break;
+
+            default:
+                console.error("unknown app action", action);
+                throw "Unknown app action";
+        }
+    }
+
+    if (typeof out.mode === "object" && Object.keys(out.mode)[0] == "editor") {
+        const editor = out.editors[out.mode.editor];
+        const dirty = EditorState.dataIsDirty(editor.documentId, out);
+
+        if (editor.filePath) {
+            setTimeout(async () => {
+                localStorage[`settings[${editor.filePath}]`] = JSON.stringify(editor.settings);
+            });
+        }
+
+        if (dirty && editor.settings["Auto Save"] && editor.filePath) {
+            const path = editor.filePath;
+            const doc = editor.document;
+            const time = editor.lastUpdated;
+
+            setTimeout(async () => {
+                const result = await writeVox(path, doc);
+
+                if (Result.isSuccess(result)) {
+                    appDispatch({
+                        type: "editor-action",
+                        value: {
+                            documentId: editor.documentId,
+                            action: {
+                                type: "set-last-saved",
+                                value: time,
+                            },
+                        },
+                    });
+                } else {
+                    alert(`Failed to auto-save file:\n\t${Result.problemMessage(result)}\n(Disabling auto-save)`);
+                    appDispatch({
+                        type: "editor-action",
+                        value: {
+                            documentId: editor.documentId,
+                            action: {
+                                type: "set-auto-save",
+                                value: false,
+                            },
+                        },
+                    });
+                }
+            });
+        }
+    }
+
+    appContext = out;
+
+    return out;
+}
+
+
+function keyBinder (e: {preventDefault: () => void}, input: Electron.Input) {
+    if (appContext.lockIO) {
+        e.preventDefault();
+        return;
+    }
+
+    if (input.type !== "keyUp") return;
+
+    const modifiers = {
+        ctrl: input.control,
+        alt: input.alt,
+        shift: input.shift,
+    };
+
+    const key = makeKey(input.key);
+    if (!key) return;
+
+    const combo = makeKeyCombo(modifiers, key);
+    const keyAction = appContext.settings.keyBindings[combo];
+    if (!keyAction) return;
+
+    e.preventDefault();
+
+    const documentId = typeof appContext.mode === "object"? appContext.mode.editor : null;
+    const action = keyAction(documentId, appContext);
+    if (action) appDispatch(action);
+};
+
 
 export default function App () {
     const [context, dispatch] = useReducer(appReducer, {
@@ -327,200 +553,44 @@ export default function App () {
         mode: "splash",
         lastMode: "splash",
         editors: [],
-        settings: null
+        settings: {
+            keyBindings: {
+                "F11": (_documentId: number | null, context: AppTypes.Context): AppTypes.Action | null => {
+                    return {
+                        type: "set-fullscreen",
+                        value: !context.fullscreen,
+                    };
+                },
+
+                "Control+Z": (documentId: number | null, _context: AppTypes.Context): AppTypes.Action | null => {
+                    if (documentId === null) return null;
+
+                    return {
+                        type: "editor-action",
+                        value: {
+                            documentId,
+                            action: { type: "undo" },
+                        }
+                    };
+                },
+
+                "Control+Y": (documentId: number | null, _context: AppTypes.Context): AppTypes.Action | null => {
+                    if (documentId === null) return null;
+
+                    return {
+                        type: "editor-action",
+                        value: {
+                            documentId,
+                            action: { type: "redo" },
+                        }
+                    };
+                },
+            },
+        }
     });
 
-    latestContext = context;
-
-    function appReducer (state: AppTypes.Context, action: AppTypes.Action): AppTypes.Context {
-        let out: AppTypes.Context;
-
-        console.log("app action", action);
-
-        if (action.type === "set-lock-io") {
-            out = { ...state, lockIO: action.value };
-        } else if (state.lockIO) {
-            throw "Cannot dispatch while IO locked";
-        } else {
-            switch (action.type) {
-                case "set-fullscreen":
-                    remote.native.getCurrentWindow().setFullScreen(action.value);
-                // eslint-disable-next-line no-fallthrough
-                case "post-fullscreen":
-                    out = { ...state, fullscreen: action.value };
-                    break;
-
-                case "set-mode":
-                    out = { ...state, mode: action.value === null? state.lastMode : action.value, lastMode: state.mode };
-                    break;
-
-                case "open-doc": {
-                    const filePath = action.value.filePath;
-                    const document = action.value.document;
-
-                    const settings: EditorTypes.Settings = { "Auto Save": false };
-
-                    if (filePath) {
-                        let reset = false;
-                        let json;
-
-                        try {
-                            json = JSON.parse(localStorage[`settings[${filePath}]`]);
-                        } catch (error) {
-                            console.error("local storage is unparsable, resetting to default value", error);
-                            reset = true;
-                        }
-
-                        if (typeof json === "object") {
-                            const keys = Object.keys(settings) as (keyof EditorTypes.Settings)[];
-
-                            for (const key of keys) {
-                                if (key in json) {
-                                    if (typeof json[key] === typeof settings[key]) {
-                                        settings[key] = json[key];
-                                    } else {
-                                        console.error(`local storage is corrupt at ${key}, resetting to default value`, json[key], settings[key]);
-                                        reset = true;
-                                        break;
-                                    }
-                                }
-                            }
-                        } else {
-                            reset = true;
-                        }
-
-                        if (reset) {
-                            localStorage[`settings[${filePath}]`] = JSON.stringify(settings);
-                        }
-                    }
-
-                    const time = Date.now();
-                    const documentId = state.editors.length;
-
-                    const editor: EditorTypes.Context = {
-                        documentId,
-                        lastUpdated: time,
-                        lastSaved: filePath !== null? time : 0,
-                        settings,
-                        startedFromBlankDocument: Document.isBlank(document),
-                        filePath,
-                        document,
-                        overlays: {
-                            settings: false,
-                        },
-                        details: {
-                            nodeData: {
-                                focused: false,
-                                range: null,
-                                lastRange: new Range(0, 0),
-                                width: 640,
-                            },
-                            blockFormat: {
-                                align: null,
-                                header: null,
-                            },
-                            fontAttributes: {
-                                size: null,
-                                font: null,
-                                color: null,
-                                background: null,
-                            },
-                            textDecoration: {
-                                bold: false,
-                                italic: false,
-                                underline: false,
-                                strike: false,
-                            },
-                        },
-                        quill: null,
-                    };
-
-                    out = {
-                        ...state,
-                        mode: {editor: documentId},
-                        lastMode: state.mode,
-                        editors: [
-                            ...state.editors,
-                            editor,
-                        ],
-                    };
-                } break;
-
-                case "close-doc": {
-                    const editors = state.editors.filter((_, index) => index !== action.value);
-                    out = {
-                        ...state,
-                        mode: editors.length > 0 ? {editor: editors.length - 1} : "splash",
-                        lastMode: "splash",
-                        editors
-                    };
-                } break;
-
-                case "editor-action": {
-                    const editor = state.editors[action.value.documentId];
-                    const newEditor = editorDispatch(editor, action.value.action);
-                    out = {
-                        ...state,
-                        editors: state.editors.map((editor, index) => index === action.value.documentId ? newEditor : editor)
-                    };
-                } break;
-
-                default:
-                    console.error("unknown app action", action);
-                    throw "Unknown app action";
-            }
-        }
-
-        if (typeof out.mode === "object" && Object.keys(out.mode)[0] == "editor") {
-            const editor = out.editors[out.mode.editor];
-            const dirty = EditorState.dataIsDirty(editor.documentId, out);
-
-            if (editor.filePath) {
-                setTimeout(async () => {
-                    localStorage[`settings[${editor.filePath}]`] = JSON.stringify(editor.settings);
-                });
-            }
-
-            if (dirty && editor.settings["Auto Save"] && editor.filePath) {
-                const path = editor.filePath;
-                const doc = editor.document;
-                const time = editor.lastUpdated;
-
-                setTimeout(async () => {
-                    const result = await writeVox(path, doc);
-
-                    if (Result.isSuccess(result)) {
-                        dispatch({
-                            type: "editor-action",
-                            value: {
-                                documentId: editor.documentId,
-                                action: {
-                                    type: "set-last-saved",
-                                    value: time,
-                                },
-                            },
-                        });
-                    } else {
-                        alert(`Failed to auto-save file:\n\t${Result.problemMessage(result)}\n(Disabling auto-save)`);
-                        dispatch({
-                            type: "editor-action",
-                            value: {
-                                documentId: editor.documentId,
-                                action: {
-                                    type: "set-auto-save",
-                                    value: false,
-                                },
-                            },
-                        });
-                    }
-                });
-            }
-        }
-
-        latestContext = out;
-
-        return out;
-    }
+    appContext = context;
+    appDispatch = dispatch;
 
     let modal;
     if (typeof context.mode === "string") {
@@ -560,12 +630,11 @@ export default function App () {
     }
 
     useLayoutEffect(() => {
-        console.log("add close hook");
         remote.window.onClose = async (exit: () => void) => {
             let shouldExit = true;
-            if (AppState.dataNeedsSave(latestContext)) {
-                for (const editor of latestContext.editors) {
-                    if (EditorState.dataNeedsSave(editor.documentId, latestContext)) {
+            if (AppState.dataNeedsSave(appContext)) {
+                for (const editor of appContext.editors) {
+                    if (EditorState.dataNeedsSave(editor.documentId, appContext)) {
                         await saveInterrupt(editor, dispatch, () => {}, () => { shouldExit = false; });
                     }
 
@@ -576,18 +645,11 @@ export default function App () {
             if (shouldExit) exit();
         };
 
-        console.log("add keybinds");
-        remote.globalShortcut.register("F11", () => {
-            if (latestContext.lockIO) return;
-            dispatch({ type: "set-fullscreen", value: !latestContext.fullscreen });
-        });
+        webContents.on("before-input-event", keyBinder);
 
         return () => {
-            console.log("remove close hook");
             remote.window.onClose = null;
-
-            console.log("remove keybinds");
-            remote.globalShortcut.unregisterAll();
+            webContents.off("before-input-event", keyBinder);
         };
     }, []);
 
@@ -608,8 +670,9 @@ export default function App () {
 }
 
 
+
 // prevents bugs when the window is reloaded by electron
 window.onbeforeunload = () => {
     remote.window.onClose = null;
-    remote.globalShortcut.unregisterAll();
+    webContents.off("before-input-event", keyBinder);
 };

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { Vec2, Vec3, hexToRgb, hslToRgb, positionToRgb, rgbToHsl, rgbToHex, rgbToPosition } from "Support/math";
+import { Vec2, Vec3 } from "Support/math";
+import { hexToRgb, hslToRgb, positionToRgb, rgbToHsl, rgbToHex, rgbToPosition } from "Support/color";
 
 import { Canvas } from "Elements/canvas";
 import { Column, Row } from "Elements/layout";
@@ -27,7 +28,7 @@ function drawColorSpaceRgb (ctx: CanvasRenderingContext2D, sat: number, width: n
     ctx.putImageData(imageData, 0, 0);
 }
 
-function drawSelectionRgb(ctx: CanvasRenderingContext2D, rgb: Vec3, x: number, y: number) {
+function drawSelectionRgb(ctx: CanvasRenderingContext2D, rgb: Vec3, [x, y]: Vec2) {
     ctx.fillStyle = `rgb(${rgb.join(", ")})`;
     ctx.lineWidth = 2.1;
     ctx.strokeStyle = `rgb(${rgb.map(n => 255 - n).join(", ")})`;
@@ -46,12 +47,12 @@ export default function ColorPickerRgb ({value, onChange, width, height, childre
 
     const draw = (ctx: CanvasRenderingContext2D) => {
         drawColorSpaceRgb(ctx, sat, width, height);
-        drawSelectionRgb(ctx, rgb, ...rgbToPosition(rgb, width, height));
+        drawSelectionRgb(ctx, rgb, rgbToPosition(rgb, width, height));
 
         if (mouse && tempRgb) {
-            drawSelectionRgb(ctx, tempRgb, mouse[0], mouse[1]);
-            ctx.fillStyle = ctx.strokeStyle;
-            ctx.fillText(`rgb(${tempRgb.join(", ")})`, mouse[0] + 10, mouse[1] + 10);
+            drawSelectionRgb(ctx, tempRgb, mouse);
+            ctx.fillStyle = "#fff";
+            ctx.fillText(`rgb(${tempRgb.join(", ")})`, mouse[0] + 15, mouse[1] + 10);
         }
     };
 

@@ -13,7 +13,6 @@ import ColorInput from "Elements/input/color";
 import Svg from "Elements/svg";
 import ToolSet from "Elements/tool-set";
 import Spacer from "Elements/spacer";
-import {RgbDisplay} from "Elements/color-display";
 
 import Document from "Document";
 import { DEFAULT_DOCUMENT_THEME, DEFAULT_FONTS, lengthToPx, lookupPropertyString, simpleColorString, simpleLengthString } from "Document/theme";
@@ -27,7 +26,6 @@ import { EDITOR_ALIGNMENT_NAMES, EDITOR_HEADER_LEVELS, EDITOR_TEXT_DECORATION_PR
 
 import savedImg from "Assets/file-checkmark.svg?raw";
 import confirmImg from "Assets/checkmark.svg?raw";
-import deleteImg from "Assets/xmark.svg?raw";
 import unsavedImg from "Assets/file-circle-cross.svg?raw";
 import saveAsImg from "Assets/file-arrow-up.svg?raw";
 // import alignColumnsImg from "Assets/align-columns.svg";
@@ -40,6 +38,8 @@ import sliderImg from "Assets/horizontal-sliders.svg?raw";
 import exportImg from "Assets/file-arrow-down.svg?raw";
 import gearImg from "Assets/gear.svg?raw";
 import closeImg from "Assets/arrow-right-into-bracket.svg?raw";
+import { HexRgba } from "Support/color";
+import FontInput from "Elements/input/font";
 
 
 
@@ -282,39 +282,22 @@ export default function Toolbar () {
 
 
     const baseFont = lookupPropertyString(editorContext.document.theme, "base-font-family");
-    const actualFontFamilies = [...Object.keys(editorContext.document.fonts), ...DEFAULT_FONTS];
+    const actualFontFamilies = Object.keys(editorContext.document.fonts);
+
     const fontFamilies = actualFontFamilies.slice();
-    if (!fontFamilies.includes(baseFont)) {
+    if (!fontFamilies.includes(baseFont) && !DEFAULT_FONTS.includes(baseFont)) {
         fontFamilies.push(baseFont);
     }
-    if (editorContext.details.fontAttributes.font !== null && !fontFamilies.includes(editorContext.details.fontAttributes.font)) {
-        fontFamilies.push(editorContext.details.fontAttributes.font);
-    }
-    fontFamilies.sort();
 
-    const getFontFamilyIndex = () => {
-        const fontFamily = editorContext.details.fontAttributes.font;
-        if (fontFamily === null) {
-            return fontFamilies.findIndex(k => k === baseFont);
-        } else {
-            return fontFamilies.findIndex(k => k === fontFamily);
-        }
-    };
+    const selectedFont = editorContext.details.fontAttributes.font || baseFont;
 
-    const changeFontFamily = (newIndex: number) => {
-        const fontFamily = fontFamilies[newIndex];
-        if (!actualFontFamilies.includes(fontFamily as string) || fontFamily === baseFont) {
+    const changeFontFamily = (fontFamily: string) => {
+        if (fontFamily === baseFont) {
             editorDispatch({ type: "set-font-family", value: null });
         } else {
             editorDispatch({ type: "set-font-family", value: fontFamily });
         }
     };
-
-    const fontFamilyOptions = fontFamilies.map((font, i) =>
-        actualFontFamilies.includes(font)
-            ? <option key={i} style={{fontFamily: font}}>{font}</option>
-            : <option key={i} style={{color: "red"}}>{font}</option>
-    );
 
 
     const getDocumentFontSize = () =>
@@ -333,7 +316,6 @@ export default function Toolbar () {
     const confirmFontSize = (setOpen: React.Dispatch<React.SetStateAction<boolean>>) => () => {
         const a = lengthToPx(editorContext.document.theme, tempFontSize);
         const b = lengthToPx(editorContext.document.theme, getDocumentFontSize());
-        console.log(a, b);
 
         if (a === b) {
             editorDispatch({ type: "set-font-size", value: null });
@@ -348,58 +330,34 @@ export default function Toolbar () {
     const getDocumentFontColor = () =>
         editorContext.document.theme["base-font-color"] || DEFAULT_DOCUMENT_THEME["base-font-color"];
 
-    const [tempFontColor, setTempFontColor] = useState(editorContext.details.fontAttributes.color || getDocumentFontColor());
+    const fontColor = editorContext.details.fontAttributes.color || getDocumentFontColor();
 
-    const resetFontColor = () => {
-        setTempFontColor(editorContext.details.fontAttributes.color || getDocumentFontColor());
-    };
-
-    const deleteFontColor = (setOpen: React.Dispatch<React.SetStateAction<boolean>>) => () => {
-        editorDispatch({ type: "set-font-color", value: null });
-        setOpen(false);
-    };
-
-    const confirmFontColor = (setOpen: React.Dispatch<React.SetStateAction<boolean>>) => () => {
-        const a = simpleColorString(tempFontColor);
+    const setFontColor = (newFontColor: HexRgba) => {
+        const a = simpleColorString(newFontColor);
         const b = simpleColorString(getDocumentFontColor());
-        console.log(a, b);
 
-        if (a === b) {
+        if (a.toLowerCase() === b.toLowerCase()) {
             editorDispatch({ type: "set-font-color", value: null });
         } else {
-            editorDispatch({ type: "set-font-color", value: tempFontColor });
+            editorDispatch({ type: "set-font-color", value: newFontColor });
         }
-
-        setOpen(false);
     };
 
 
     const getDocumentFontBackground = () =>
         editorContext.document.theme["page-color"] || DEFAULT_DOCUMENT_THEME["page-color"];
 
-    const [tempFontBackground, setTempFontBackground] = useState(editorContext.details.fontAttributes.background || getDocumentFontBackground());
+    const fontBackground = editorContext.details.fontAttributes.background || getDocumentFontBackground();
 
-    const resetFontBackground = () => {
-        setTempFontBackground(editorContext.details.fontAttributes.background || getDocumentFontBackground());
-    };
-
-    const deleteFontBackground = (setOpen: React.Dispatch<React.SetStateAction<boolean>>) => () => {
-        editorDispatch({ type: "set-font-background", value: null });
-        setOpen(false);
-    };
-
-    const confirmFontBackground = (setOpen: React.Dispatch<React.SetStateAction<boolean>>) => () => {
-        const a = simpleColorString(tempFontBackground);
+    const setFontBackground = (newFontBackground: HexRgba) => {
+        const a = simpleColorString(newFontBackground);
         const b = simpleColorString(getDocumentFontBackground());
-        console.log(a, b);
 
-        if (a === b) {
+        if (a.toLowerCase() === b.toLowerCase()) {
             editorDispatch({ type: "set-font-background", value: null });
         } else {
-            editorDispatch({ type: "set-font-background", value: tempFontBackground });
+            editorDispatch({ type: "set-font-background", value: newFontBackground });
         }
-
-        setOpen(false);
     };
 
 
@@ -415,74 +373,29 @@ export default function Toolbar () {
         <TextDetailsButton kind="italic"/>
         <TextDetailsButton kind="underline"/>
         <TextDetailsButton kind="strike"/>
-        <Dropout
-            title="Foreground Color"
+        <ColorInput
+            title={`Text Foreground Color (${fontColor})`}
             disabled={disabled}
-            folded={<RgbDisplay display={tempFontColor} style={{border: "1px solid rgb(var(--primary-color))"}} />}
-            style={{padding: "5px"}}
-            onBlur={resetFontColor}
-            unfolded={setOpen => <>
-                    <RgbDisplay
-                        display={tempFontColor}
-                        style={{width: "100%", height: "2em", marginBottom: "5px"}}
-                    />
-                    <ColorInput
-                        property={tempFontColor}
-                        onChange={setTempFontColor}
-                    />
-                    <div style={{marginTop: "5px", display: "flex", flexGrow: 1}}>
-                        <Button.Icon
-                            onClick={deleteFontColor(setOpen)}
-                            svg={deleteImg}
-                        />
-                        <Button.Icon
-                            onClick={confirmFontColor(setOpen)}
-                            style={{marginLeft: "5px"}}
-                            svg={confirmImg}
-                        />
-                    </div>
-                </>
-            }
+            value={fontColor}
+            defaultValue={getDocumentFontColor()}
+            onChange={setFontColor}
         />
-        <Dropout
-            title="Background Color"
+        <ColorInput
+            title={`Text Background Color (${fontBackground})`}
             disabled={disabled}
-            folded={<RgbDisplay display={tempFontBackground} style={{border: "1px solid rgb(var(--primary-color))"}} />}
-            style={{padding: "5px"}}
-            onBlur={resetFontBackground}
-            unfolded={setOpen => <>
-                    <RgbDisplay
-                        display={tempFontBackground}
-                        style={{width: "100%", height: "2em", marginBottom: "5px"}}
-                    />
-                    <ColorInput
-                        property={tempFontBackground}
-                        onChange={setTempFontBackground}
-                    />
-                    <div style={{marginTop: "5px", display: "flex", flexGrow: 1}}>
-                        <Button.Icon
-                            onClick={deleteFontBackground(setOpen)}
-                            svg={deleteImg}
-                        />
-                        <Button.Icon
-                            onClick={confirmFontBackground(setOpen)}
-                            style={{marginLeft: "5px"}}
-                            svg={confirmImg}
-                        />
-                    </div>
-                </>
-            }
+            value={fontBackground}
+            defaultValue={getDocumentFontBackground()}
+            onChange={setFontBackground}
         />
-        <Dropdown
-            title="Font Family"
+        <FontInput
+            title={`Font Family (${selectedFont})`}
             disabled={disabled}
-            selected={getFontFamilyIndex()}
+            value={selectedFont}
+            allowedFonts={fontFamilies}
             onChange={changeFontFamily}
-        >
-            {fontFamilyOptions}
-        </Dropdown>
+        />
         <Dropout
-            title="Font Size"
+            title={`Font Size (${getFontSize()})`}
             disabled={disabled}
             folded={<p>{getFontSize()}</p>}
             style={{padding: "5px"}}
@@ -502,7 +415,7 @@ export default function Toolbar () {
             }
         />
         <Dropdown
-            title="Block Mode"
+            title={`Block Mode (${getBlockIndex() == 0? "Paragraph" : `Header Level ${getBlockIndex()}`})`}
             disabled={disabled}
             selected={getBlockIndex()}
             onChange={changeBlock}
@@ -516,7 +429,7 @@ export default function Toolbar () {
             <option title="Header Level 6 Block">H6</option>
         </Dropdown>
         <Dropdown
-            title="Alignment"
+            title={`Alignment (${EDITOR_ALIGNMENT_NAMES[getAlignmentIndex()] || "Left"})`}
             disabled={disabled}
             selected={getAlignmentIndex()}
             onChange={changeAlignment}

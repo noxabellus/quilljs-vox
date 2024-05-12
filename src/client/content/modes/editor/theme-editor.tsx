@@ -1,6 +1,6 @@
 import { parseFloatSafe, toFixed } from "Support/math";
 
-import { Color, Dimensions, Length, THEME_UNITS, Theme, lengthUnit, lengthConvert, propertyType, themeValue, DEFAULT_DOCUMENT_THEME, Font, DEFAULT_FONTS } from "Document/theme";
+import { Dimensions, Length, THEME_UNITS, Theme, lengthUnit, lengthConvert, propertyType, themeValue, DEFAULT_DOCUMENT_THEME, Font } from "Document/theme";
 
 import Input from "Elements/input";
 import Dropdown from "Elements/input/dropdown";
@@ -12,6 +12,8 @@ import SettingsList from "Elements/settings-list";
 import SettingsSection from "Elements/settings-section";
 import { useAppState } from "../../app/state";
 import InputColor from "Elements/input/color";
+import { HexRgba } from "Support/color";
+import FontInput from "Elements/input/font";
 
 
 
@@ -104,8 +106,8 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
 
         case "color": {
             return <InputColor
-                name={fieldName}
-                property={property as Color}
+                value={property as HexRgba}
+                defaultValue = {DEFAULT_DOCUMENT_THEME[fieldName] as HexRgba}
                 onChange={data => {
                     editorDispatch({
                         type: "set-theme-property",
@@ -122,41 +124,20 @@ const ThemeField = ({fieldName}: {fieldName: keyof Theme}) => {
         case "font": {
             const value = (property as Font).fontName;
 
-            const actualFontNames = [...Object.keys(editorContext.document.fonts), ...DEFAULT_FONTS];
-            if (fieldName != "base-font-family") actualFontNames.push("inherit");
-
-            const fontNames = actualFontNames.slice();
-            if (!fontNames.includes(value)) fontNames.push(value);
-            fontNames.sort();
-
-            const selected = fontNames.indexOf(value);
-
-            const changeFont = (i: number) => {
-                const newFontName = fontNames[i];
-
-                editorDispatch({
-                    type: "set-theme-property",
-                    value: {
-                        key: fieldName,
-                        data: { fontName: newFontName },
-                    },
-                });
-            };
-
-            return <div>
-                <Dropdown
-                    selected={selected}
-                    onChange={changeFont}
-                >
-                    {fontNames.map((fontName: string, i: number) => {
-                        if (actualFontNames.includes(fontName)) {
-                            return <option key={i} title="Click to select a different font" style={{fontFamily: fontName}}>{fontName}</option>;
-                        } else {
-                            return <option key={i} title="Selected font no longer exists, click to select a new one" style={{fontStyle: "italic", color: "red"}}>{fontName}</option>;
-                        }
-                    })}
-                </Dropdown>
-            </div>;
+            return <FontInput
+                value={value}
+                allowedFonts={Object.keys(editorContext.document.fonts)}
+                allowInherit={fieldName !== "base-font-family"}
+                onChange={fontName => {
+                    editorDispatch({
+                        type: "set-theme-property",
+                        value: {
+                            key: fieldName,
+                            data: { fontName },
+                        },
+                    });
+                }}
+            />;
         }
 
         // case "string": {

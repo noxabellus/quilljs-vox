@@ -16,6 +16,13 @@ export default function popOutBuilder() {
         let stop = false;
         let handle: number | null = null;
 
+        const handler = (e: MouseEvent) => {
+            if (!controlRef.current?.contains(e.target as Node)
+            &&  !popOutRef.current?.contains(e.target as Node)) {
+                setOpen(false);
+            }
+        };
+
         const observer = (force: any) => {
             const selfRect = control.getBoundingClientRect();
             const popOutRect = popOut.getBoundingClientRect();
@@ -37,16 +44,21 @@ export default function popOutBuilder() {
             if (!stop) handle = requestAnimationFrame(observer);
         };
 
-        if (open) {
-            observer(true);
-        } else {
-            stop = true;
-        }
-
-        return () => {
+        const stopper = () => {
             stop = true;
             if (handle !== null) cancelAnimationFrame(handle);
+            handle = null;
+            document.removeEventListener("click", handler);
         };
+
+        if (open) {
+            observer(true);
+            document.addEventListener("click", handler);
+        } else {
+            stopper();
+        }
+
+        return stopper;
     }, [open]);
 
     useEffect(() => {

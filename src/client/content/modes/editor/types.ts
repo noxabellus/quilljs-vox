@@ -2,8 +2,10 @@ import { PathLike } from "fs";
 import Quill, { Delta, Range } from "Extern/quill";
 
 import Document from "Document";
-import { Color, Length, Theme } from "Document/theme";
+import { Length, Theme } from "Document/theme";
 import History from "quill/modules/history";
+import { HexRgba } from "Support/color";
+import { KeyCombo } from "Client/content/app/settings";
 
 
 export type Context = {
@@ -56,8 +58,8 @@ export type TextDecoration = {
 export type FontAttributes = {
     size: Length | null,
     font: string | null,
-    color: Color | null,
-    background: Color | null,
+    color: HexRgba | null,
+    background: HexRgba | null,
 };
 
 
@@ -115,6 +117,8 @@ export type Action
     | DeleteFont
     | RefreshImages
     | KeyboardShortcut
+    | Undo
+    | Redo
     ;
 
 export type SetFilePath = {
@@ -177,12 +181,12 @@ export type SetFontFamily = {
 
 export type SetFontColor = {
     type: "set-font-color",
-    value: Color | null,
+    value: HexRgba | null,
 };
 
 export type SetFontBackground = {
     type: "set-font-background",
-    value: Color | null,
+    value: HexRgba | null,
 };
 
 export type SetAlign = {
@@ -281,18 +285,13 @@ export type RefreshImages = {
 
 export type KeyboardShortcut = {
     type: "keyboard-shortcut",
-    value: {
-        key: string,
-        modifiers: ShortcutModifiers,
-    },
+    value: KeyCombo,
 };
 
-export type ShortcutModifiers = {
-    ctrl: boolean,
-    alt: boolean,
-    shift: boolean,
+export type Undo = {
+    type: "undo",
 };
 
-export const BLACK_LISTED_SHORTCUT_KEYS = [
-    "Control", "Alt", "Shift", "Meta", "CapsLock", "Backspace", "Delete"
-];
+export type Redo = {
+    type: "redo",
+};

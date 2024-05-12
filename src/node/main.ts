@@ -106,14 +106,14 @@ let needHardReset = false;
 
 setInterval(() => {
     if (needHardReset) {
-        console.log("need hard reset, reloading electron");
+        console.info("need hard reset, reloading electron");
         forceClose = true;
         app.relaunch();
         app.quit();
     }
 
     if (dirty) {
-        console.log("need soft reset, reloading window");
+        console.info("need soft reset, reloading window");
         dirty = false;
         win.reload();
     }

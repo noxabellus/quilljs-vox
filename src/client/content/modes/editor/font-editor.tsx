@@ -118,7 +118,7 @@ export default function FontEditor () {
                         <Button.Icon disabled={overlappingName} title={overlappingName? "A font with this name already exists" : "Set font name"} svg={setImg} onClick={renameFont}/>
                         <Button.Icon title="Cancel renaming" svg={cancelImg} onClick={cancelRename}/>
                     </div>
-                    : <span>{fontName}</span>
+                    : <span style={{fontFamily: fontName}}>{fontName}</span>
                 }
                 { !isRenaming &&
                     <>
@@ -170,9 +170,9 @@ export default function FontEditor () {
     return <SettingsSection>
         <h1>Fonts</h1>
         <SettingsList>
-            <li><Label title="Built in font" style={{color: "yellow"}}><span>serif</span><i>(Builtin)</i></Label></li>
-            <li><Label title="Built in font" style={{color: "yellow"}}><span>sans-serif</span><i>(Builtin)</i></Label></li>
-            <li><Label title="Built in font" style={{color: "yellow"}}><span>monospace</span><i>(Builtin)</i></Label></li>
+            <li><Label title="Built in font" style={{color: "yellow"}}><span style={{fontFamily:"serif"}}>serif</span><i>(Builtin)</i></Label></li>
+            <li><Label title="Built in font" style={{color: "yellow"}}><span style={{fontFamily:"sans-serif"}}>sans-serif</span><i>(Builtin)</i></Label></li>
+            <li><Label title="Built in font" style={{color: "yellow"}}><span style={{fontFamily:"monospace"}}>monospace</span><i>(Builtin)</i></Label></li>
             {fonts}
         </SettingsList>
         <Button.Icon disabled={renamingInProgress} title={"Begin registering a new font"} svg={newImg} onClick={addNewFont}/>

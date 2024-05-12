@@ -14,9 +14,12 @@ import ColorPickerRgb from "./rgb";
 
 import undoImg from "Assets/rotate-ccw.svg?raw";
 import confirmImg from "Assets/checkmark.svg?raw";
+import defaultImg from "Assets/circle-cross.svg?raw";
 import cancelImg from "Assets/xmark.svg?raw";
 import styled from "styled-components";
 import { toFixed } from "Support/math";
+import { HexRgb, HexRgba } from "Support/color";
+
 
 
 export type ColorPickerProps
@@ -26,28 +29,31 @@ export type ColorPickerProps
 type ColorPickerLocal = {
     width: number,
     height: number,
-    value: string,
-    onChange?: (value: string) => void,
+    value: HexRgba,
+    defaultValue?: HexRgba,
+    onChange?: (value: HexRgba) => void,
     onCancel: () => void,
-    onConfirm: (value: string) => void
+    onConfirm: (value: HexRgba) => void
 };
 
 
 const ColorPickerStyles = styled(Column)`
-    align-items: flex-end;
-    position: absolute;
+    display: flex !important;
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    align-items: flex-end !important;
+    position: fixed !important;
+    z-index: 1000 !important;
     left: 0;
     top: 0;
 `;
 
 
-const ColorPicker = forwardRef(({width, height, value, onChange, onCancel, onConfirm, ...props}: ColorPickerProps, ref?: React.Ref<HTMLDivElement>) => {
-    if (value.length !== 9 || !value.startsWith("#") || value.slice(1).match(/[^a-fA-F0-9]/))
-        throw `invalid hex color: ${value} (expected 9 characters of the form #RRGGBBAA)`;
-
+const ColorPicker = forwardRef(({width, height, value, defaultValue, onChange, onCancel, onConfirm, ...props}: ColorPickerProps, ref?: React.Ref<HTMLDivElement>) => {
     const [selected, setSelected] = useState<0 | 1 | 2>(2);
-    const [hex, setHex] = useState(value.slice(0, 7));
-    const [alpha, setAlpha] = useState(toFixed(parseInt(value.slice(7), 16) / 255));
+    const [hex, setHex] = useState(value.slice(0, 7) as HexRgb);
+    const [alpha, setAlpha] = useState(parseInt(value.slice(7), 16) / 255);
 
     let Picker;
     switch (selected) {
@@ -57,7 +63,7 @@ const ColorPicker = forwardRef(({width, height, value, onChange, onCancel, onCon
     }
 
     const getFullString = () =>
-        `${hex}${Math.round(alpha * 255).toString(16).padStart(2, "0")}`;
+        `${hex}${Math.round(alpha * 255).toString(16).padStart(2, "0")}` as HexRgba;
 
     useEffect(() => {
         onChange?.(getFullString());
@@ -71,18 +77,24 @@ const ColorPicker = forwardRef(({width, height, value, onChange, onCancel, onCon
                     <option>HSL</option>
                     <option>HSV</option>
                 </Dropdown>
-                <HexDisplay display={hex+Math.round(alpha * 255).toString(16)} style={{borderRadius: "5px", border: "1px solid white", flexGrow: 1, height: "2em", alignSelf: "stretch", justifySelf: "stretch", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center"}}>
+                <HexDisplay color={getFullString()} style={{borderRadius: "5px", border: "1px solid white", flexGrow: 1, height: "2em", alignSelf: "stretch", justifySelf: "stretch", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center"}}>
                     <span style={{fontFamily: "monospace", borderRadius: ".5em", background:"rgba(0,0,0,0.2)", color:"white", userSelect: "text"}}>{getFullString()}</span>
                 </HexDisplay>
             </Row>
             <Picker value={hex} width={width} height={height} onChange={setHex}>
-                <ColorComponent color={makeFullTransparencyDemo([0, 255, 255, alpha])} title="Alpha" min="0.00" max="1.00" step="0.01" value={alpha} onChange={v => setAlpha(toFixed(parseFloat(v)))} />
+                <ColorComponent color={makeFullTransparencyDemo([0, 255, 255, alpha])} title="Alpha" min="0.0000" max="1.0000" step="0.0001" value={alpha} onChange={v => setAlpha(toFixed(parseFloat(v)))} />
             </Picker>
         </Block>
         <ToolSet>
             <Button.Icon title="Cancel editing color" svg={cancelImg} onClick={onCancel} />
+            {defaultValue &&
+                <Button.Icon title="Reset to default color" svg={defaultImg} onClick={() => {
+                    setHex(defaultValue.slice(0, 7) as HexRgb);
+                    setAlpha(parseInt(defaultValue.slice(7), 16) / 255);
+                }} />
+            }
             <Button.Icon title="Revert to starting color" svg={undoImg} onClick={() => {
-                setHex(value.slice(0, 7));
+                setHex(value.slice(0, 7) as HexRgb);
                 setAlpha(parseInt(value.slice(7), 16) / 255);
             }} />
             <Button.Icon title="Confirm edited color" svg={confirmImg} onClick={() => onConfirm(getFullString())} />
