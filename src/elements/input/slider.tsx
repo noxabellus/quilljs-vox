@@ -36,7 +36,7 @@ const SliderStyles = styled.input`
 
 
 export function VerticalSlider({ style, ...props }: DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>) {
-    return <SliderStyles type="range" style={{ ...style, marginLeft: ".35em", width: ".5em", writingMode: "vertical-lr" }} {...props} />;
+    return <SliderStyles type="range" style={{ ...style, marginLeft: ".25em", width: ".5em", writingMode: "vertical-lr" }} {...props} />;
 }
 
 export function HorizontalSlider({ style, ...props }: DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>) {

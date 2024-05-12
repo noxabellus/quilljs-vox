@@ -16,7 +16,6 @@ const primaryShadowOutsetOnly = css`
 `;
 
 const block = css`
-    margin-bottom: 10px;
     background-color: rgb(var(--element-color));
     border: 1px solid rgb(var(--accent-color));
     ${primaryShadow}
