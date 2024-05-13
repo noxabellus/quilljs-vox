@@ -195,6 +195,12 @@ function editorReducer (context: EditorTypes.Context, action: EditorTypes.Action
             out.details.textDecoration.strike = action.value;
             break;
 
+        case "set-script":
+            q.setSelection(range, "silent");
+            q.format("script", action.value);
+            out.details.textDecoration.script = action.value;
+            break;
+
         case "set-font-size":
             q.setSelection(range, "silent");
             q.format("size", action.value !== null? simpleLengthString(action.value) : null);
@@ -240,6 +246,7 @@ function editorReducer (context: EditorTypes.Context, action: EditorTypes.Action
                     italic: false,
                     underline: false,
                     strike: false,
+                    script: null,
                     font: null,
                     size: null,
                     align: null,
@@ -252,12 +259,15 @@ function editorReducer (context: EditorTypes.Context, action: EditorTypes.Action
                     italic: false,
                     underline: false,
                     strike: false,
+                    script: null,
                     font: null,
                     size: null,
+                    color: null,
+                    background: null,
                 });
             }
             out.details.fontAttributes = { size: null, font: null, color: null, background: null };
-            out.details.textDecoration = { bold: false, italic: false, underline: false, strike: false };
+            out.details.textDecoration = { bold: false, italic: false, underline: false, strike: false, script: null };
         } break;
 
         case "post-range": {
@@ -271,12 +281,21 @@ function editorReducer (context: EditorTypes.Context, action: EditorTypes.Action
                 const fmt = q.getFormat(action.value);
 
                 for (const key of textDecorations) {
+                    if (key == "script") {
+                        if (key in fmt) {
+                            let value = fmt[key] as any;
+                            if (Array.isArray(value)) value = value[0];
+                            out.details.textDecoration.script = value;
+                        } else {
+                            out.details.textDecoration.script = null;
+                        }
+                    }
                     if (key in fmt) {
                         let value: any = fmt[key];
                         if (Array.isArray(value)) value = value[0];
-                        out.details.textDecoration[key as keyof EditorTypes.TextDecoration] = value;
+                        out.details.textDecoration[key as keyof Omit<EditorTypes.TextDecoration, "script">] = value;
                     } else {
-                        out.details.textDecoration[key as keyof EditorTypes.TextDecoration] = false;
+                        out.details.textDecoration[key as keyof Omit<EditorTypes.TextDecoration, "script">] = false;
                     }
                 }
 
@@ -424,6 +443,7 @@ function appReducer (state: AppTypes.Context, action: AppTypes.Action): AppTypes
                             italic: false,
                             underline: false,
                             strike: false,
+                            script: null,
                         },
                     },
                     quill: null,

@@ -35,6 +35,7 @@ const primary = css`
     padding: 5px;
     color: rgb(var(--primary-color));
     stroke: rgb(var(--primary-color));
+    fill: rgb(var(--primary-color));
     ${primaryShadow}
 
     &:disabled {
@@ -46,6 +47,7 @@ const primary = css`
 const strokeActivationFx = css`
     color: rgb(var(--accent-color));
     stroke: rgb(var(--accent-color));
+    fill: rgb(var(--accent-color));
 `;
 
 const borderActivationFx = css`

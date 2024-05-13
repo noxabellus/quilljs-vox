@@ -53,7 +53,10 @@ export type TextDecoration = {
     italic: boolean,
     underline: boolean,
     strike: boolean,
+    script: null | TextScript,
 };
+
+export type TextScript = "sub" | "super";
 
 export type FontAttributes = {
     size: Length | null,
@@ -64,7 +67,7 @@ export type FontAttributes = {
 
 
 export type TextDecorationProperties = {
-    [K in keyof TextDecoration]: [string, string, string, string]
+    [K in keyof Omit<TextDecoration, "script">]: [string, string, string, string]
 };
 
 export type BlockAlign = null | "center" | "right" | "justify";
@@ -83,6 +86,11 @@ export const EDITOR_TEXT_DECORATION_PROPERTIES: TextDecorationProperties = {
     strike: ["textDecoration", "line-through", "S", "Strikethrough"],
 };
 
+export const EDITOR_SCRIPT_TITLES: {[K in TextScript]: string} = {
+    sub: "Subscript",
+    super: "Superscript",
+};
+
 
 export type Action
     = SetLastUpdated
@@ -94,6 +102,7 @@ export type Action
     | SetItalic
     | SetUnderline
     | SetStrike
+    | SetScript
     | SetFontSize
     | SetFontFamily
     | SetFontColor
@@ -167,6 +176,11 @@ export type SetUnderline = {
 export type SetStrike = {
     type: "set-strike",
     value: boolean,
+};
+
+export type SetScript = {
+    type: "set-script",
+    value: TextScript | null,
 };
 
 export type SetFontSize = {

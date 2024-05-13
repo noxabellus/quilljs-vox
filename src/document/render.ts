@@ -52,7 +52,9 @@ export type InlineTemplates = {
     italic: ElemTemplate,
     underline: ElemTemplate,
     strike: ElemTemplate,
+    script: ElemTemplate,
     font: ElemTemplate,
+    size: ElemTemplate,
     embeds: EmbedTemplates,
 };
 
@@ -242,7 +244,9 @@ export const HtmlFormat: Format = {
             italic: content => `<i>${content}</i>`,
             underline: content => `<u>${content}</u>`,
             strike: content => `<s>${content}</s>`,
+            script: (content, attrs) => attrs.script == "sub"? `<sub>${content}</sub>` : `<sup>${content}</sup>`,
             font: (content, attrs) => `<span style="font-family:${attrs.font}">${content}</span>`,
+            size: (content, attrs) => `<span style="font-size:${attrs.size}">${content}</span>`,
 
             embeds: {
                 image: (embed, attrs) => {
@@ -323,7 +327,9 @@ function innerHtml (content: string, attrs: AttributeMap, options: Options): str
             case "italic":
             case "underline":
             case "strike":
+            case "script":
             case "font":
+            case "size":
                 template = options.inlineTemplates[attr];
             break;
 

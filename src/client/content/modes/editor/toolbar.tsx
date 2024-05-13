@@ -4,7 +4,9 @@ import styled from "styled-components";
 import { saveHtml, saveVox, writeVox } from "Support/file";
 import Result from "Support/result";
 import remote from "Support/remote";
+import { HexRgba } from "Support/color";
 
+import FontInput from "Elements/input/font";
 import Dropdown from "Elements/input/dropdown";
 import Button from "Elements/input/button";
 import Dropout from "Elements/input/dropout";
@@ -21,7 +23,7 @@ import { useAppState } from "../../app/state";
 
 import saveInterrupt from "./save-interrupt";
 import { useEditorState, dataIsDirty, dataNeedsSave } from "./state";
-import { EDITOR_ALIGNMENT_NAMES, EDITOR_HEADER_LEVELS, EDITOR_TEXT_DECORATION_PROPERTIES, TextDecoration } from "./types";
+import { EDITOR_ALIGNMENT_NAMES, EDITOR_HEADER_LEVELS, EDITOR_SCRIPT_TITLES, EDITOR_TEXT_DECORATION_PROPERTIES, TextDecoration, TextScript } from "./types";
 
 
 import savedImg from "Assets/file-checkmark.svg?raw";
@@ -38,8 +40,8 @@ import sliderImg from "Assets/horizontal-sliders.svg?raw";
 import exportImg from "Assets/file-arrow-down.svg?raw";
 import gearImg from "Assets/gear.svg?raw";
 import closeImg from "Assets/arrow-right-into-bracket.svg?raw";
-import { HexRgba } from "Support/color";
-import FontInput from "Elements/input/font";
+import subImg from "Assets/subscript.svg?raw";
+import superImg from "Assets/superscript.svg?raw";
 
 
 
@@ -57,12 +59,12 @@ export default function Toolbar () {
     const [editorContext, editorDispatch] = useEditorState(appContext);
     const disabled = !editorContext.details.nodeData.focused;
 
-    const formatter = (prop: keyof TextDecoration) => (e: MouseEvent) => {
+    const formatter = (prop: keyof Omit<TextDecoration, "script">) => (e: MouseEvent) => {
         e.preventDefault();
         editorDispatch({ type: `set-${prop}`, value: !editorContext.details.textDecoration[prop] });
     };
 
-    const className = (prop: keyof TextDecoration): "selected" | "" =>
+    const className = (prop: keyof Omit<TextDecoration, "script">): "selected" | "" =>
         editorContext.details.textDecoration[prop] && editorContext.details.nodeData.focused ? "selected" : "";
 
     const getBlockIndex = () =>
@@ -80,10 +82,10 @@ export default function Toolbar () {
     const unstyle = () =>
         editorDispatch({ type: "clear-format" });
 
-    const TextDetailsButton = ({kind}: {kind: keyof TextDecoration}) => {
+    const TextDetailsButton = ({kind}: {kind: keyof Omit<TextDecoration, "script">}) => {
         const [propName, propValue, propText, propTitle] = EDITOR_TEXT_DECORATION_PROPERTIES[kind];
 
-        return (<Button.Serif
+        return <Button.Serif
             disabled={disabled}
             style={{[propName]: propValue}}
             onClick={formatter(kind)}
@@ -91,7 +93,22 @@ export default function Toolbar () {
             title={propTitle}
         >
             {propText}
-        </Button.Serif>);
+        </Button.Serif>;
+    };
+
+    const TextScriptIcon = ({svg, kind}: {svg: string, kind: TextScript}) => {
+        const propTitle = EDITOR_SCRIPT_TITLES[kind];
+
+        return <Button.Icon
+            svg={svg}
+            disabled={disabled}
+            onClick={e => {
+                e.preventDefault();
+                editorDispatch({ type: "set-script", value: editorContext.details.textDecoration.script == kind? null : kind });
+            }}
+            className={editorContext.details.textDecoration.script == kind && editorContext.details.nodeData.focused ? "selected" : ""}
+            title={propTitle}
+        />;
     };
 
     const saveFile = async () => {
@@ -373,6 +390,8 @@ export default function Toolbar () {
         <TextDetailsButton kind="italic"/>
         <TextDetailsButton kind="underline"/>
         <TextDetailsButton kind="strike"/>
+        <TextScriptIcon svg={subImg} kind="sub"/>
+        <TextScriptIcon svg={superImg} kind="super"/>
         <ColorInput
             title={`Text Foreground Color (${fontColor})`}
             disabled={disabled}

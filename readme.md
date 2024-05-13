@@ -6,8 +6,19 @@ WIP rich text editor
 + 🟩 document format compatible with version control
 + 🟩 undo/redo to the beginning or end of time, even after save/load
 + 🟨 standard editor tools
-    - 🟩 basic formatting (bold, italic, underline, etc)
-    - 🟩 paragraph alignment
+    - 🟩 basic formatting
+        * 🟩 bold
+        * 🟩 italic
+        * 🟩 underline
+        * 🟩 strike-through
+        * 🟩 subscript
+        * 🟩 superscript
+    - 🟩 text alignment
+        + 🟩 left
+        + 🟩 center
+        + 🟩 right
+        + 🟩 justified
+        + 🯄 column
     - 🟩 font size selection
     - 🟩 font family selection
     - 🟩 font color and highlight selection
@@ -21,12 +32,13 @@ WIP rich text editor
     - 🟥 lists
     - 🟥 tables
     - 🟥 links
+    - 🟥 horizontal rule
     - 🟥 inline code blocks
+    - 🟥 style sets (like google docs)
     - 🟨 sections
         * 🟩 headers
         * 🟩 paragraphs
-        * 🟥 blocks
-        * 🟥 style sets
+        * 🟥 blocks (like markdown block quotes)
         * 🟥 table of contents
     - 🟥 editorial kit
         * 🟥 positional comments

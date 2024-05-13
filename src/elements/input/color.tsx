@@ -41,7 +41,6 @@ export default function InputColor({title, value, defaultValue, disabled, onChan
 
     useEffect(() => {
         if (tempColor === null) {
-            console.log("setting new value");
             setColor(value);
             setLastChange(value);
         }
