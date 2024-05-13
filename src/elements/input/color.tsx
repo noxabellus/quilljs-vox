@@ -23,11 +23,16 @@ export default function InputColor({title, value, defaultValue, disabled, onChan
     const [controlRef, popOutRef, open, setOpen] = popOutBuilder();
     const [color, setColor] = useState(value);
     const [tempColor, setTempColor] = useState<HexRgba | null>(null);
+    const [lastChange, setLastChange] = useState<HexRgba | null>(color);
 
     const colorToShow = tempColor ?? color;
 
     useEffect(() => {
-        if (colorToShow !== value) onChange?.(colorToShow);
+        if (colorToShow !== lastChange) {
+            console.log("onChange", colorToShow, lastChange);
+            onChange?.(colorToShow);
+            setLastChange(colorToShow);
+        }
     }, [tempColor]);
 
     useEffect(() => {
@@ -35,7 +40,11 @@ export default function InputColor({title, value, defaultValue, disabled, onChan
     }, [color]);
 
     useEffect(() => {
-        if (tempColor === null) setColor(value);
+        if (tempColor === null) {
+            console.log("setting new value");
+            setColor(value);
+            setLastChange(value);
+        }
     }, [value]);
 
     return <>
