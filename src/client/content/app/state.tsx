@@ -11,7 +11,9 @@ const Context = createContext<Context>({
     mode: "splash",
     lastMode: "splash",
     fullscreen: false,
-    settings: null,
+    settings: {
+        keyBindings: {}
+    },
 });
 const Dispatch = createContext<Dispatch<Action>>(() => {
     throw "No provider found for AppDispatch!";
