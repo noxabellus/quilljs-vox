@@ -4,41 +4,57 @@ WIP rich text editor
 
 ## Planned features
 + 🟩 document format compatible with version control
-+ 🟩 undo/redo to the beginning or end of time
-+ 🟨 google-docs-like editor tools
++ 🟩 undo/redo to the beginning or end of time, even after save/load
++ 🟨 standard editor tools
     - 🟩 basic formatting (bold, italic, underline, etc)
     - 🟩 paragraph alignment
-    - 🟥 font size selection
-    - 🟥 font family selection
-    - 🟥 embeds
+    - 🟩 font size selection
+    - 🟩 font family selection
+    - 🟩 font color and highlight selection
+    - 🟨 rich pasting of html
+    - 🟨 embeds
+        * 🟩 pasting images from html
+        * 🟥 pasting images from file
+        * 🟥 image insertion tool
+        * 🯄 video insertion
+        * 🯄 audio insertion
+    - 🟥 lists
+    - 🟥 tables
+    - 🟥 links
     - 🟥 inline code blocks
-    - 🟥 sections
-        * 🟥 headers
+    - 🟨 sections
+        * 🟩 headers
+        * 🟩 paragraphs
         * 🟥 blocks
         * 🟥 style sets
         * 🟥 table of contents
-    - 🟥 comments and other editorial kit
+    - 🟥 editorial kit
+        * 🟥 positional comments
+        * 🯄 option to export editorial kit embedded into document
     - 🯄 paging mode
+    - 🯄 inline latex/typst support
++ 🟩 custom fonts
++ 🟨 custom keybinds
+    - 🟥 basic rebinding of editor commands
+    - 🟥 custom action functions
 + 🟥 fast navigation between locations in the document
     - 🟥 user-defined location bookmarks
     - 🟥 serializable stack of cursor locations navigable by forward/back
     - 🟥 section links
 + 🟨 editor themes
-    - 🟨 dark mode
+    - 🟩 dark mode
     - 🟥 light mode
     - 🟥 custom themes
-+ 🟥 custom fonts
 + 🟨 export to html
-    - 🟩 basic export
+    - 🟩 basic export of document, 1:1 of what is shown in editor
+    - 🟩 custom document theme (basic properties like page width, color, etc)
     - 🟥 custom document css
-    - 🟥 custom html templates
-+ 🟥 export to markdown
-    - 🟥 basic export
-    - 🟥 custom view css
-    - 🟥 github style view
+    - 🟥 choice of how html is formatted (minify/beautify/etc)
+    - 🯄 custom html templates
++ 🯄 export to pdf
++ 🯄 export to markdown
 + 🯄 collaborative editing
 + 🯄 workspace/multi-document mode
-+ 🯄 inline latex/typst support
 + 🯄 git gui
 
 
@@ -48,12 +64,15 @@ WIP rich text editor
 > * 🯄 possible, actual inclusion undecided
 
 ## Dependencies
-+ quill 2
++ quill 2 & parchment
 + electron 30
 + typescript 5
 + react 18
 + styled-components 6
 + webpack 5 & various plugins
++ js-beautify
++ html-minifier
++ eslint
 
 #### Possible future dependencies
 + highlight.js
