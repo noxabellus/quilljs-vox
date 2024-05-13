@@ -105,8 +105,9 @@ export default function convertDocument (doc: Document, format: Format, userOpti
 
             if (op.insert.startsWith("\n")) {
                 currentSection.attributes = op.attributes || {};
+                newSection();
                 attributes = {};
-                lines.unshift();
+                lines.shift();
             } else {
                 attributes = op.attributes || {};
                 currentSection.ops.push({ insert: lines.shift(), attributes });
@@ -117,9 +118,12 @@ export default function convertDocument (doc: Document, format: Format, userOpti
             }
 
 			lines.forEach(line => {
-                currentSection.ops.push({insert: line, attributes });
-                newSection();
+                const op = {insert: line, attributes };
+                if (currentSection.ops.length) newSection();
+                currentSection.ops.push(op);
             });
+
+            if (op.insert.endsWith("\n")) newSection();
 		} else {
             // inline segment
 			currentSection.ops.push(op);
@@ -255,7 +259,7 @@ export const HtmlFormat: Format = {
 
         attributeProcessors: {},
 
-        postProcess: "beautify",
+        postProcess: null,
     }
 };
 
