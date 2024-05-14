@@ -1,6 +1,6 @@
 # Vox Editor (QuillJS version, archive)
 
-An semi-complete text editor, shelved in favor of [a new version written with slatejs](https://github.com/noxabellus/vox)
+A semi-complete text editor, shelved in favor of [a new version written with slatejs](https://github.com/noxabellus/vox)
 
 ## State of the archive
 + 🟩 document format compatible with version control
