@@ -1,8 +1,8 @@
-# Vox Editor
+# Vox Editor (QuillJS version, archive)
 
-WIP rich text editor
+An semi-complete text editor, shelved in favor of [a new version written with slatejs](https://github.com/noxabellus/vox)
 
-## Planned features
+## State of the archive
 + 🟩 document format compatible with version control
 + 🟩 undo/redo to the beginning or end of time, even after save/load
 + 🟨 standard editor tools
@@ -18,7 +18,6 @@ WIP rich text editor
         + 🟩 center
         + 🟩 right
         + 🟩 justified
-        + 🯄 column
     - 🟩 font size selection
     - 🟩 font family selection
     - 🟩 font color and highlight selection
@@ -27,8 +26,6 @@ WIP rich text editor
         * 🟩 pasting images from html
         * 🟥 pasting images from file
         * 🟥 image insertion tool
-        * 🯄 video insertion
-        * 🯄 audio insertion
     - 🟥 lists
     - 🟥 tables
     - 🟥 links
@@ -42,9 +39,6 @@ WIP rich text editor
         * 🟥 table of contents
     - 🟥 editorial kit
         * 🟥 positional comments
-        * 🯄 option to export editorial kit embedded into document
-    - 🯄 paging mode
-    - 🯄 inline latex/typst support
 + 🟩 custom fonts
 + 🟨 custom keybinds
     - 🟥 basic rebinding of editor commands
@@ -62,18 +56,6 @@ WIP rich text editor
     - 🟩 custom document theme (basic properties like page width, color, etc)
     - 🟥 custom document css
     - 🟥 choice of how html is formatted (minify/beautify/etc)
-    - 🯄 custom html templates
-+ 🯄 export to pdf
-+ 🯄 export to markdown
-+ 🯄 collaborative editing
-+ 🯄 workspace/multi-document mode
-+ 🯄 git gui
-
-
-> * 🟩 implemented >75%
-> * 🟨 in progress
-> * 🟥 not yet implemented
-> * 🯄 possible, actual inclusion undecided
 
 ## Dependencies
 + quill 2 & parchment
@@ -85,7 +67,3 @@ WIP rich text editor
 + js-beautify
 + html-minifier
 + eslint
-
-#### Possible future dependencies
-+ highlight.js
-+ minimal code editor of some kind (for css, html templates, inline code blocks)
